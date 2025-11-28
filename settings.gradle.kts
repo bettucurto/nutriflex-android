@@ -21,6 +21,7 @@ dependencyResolutionManagement {
 
 rootProject.name = "Nutriflex2"
 include(":app")
-include(":ui")
-include(":domain")
-include(":data")
+include(":dieta")
+include(":treino")
+include(":auth")
+include(":core-ui")
