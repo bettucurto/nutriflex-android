@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="show_password">Show Password</string>
+    <string name="hide_password">Hide Password</string>
+    <string name="divider">or</string>
+    <string name="clickable_text1">Dont have an account yet? </string>
+    <string name="clickable_text2"> Register</string>
+
+</resources>

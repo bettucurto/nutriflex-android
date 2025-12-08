@@ -1,4 +1,4 @@
-package com.example.core_ui
+package com.example.components
 
 import org.junit.Test
 

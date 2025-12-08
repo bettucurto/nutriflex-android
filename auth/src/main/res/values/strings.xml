@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="titleWelcomeScreen">Welcome to Nutriflex!</string>
+    <string name="btn1WelcomeScreen">I dont have an account</string>
+    <string name="btn2WelcomeScreen">I already have an account</string>
+    <string name="titleLoginScreen">Welcome Back!</string>
+    <string name="headingTitleLoginScreen">Hey there,</string>
+    <string name="textField1LoginScreen">Email</string>
+    <string name="textField2LoginScreen">Password</string>
+    <string name="btnLoginScreen">Login</string>
+</resources>
