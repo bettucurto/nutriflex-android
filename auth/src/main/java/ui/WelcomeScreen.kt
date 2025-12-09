@@ -54,14 +54,14 @@ fun WelcomeScreen(navController: NavController) {
 
                 NFButton(
                     text = stringResource(id = R.string.btn1WelcomeScreen),
-                    onClick = {}
+                    onButtonClicked = {}
                 )
 
                 Spacer(modifier = Modifier.height(16.dp))
 
                 NFOutlinedButton(
                     text = stringResource(id = R.string.btn2WelcomeScreen),
-                    onClick = {navController.navigate("loginScreen")}
+                    onButtonClicked = {navController.navigate("loginScreen")}
                 )
             }
         }

@@ -37,6 +37,9 @@ android {
 }
 
 dependencies {
+    val lifecycle_version = "2.10.0"
+    val arch_version = "2.2.0"
+
     implementation(libs.androidx.core.ktx)
     implementation(libs.androidx.appcompat)
     implementation(libs.material)
@@ -47,6 +50,12 @@ dependencies {
     implementation(project(":core-ui"))
     implementation(libs.androidx.ui)
     implementation(libs.androidx.compose.material.icons.core)
+
+    implementation("androidx.lifecycle:lifecycle-viewmodel-ktx:${lifecycle_version}")
+    // ViewModel utilities for Compose
+    implementation("androidx.lifecycle:lifecycle-viewmodel-compose:${lifecycle_version}")
+    // Lifecycle utilities for Compose
+    implementation("androidx.lifecycle:lifecycle-runtime-compose:${lifecycle_version}")
     implementation(libs.ui)
     testImplementation(libs.junit)
     androidTestImplementation(libs.androidx.junit)

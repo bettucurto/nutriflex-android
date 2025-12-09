@@ -28,7 +28,8 @@ import com.example.components.R
 import theme.AppShapes
 
 @Composable
-fun RegularTextField(labelValue: String, imageVector: ImageVector){
+fun RegularTextField(labelValue: String, imageVector: ImageVector,
+                     onTextSelected: (String) -> Unit){
 
     val textValue = remember{
         mutableStateOf("")
@@ -51,6 +52,7 @@ fun RegularTextField(labelValue: String, imageVector: ImageVector){
         value = textValue.value,
         onValueChange = {
             textValue.value = it
+            onTextSelected(it)
         },
         singleLine = true,
         maxLines = 1,
@@ -63,7 +65,8 @@ fun RegularTextField(labelValue: String, imageVector: ImageVector){
 }
 
 @Composable
-fun PasswordTextField(labelValue: String, imageVector: ImageVector){
+fun PasswordTextField(labelValue: String, imageVector: ImageVector,
+                      onTextSelected: (String) -> Unit){
 
     val localFocusManager = LocalFocusManager.current
     val password = remember{
@@ -96,6 +99,7 @@ fun PasswordTextField(labelValue: String, imageVector: ImageVector){
         value = password.value,
         onValueChange = {
             password.value = it
+            onTextSelected(it)
         },
         singleLine = true,
         maxLines = 1,

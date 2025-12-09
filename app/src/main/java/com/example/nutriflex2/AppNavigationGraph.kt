@@ -21,7 +21,7 @@ import androidx.navigation.NavHostController
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import kotlinx.coroutines.delay
-import ui.LoginScreen
+import ui.login.LoginScreen
 import ui.WelcomeScreen
 
 @Composable
@@ -38,13 +38,13 @@ fun AppNavGraph(navController: NavHostController) {
             exitTransition = {
                 slideOutOfContainer(
                     AnimatedContentTransitionScope.SlideDirection.Left,
-                    tween(700, delayMillis = 200)
+                    tween(700)
                 )
             },
             enterTransition = {
                 slideIntoContainer(
                     AnimatedContentTransitionScope.SlideDirection.Right,
-                    tween(700, delayMillis = 200)
+                    tween(700)
                 )
             }
         ) {
@@ -54,13 +54,13 @@ fun AppNavGraph(navController: NavHostController) {
             enterTransition ={
                 slideIntoContainer(
                     AnimatedContentTransitionScope.SlideDirection.Left,
-                    tween(700, delayMillis = 200)
+                    tween(700)
                 )
             },
             exitTransition = {
                 slideOutOfContainer(
                     AnimatedContentTransitionScope.SlideDirection.Right,
-                    tween(700, delayMillis = 200)
+                    tween(700)
                 )
             }
         ) {

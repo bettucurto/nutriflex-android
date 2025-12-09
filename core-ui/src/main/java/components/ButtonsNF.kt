@@ -24,11 +24,13 @@ fun NFButton(
     text: String,
     modifier: Modifier = Modifier,
     enabled: Boolean = true,
-    onClick: () -> Unit
+    onButtonClicked: () -> Unit
 ) {
 
     Button(
-        onClick = onClick,
+        onClick = {
+            onButtonClicked.invoke()
+        },
         enabled = enabled,
         modifier = modifier
             .fillMaxWidth()
@@ -59,7 +61,7 @@ fun NFOutlinedButton(
     text: String,
     modifier: Modifier = Modifier,
     enabled: Boolean = true,
-    onClick: () -> Unit
+    onButtonClicked: () -> Unit
 ) {
 
 //    OutlinedButton(
@@ -79,7 +81,9 @@ fun NFOutlinedButton(
 //    }
 
     Button(
-        onClick = onClick,
+        onClick = {
+            onButtonClicked.invoke()
+        },
         enabled = enabled,
         modifier = modifier
             .fillMaxWidth()
