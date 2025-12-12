@@ -2,6 +2,7 @@ plugins {
     alias(libs.plugins.android.library)
     alias(libs.plugins.kotlin.android)
     alias(libs.plugins.kotlin.compose)
+    id("org.jetbrains.kotlin.kapt")
 }
 
 
@@ -47,9 +48,16 @@ dependencies {
     implementation(libs.androidx.material3)
     implementation(libs.androidx.navigation.runtime.ktx)
     implementation(libs.androidx.ui.tooling.preview)
-    implementation(project(":core-ui"))
+    implementation(project(":core"))
     implementation(libs.androidx.ui)
     implementation(libs.androidx.compose.material.icons.core)
+    implementation("com.squareup.retrofit2:retrofit:2.11.0")
+    implementation("com.squareup.retrofit2:converter-moshi:2.11.0") // ou converter-gson
+    implementation("com.squareup.okhttp3:logging-interceptor:4.12.0")
+
+    implementation("com.google.dagger:hilt-android:2.52")
+    kapt("com.google.dagger:hilt-compiler:2.52")
+    implementation("androidx.hilt:hilt-navigation-compose:1.0.0")
 
     implementation("androidx.lifecycle:lifecycle-viewmodel-ktx:${lifecycle_version}")
     // ViewModel utilities for Compose

@@ -2,6 +2,8 @@ plugins {
     alias(libs.plugins.android.application)
     alias(libs.plugins.kotlin.android)
     alias(libs.plugins.kotlin.compose)
+    id("com.google.dagger.hilt.android")
+    id("org.jetbrains.kotlin.kapt")
 }
 
 android {
@@ -52,7 +54,7 @@ dependencies {
     implementation(libs.androidx.compose.material3)
     implementation("androidx.compose.animation:animation:1.7.0")
     implementation(project(":auth"))
-    implementation(project(":core-ui"))
+    implementation(project(":core"))
     testImplementation(libs.junit)
     androidTestImplementation(libs.androidx.junit)
     androidTestImplementation(libs.androidx.espresso.core)
@@ -62,6 +64,11 @@ dependencies {
     debugImplementation(libs.androidx.compose.ui.test.manifest)
     val nav_version = "2.9.6"
     implementation("androidx.core:core-splashscreen:1.0.1")
+
+
+    implementation("com.google.dagger:hilt-android:2.52")
+    kapt("com.google.dagger:hilt-compiler:2.52")
+
 
     implementation("androidx.navigation:navigation-compose:$nav_version")
 }

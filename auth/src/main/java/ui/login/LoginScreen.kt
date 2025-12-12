@@ -1,5 +1,6 @@
 package ui.login
 
+import android.util.Log
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.interaction.MutableInteractionSource
@@ -14,12 +15,13 @@ import androidx.compose.material.icons.outlined.Lock
 import androidx.compose.material3.MaterialTheme.colorScheme
 import androidx.compose.material3.Surface
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalFocusManager
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
-import androidx.lifecycle.viewmodel.compose.viewModel
+import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.navigation.NavController
 import com.example.auth.R
 import components.ClickableTextComponent
@@ -33,9 +35,17 @@ import theme.AppTheme
 
 
 @Composable
-fun LoginScreen(navController: NavController, loginViewModel: LoginViewModel = viewModel()){
+fun LoginScreen(navController: NavController, viewModel: LoginViewModel = hiltViewModel()){
     AppTheme(){
         val focusManager = LocalFocusManager.current
+        val state = viewModel.loginUIState
+
+        // Navegar quando o login tiver sucesso
+        LaunchedEffect(state.isSuccess) {
+            if (state.isSuccess) {
+                navController.navigate("welcomeScreen")
+            }
+        }
 
         Surface(
             modifier = Modifier
@@ -58,18 +68,19 @@ fun LoginScreen(navController: NavController, loginViewModel: LoginViewModel = v
                 RegularTextField(stringResource(R.string.textField1LoginScreen),
                     Icons.Outlined.Email,
                     onTextSelected = {
-                        loginViewModel.onEvent((LoginUIEvent.LoginEmailChanged(it)))
+                        viewModel.onEvent((LoginUIEvent.LoginEmailChanged(it)))
                 })
                 PasswordTextField(stringResource(R.string.textField2LoginScreen),
                     Icons.Outlined.Lock,
                     onTextSelected = {
-                        loginViewModel.onEvent((LoginUIEvent.LoginPasswordChanged(it)))
+                        viewModel.onEvent((LoginUIEvent.LoginPasswordChanged(it)))
                     })
 
                 Spacer(Modifier.height(250.dp))
 
-                NFButton(stringResource(id= R.string.btnLoginScreen), onButtonClicked = {loginViewModel.onEvent(
-                    LoginUIEvent.LoginButtonClicked)})
+                NFButton(stringResource(id= R.string.btnLoginScreen), onButtonClicked = {viewModel.onEvent(
+                    LoginUIEvent.LoginButtonClicked)
+                            Log.d("Login", "Botão login clicado")})
                 DividerTextComponent()
                 ClickableTextComponent(onClick = {navController.navigate("welcomeScreen")})
             }
