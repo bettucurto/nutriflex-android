@@ -3,9 +3,30 @@
     <string name="titleWelcomeScreen">Welcome to Nutriflex!</string>
     <string name="btn1WelcomeScreen">I dont have an account</string>
     <string name="btn2WelcomeScreen">I already have an account</string>
+
     <string name="titleLoginScreen">Welcome Back!</string>
     <string name="headingTitleLoginScreen">Hey there,</string>
     <string name="textField1LoginScreen">Email</string>
     <string name="textField2LoginScreen">Password</string>
     <string name="btnLoginScreen">Login</string>
+
+    <string name="titleRegistration1">Welcome!</string>
+    <string name="titleRegistration2">About you</string>
+    <string name="titleRegistration3">Almost there!</string>
+    <string name="SubTitleRegistration1">Tell us about yourself</string>
+    <string name="SubTitleRegistration5">Choose an email and password</string>
+    <string name="textField1RegisterScreen1">Name</string>
+    <string name="textField2RegisterScreen1">Birth Date</string>
+    <string name="buttonRegisterScreen1">Next</string>
+    <string name="buttonRegisterScreen5">Create Account</string>
+
+    <string name="SubTitleRegistration2">What are your diet goals?</string>
+    <string name="SubTitleRegistration3">Ever struggled with a diet?</string>
+
+    <string name="textField1RegisterScreen4">Height</string>
+    <string name="textField2RegisterScreen4">Current Weight</string>
+    <string name="textField2RegisterScreen4SupportText">Doesnt have to be exact, you can always change it later</string>
+    <string name="textField3RegisterScreen4">Weight Goal</string>
+    <string name="textField3RegisterScreen4SupportText">Pick your goal weight that you can also change later, or let us choose the most appropriate for your needs</string>
+
 </resources>

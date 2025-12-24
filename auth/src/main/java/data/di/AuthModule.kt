@@ -1,5 +1,6 @@
 package data.di
 
+import android.util.Log
 import dagger.Module
 import dagger.Provides
 import dagger.hilt.InstallIn
@@ -15,6 +16,7 @@ object AuthModule {
     @Provides
     @Singleton
     fun provideAuthApi(retrofit: Retrofit): AuthApiService {
+        Log.d("DI", "Retrofit recebido em AuthModule: $retrofit")
         return retrofit.create(AuthApiService::class.java)
     }
 }

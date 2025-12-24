@@ -3,8 +3,10 @@ package ui
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
@@ -52,17 +54,26 @@ fun WelcomeScreen(navController: NavController) {
 
                 Spacer(modifier = Modifier.height(48.dp))
 
-                NFButton(
-                    text = stringResource(id = R.string.btn1WelcomeScreen),
-                    onButtonClicked = {}
-                )
-
+                Row(modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(horizontal = 19.dp)
+                ) {
+                    NFButton(
+                        text = stringResource(id = R.string.btn1WelcomeScreen),
+                        onButtonClicked = {navController.navigate("registrationScreen1")}
+                    )
+                }
                 Spacer(modifier = Modifier.height(16.dp))
 
-                NFOutlinedButton(
-                    text = stringResource(id = R.string.btn2WelcomeScreen),
-                    onButtonClicked = {navController.navigate("loginScreen")}
-                )
+                Row(modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(horizontal = 19.dp)
+                ) {
+                    NFOutlinedButton(
+                        text = stringResource(id = R.string.btn2WelcomeScreen),
+                        onButtonClicked = { navController.navigate("loginScreen") }
+                    )
+                }
             }
         }
     }

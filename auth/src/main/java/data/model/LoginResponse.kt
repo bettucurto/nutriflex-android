@@ -1,5 +1,5 @@
 package data.model
-//Estrutura do request
+//Estrutura do q envia
 data class LoginResponse(
     val token: String
 )

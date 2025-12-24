@@ -14,6 +14,7 @@ import androidx.compose.material.icons.outlined.Email
 import androidx.compose.material.icons.outlined.Lock
 import androidx.compose.material3.MaterialTheme.colorScheme
 import androidx.compose.material3.Surface
+import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.remember
@@ -27,9 +28,9 @@ import com.example.auth.R
 import components.ClickableTextComponent
 import components.DividerTextComponent
 import components.HeadingTextComponent
+import components.IconTextField
 import components.NFButton
 import components.PasswordTextField
-import components.RegularTextField
 import components.TitleText
 import theme.AppTheme
 
@@ -65,24 +66,34 @@ fun LoginScreen(navController: NavController, viewModel: LoginViewModel = hiltVi
                 TitleText(stringResource(R.string.titleLoginScreen))
                 Spacer(Modifier.height(30.dp))
 
-                RegularTextField(stringResource(R.string.textField1LoginScreen),
+                IconTextField(stringResource(R.string.textField1LoginScreen),
                     Icons.Outlined.Email,
+                    error = state.emailError,
                     onTextSelected = {
                         viewModel.onEvent((LoginUIEvent.LoginEmailChanged(it)))
                 })
                 PasswordTextField(stringResource(R.string.textField2LoginScreen),
                     Icons.Outlined.Lock,
+                    error = state.passwordError,
                     onTextSelected = {
                         viewModel.onEvent((LoginUIEvent.LoginPasswordChanged(it)))
                     })
 
-                Spacer(Modifier.height(250.dp))
+                if (state.errorMessage != null) {
+                    Spacer(Modifier.height(12.dp))
+                    Text(
+                        text = state.errorMessage,
+                        color = colorScheme.error
+                    )
+                }
+                Spacer(Modifier.weight(1f))
 
                 NFButton(stringResource(id= R.string.btnLoginScreen), onButtonClicked = {viewModel.onEvent(
                     LoginUIEvent.LoginButtonClicked)
                             Log.d("Login", "Botão login clicado")})
                 DividerTextComponent()
-                ClickableTextComponent(onClick = {navController.navigate("welcomeScreen")})
+                ClickableTextComponent(onClick = {navController.navigate("registrationScreen1")})
+                Spacer(Modifier.weight(0.1f))
             }
         }
     }

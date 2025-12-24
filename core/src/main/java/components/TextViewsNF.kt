@@ -38,6 +38,20 @@ fun TitleText(value: String){
 }
 
 @Composable
+fun LeftTitleText(value: String){
+    Text(
+        text = value,
+        modifier = Modifier.fillMaxWidth().heightIn(),
+        style = TextStyle(
+            fontSize = 30.sp,
+            fontWeight = FontWeight.Bold,
+            fontFamily = FontFamily(Font(R.font.audiowide)),
+            color = colorScheme.secondary
+        )
+    )
+}
+
+@Composable
 fun HeadingTextComponent(value: String) {
     Text(
         text = value,
@@ -51,6 +65,21 @@ fun HeadingTextComponent(value: String) {
         )
     )
 }
+
+@Composable
+fun LeftHeadingTextComponent(value: String) {
+    Text(
+        text = value,
+        modifier = Modifier.fillMaxWidth().heightIn(min = 40.dp),
+        style = TextStyle(
+            fontSize = 24.sp,
+            fontWeight = FontWeight.Normal,
+            fontFamily = FontFamily(Font(R.font.audiowide)),
+            color = colorScheme.secondary
+        )
+    )
+}
+
 
 @Composable
 fun ClickableTextComponent(onClick: () -> Unit){
