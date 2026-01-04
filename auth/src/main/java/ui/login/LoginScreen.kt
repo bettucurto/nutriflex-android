@@ -44,7 +44,9 @@ fun LoginScreen(navController: NavController, viewModel: LoginViewModel = hiltVi
         // Navegar quando o login tiver sucesso
         LaunchedEffect(state.isSuccess) {
             if (state.isSuccess) {
-                navController.navigate("welcomeScreen")
+                navController.navigate("homeScreen") {
+                    popUpTo("loginScreen") { inclusive = true }
+                }
             }
         }
 

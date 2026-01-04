@@ -1,5 +1,6 @@
 package ui.login
 
+import android.util.Log
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
@@ -83,9 +84,14 @@ class LoginViewModel @Inject constructor(
                                 w / ((h / 100f) * (h / 100f))
                             } else 0f
 
+
                             val dailyCalories = progress?.calorias_diarias ?: 0
                             val goalWeight = progress?.peso_meta ?: progress?.peso_atual ?: 0f
                             val currentWeight = progress?.peso_atual ?: 0f
+                            Log.d(
+                                "LoginViewModel",
+                                "saveUserLocal: dc=$dailyCalories cw=$currentWeight gw=$goalWeight"
+                            )
 
                             userLocalRepository.saveUserLocal(
                                 userId = userDto.id,
@@ -93,11 +99,14 @@ class LoginViewModel @Inject constructor(
                                 bmi = bmi,
                                 currentWeight = currentWeight,
                                 goalWeight = goalWeight,
-                                dailyCalories = dailyCalories
+                                heightCm = userDto.altura,
+                                dailyCalories = dailyCalories,
+                                gender = userDto.genero,           // ou mapear para "M"/"F"
+                                birthDate = userDto.data_nascenca
                             )
                         }
-                        .onFailure { e ->
-                            // não bloqueia o login se esta call falhar
+                        .onFailure {
+                            Log.e("LoginViewModel", "getUserByEmail failed", it)
                         }
 
                     loginUIState = loginUIState.copy(

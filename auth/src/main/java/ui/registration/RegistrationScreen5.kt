@@ -123,8 +123,8 @@ fun RegistrationScreen5(navController: NavController, viewModel: RegisterViewMod
                                 viewModel.finalizeAndRegister { result ->
                                     result
                                         .onSuccess {
-                                            navController.navigate("welcomeScreen") {
-                                                popUpTo("loginScreen") { inclusive = true }
+                                            navController.navigate("homeScreen") {
+                                                popUpTo("registrationScreen") { inclusive = true }
                                             }
                                         }
                                         .onFailure {

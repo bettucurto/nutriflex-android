@@ -40,6 +40,9 @@ android {
 dependencies {
     implementation(libs.ui.tooling.preview)
     implementation(libs.androidx.compose.material3.android)
+    implementation(libs.androidx.foundation)
+    implementation(libs.androidx.compose.ui.unit)
+    implementation(libs.androidx.compose.animation.core)
     debugImplementation(libs.ui.tooling)
     val lifecycle_version = "2.10.0"
     val arch_version = "2.2.0"

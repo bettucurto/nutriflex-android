@@ -7,8 +7,11 @@ import dagger.Provides
 import dagger.hilt.InstallIn
 import dagger.hilt.android.qualifiers.ApplicationContext
 import dagger.hilt.components.SingletonComponent
+import local.MIGRATION_1_2
+import local.MIGRATION_2_3
 import local.NutriflexDatabase
 import local.UserLocalDao
+import local.WeightHistoryDao
 import javax.inject.Singleton
 
 @Module
@@ -19,13 +22,19 @@ object DatabaseModule {
     @Singleton
     fun provideDatabase(
         @ApplicationContext context: Context
-    ): NutriflexDatabase =
-        Room.databaseBuilder(
+    ): NutriflexDatabase {
+        return Room.databaseBuilder(
             context,
             NutriflexDatabase::class.java,
             "nutriflex.db"
-        ).build()
+        )
+            .addMigrations(MIGRATION_1_2, MIGRATION_2_3)
+            .build()
+    }
 
     @Provides
     fun provideUserLocalDao(db: NutriflexDatabase): UserLocalDao = db.userLocalDao()
+
+    @Provides
+    fun provideWeightHistoryDao(db: NutriflexDatabase): WeightHistoryDao = db.weightHistoryDao()
 }

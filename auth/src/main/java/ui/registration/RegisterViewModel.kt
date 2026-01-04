@@ -76,7 +76,7 @@ class RegisterViewModel @Inject constructor(
                 registerUIState = if (event.enabled) {
                     registerUIState.copy(
                         autoWeightGoal = true,
-                        weightGoal = 0f,          // app decide depois o valor real
+                        weightGoal = 0f,
                         weightGoalError = null
                     )
                 } else {
@@ -84,43 +84,28 @@ class RegisterViewModel @Inject constructor(
                 }
             }
             is RegisterUIEvent.RegisterEmailChanged -> {
-                registerUIState = registerUIState.copy(email= event.email)
+                registerUIState = registerUIState.copy(email = event.email)
             }
             is RegisterUIEvent.RegisterPasswordChanged -> {
                 registerUIState = registerUIState.copy(password = event.password)
             }
 
-            RegisterUIEvent.NextClickedStep1 -> {
-                validateStep1()
-            }
-            RegisterUIEvent.NextClickedStep2 -> {
-                validateStep2()
-            }
-            RegisterUIEvent.NextClickedStep3 -> {
-                validateStep3()
-            }
-            RegisterUIEvent.NextClickedStep4 -> {
-                validateStep4()
-            }
-            RegisterUIEvent.NextClickedStep5 -> {
-                validateStep4()
-            }
+            RegisterUIEvent.NextClickedStep1 -> validateStep1()
+            RegisterUIEvent.NextClickedStep2 -> validateStep2()
+            RegisterUIEvent.NextClickedStep3 -> validateStep3()
+            RegisterUIEvent.NextClickedStep4 -> validateStep4()
+            RegisterUIEvent.NextClickedStep5 -> validateStep4()
         }
     }
+
     private fun validateStep1() {
         var nameError: String? = null
         var genderError: String? = null
         var birthDateError: String? = null
 
-        if (registerUIState.name.isBlank()) {
-            nameError = "Name is mandatory"
-        }
-        if (registerUIState.gender == null) {
-            genderError = "Gender is mandatory"
-        }
-        if (registerUIState.birthDate.isBlank()) {
-            birthDateError = "Birth Date is mandatory"
-        }
+        if (registerUIState.name.isBlank()) nameError = "Name is mandatory"
+        if (registerUIState.gender == null) genderError = "Gender is mandatory"
+        if (registerUIState.birthDate.isBlank()) birthDateError = "Birth Date is mandatory"
 
         val hasError = nameError != null || genderError != null || birthDateError != null
 
@@ -131,42 +116,31 @@ class RegisterViewModel @Inject constructor(
             isStep1Valid = !hasError
         )
     }
+
     private fun validateStep2() {
         var goalError: String? = null
-
         if (registerUIState.goal == null) {
             goalError = "Select an option"
         }
-
-        registerUIState = registerUIState.copy(
-            goalError = goalError
-        )
+        registerUIState = registerUIState.copy(goalError = goalError)
     }
+
     private fun validateStep3() {
         var difficultyError: String? = null
-
         if (registerUIState.difficulty == null) {
             difficultyError = "Select an option"
         }
-
-        registerUIState = registerUIState.copy(
-            difficultyError = difficultyError
-        )
+        registerUIState = registerUIState.copy(difficultyError = difficultyError)
     }
+
     private fun validateStep4() {
         var heightError: String? = null
         var weightError: String? = null
         var weightGoalError: String? = null
 
-        if (registerUIState.height == null) {
-            heightError = "Height is mandatory"
-        }
-        if (registerUIState.weight == null) {
-            weightError = "Weight is mandatory"
-        }
-        if (registerUIState.weightGoal == null) {
-            weightGoalError = "Weight Goal is mandatory"
-        }
+        if (registerUIState.height == null) heightError = "Height is mandatory"
+        if (registerUIState.weight == null) weightError = "Weight is mandatory"
+        if (registerUIState.weightGoal == null) weightGoalError = "Weight Goal is mandatory"
 
         val hasError = heightError != null || weightError != null || weightGoalError != null
 
@@ -178,90 +152,94 @@ class RegisterViewModel @Inject constructor(
         )
     }
 
+    // NOVO: regra 0.33 / 0.5 / 1.0 kg por semana
+    private fun targetKgPerWeek(deltaKg: Float): Float {
+        val absDelta = kotlin.math.abs(deltaKg)
+        return when {
+            absDelta < 7f   -> 0.33f   // diferença < 7 kg
+            absDelta < 15f  -> 0.5f    // 7–15 kg
+            else            -> 1.0f    // ≥ 15 kg
+        }
+    }
+
     @RequiresApi(Build.VERSION_CODES.O)
-    suspend fun finalizeAndRegister(onResult: (Result<Unit>) -> Unit) {
-        Log.d("Register", "finalizeAndRegister called")
-        val state = registerUIState
-        Log.d("Register", "state at finalize: height=${state.height}, weight=${state.weight}, gender=${state.gender}")
+    fun finalizeAndRegister(onResult: (Result<Unit>) -> Unit) {
+        viewModelScope.launch {
+            Log.d("Register", "finalizeAndRegister called")
+            val state = registerUIState
 
-        val heightCm = state.height ?: run {
-            Log.e("Register", "Missing height")
-            return onResult(Result.failure(Exception("Missing height")))
-        }
-        val weightKg = state.weight ?: run {
-            Log.e("Register", "Missing weight")
-            return onResult(Result.failure(Exception("Missing weight")))
-        }
-        val gender = state.gender ?: run {
-            Log.e("Register", "Missing gender")
-            return onResult(Result.failure(Exception("Missing gender")))
-        }
-        val age = computeAge(state.birthDate)
+            val heightCm = state.height ?: return@launch onResult(
+                Result.failure(Exception("Missing height"))
+            )
+            val weightKg = state.weight ?: return@launch onResult(
+                Result.failure(Exception("Missing weight"))
+            )
+            val gender = state.gender ?: return@launch onResult(
+                Result.failure(Exception("Missing gender"))
+            )
+            val age = computeAge(state.birthDate)
 
-        val bmi = calculateBmi(weightKg, heightCm)
-        val baseGet = calculateGet(gender, weightKg, heightCm, age)
+            val bmi = calculateBmi(weightKg, heightCm)
+            val baseGet = calculateGet(gender, weightKg, heightCm, age)
 
-        val difficulty = state.difficulty // 0..3
-
-        val (finalWeightGoal, caloriesDaily) = if (state.autoWeightGoal) {
-            val targetWeight = normalBmiWeightForHeight(heightCm)
-            val adjPercent = bmiAdjustmentPercent(bmi)
-            val calories = baseGet * (1f + adjPercent)
-            targetWeight to calories
-        } else {
-            val weightGoal = state.weightGoal ?: weightKg
-            val basePercent = bmiAdjustmentPercent(bmi)
-            val difficultyFactor = when (difficulty) {
-                0 -> 0.5f
-                1 -> 1f
-                2, 3 -> 1.2f
-                else -> 1f
+            val finalWeightGoal = if (state.autoWeightGoal) {
+                normalBmiWeightForHeight(heightCm)
+            } else {
+                state.weightGoal ?: weightKg
             }
-            val adjPercent = basePercent * difficultyFactor
-            val calories = baseGet * (1f + adjPercent)
-            weightGoal to calories
-        }
 
-        val roundedCalories = caloriesDaily.toInt()
-        val roundedWeightGoal = String.format("%.1f", finalWeightGoal).replace(',', '.').toFloat()
+            val deltaKg = finalWeightGoal - weightKg
+            val maintenance = baseGet
 
-        registerUIState = state.copy(
-            weightGoal = roundedWeightGoal
-        )
+            val kgPerWeek = targetKgPerWeek(deltaKg)
+            val kcalPerKg = 7700f
+            val weeklyKcal = kgPerWeek * kcalPerKg
+            val dailyKcalChange = weeklyKcal / 7f
 
-        val generoString = when (gender) {
-            Gender.MALE -> "M"
-            Gender.FEMALE -> "F"
-        }
+            val caloriesDaily = if (deltaKg < 0f) {
+                maintenance - dailyKcalChange   // perder peso
+            } else {
+                maintenance + dailyKcalChange   // ganhar peso
+            }
 
-        val request = RegisterRequest(
-            nome = state.name,
-            email = state.email,
-            password = state.password,
-            altura = heightCm,
-            data_nascenca = state.birthDate,
-            genero = generoString,
-            peso_atual = weightKg,
-            peso_inicial = weightKg,
-            peso_meta = roundedWeightGoal,
-            calorias_diarias = roundedCalories,
-            dificuldades_anteriores = state.difficulty ?: 0,
-            objetivo = state.goal ?: 0
-        )
+            val roundedCalories = caloriesDaily.toInt()
+            val roundedWeightGoal =
+                String.format("%.1f", finalWeightGoal).replace(',', '.').toFloat()
 
-        val result = authRepository.register(request)
-        Log.d("Register", "register result=$result")
-        result
-            .onSuccess { registerResponse ->
-                // 1) ir buscar os dados completos do utilizador por email
-                viewModelScope.launch {
+            registerUIState = state.copy(weightGoal = roundedWeightGoal)
+
+            val generoString = when (gender) {
+                Gender.MALE -> "M"
+                Gender.FEMALE -> "F"
+            }
+
+            val request = RegisterRequest(
+                nome = state.name,
+                email = state.email,
+                password = state.password,
+                altura = heightCm,
+                data_nascenca = state.birthDate,
+                genero = generoString,
+                peso_atual = weightKg,
+                peso_inicial = weightKg,
+                peso_meta = roundedWeightGoal,
+                calorias_diarias = roundedCalories,
+                dificuldades_anteriores = state.difficulty ?: 0,
+                objetivo = state.goal ?: 0
+            )
+
+            val result = authRepository.register(request)
+
+            result
+                .onSuccess { registerResponse ->
                     val userResult = authRepository.getUserByEmail(state.email)
                     userResult
                         .onSuccess { userDto ->
                             val progress = userDto.progress
-                            val bmi = calculateBmi(weightKg, heightCm)
-                            val dailyCalories = progress?.calorias_diarias ?: roundedCalories
-                            val goalWeight = progress?.peso_meta ?: roundedWeightGoal
+                            val dailyCalories =
+                                progress?.calorias_diarias ?: roundedCalories
+                            val goalWeight =
+                                progress?.peso_meta ?: roundedWeightGoal
 
                             userLocalRepository.saveUserLocal(
                                 userId = userDto.id,
@@ -269,23 +247,26 @@ class RegisterViewModel @Inject constructor(
                                 bmi = bmi,
                                 currentWeight = weightKg,
                                 goalWeight = goalWeight,
-                                dailyCalories = dailyCalories
+                                heightCm = heightCm,
+                                dailyCalories = dailyCalories,
+                                gender = generoString,
+                                birthDate = state.birthDate
                             )
                         }
                         .onFailure { e ->
                             Log.e("Register", "Failed to fetch user by email", e)
                         }
-                }
 
-                registerUIState = registerUIState.copy(registerError = null)
-                onResult(Result.success(Unit))
-            }
-            .onFailure { e ->
-                registerUIState = registerUIState.copy(
-                    registerError = e.message ?: "Registration failed"
-                )
-                onResult(Result.failure(e))
-            }
+                    registerUIState = registerUIState.copy(registerError = null)
+                    onResult(Result.success(Unit))
+                }
+                .onFailure { e ->
+                    registerUIState = registerUIState.copy(
+                        registerError = e.message ?: "Registration failed"
+                    )
+                    onResult(Result.failure(e))
+                }
+        }
     }
 
     private fun calculateBmi(weightKg: Float, heightCm: Int): Float {
@@ -304,7 +285,7 @@ class RegisterViewModel @Inject constructor(
             val today = java.time.LocalDate.now()
             java.time.Period.between(dob, today).years
         } catch (e: Exception) {
-            30 // fallback razoável se parsing falhar
+            30
         }
     }
 
@@ -328,25 +309,22 @@ class RegisterViewModel @Inject constructor(
         age: Int
     ): Float {
         val tmb = calculateTmb(gender, weightKg, heightCm, age)
-        val activityFactor = 1.375f // levemente ativo
+        val activityFactor = 1.375f
         return tmb * activityFactor
     }
 
     private fun bmiAdjustmentPercent(bmi: Float): Float {
         return when {
-            bmi < 18.5f -> 0.05f    // magreza: +5%
-            bmi < 25f -> 0f         // normal
-            bmi < 30f -> -0.05f     // sobrepeso: -5%
-            bmi < 40f -> -0.10f     // obesidade: -10%
-            else -> -0.175f         // obesidade grave: -17.5% (meio termo 15–20)
+            bmi < 18.5f -> 0.05f
+            bmi < 25f -> 0f
+            bmi < 30f -> -0.05f
+            bmi < 40f -> -0.10f
+            else -> -0.175f
         }
     }
 
-    // peso alvo com IMC médio de 22 (intervalo 18.5–24.9)
     private fun normalBmiWeightForHeight(heightCm: Int, targetBmi: Float = 22f): Float {
         val heightM = heightCm / 100f
         return targetBmi * heightM * heightM
     }
-
-
 }

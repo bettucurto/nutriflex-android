@@ -66,7 +66,8 @@ fun AppNavGraph(navController: NavHostController) {
         composable("loginScreen") { LoginScreen(navController) }
         composable("homeScreen") {HomeScreen(
             onNavigateToTreino = { /* navController.navigate(...) */ },
-            onNavigateToDieta = { /* ... */ }
+            onNavigateToDieta = { /* ... */ },
+            onAddCaloriesClick = {navController.navigate("loginScreen")}
         )}
 
         navigation(

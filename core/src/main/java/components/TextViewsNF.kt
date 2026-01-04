@@ -8,6 +8,7 @@ import androidx.compose.material3.MaterialTheme.colorScheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.SpanStyle
 import androidx.compose.ui.text.TextStyle
@@ -17,6 +18,7 @@ import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.withStyle
+import androidx.compose.ui.unit.TextUnit
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.example.components.R
@@ -38,12 +40,12 @@ fun TitleText(value: String){
 }
 
 @Composable
-fun LeftTitleText(value: String){
+fun LeftTitleText(value: String, modifier: Modifier = Modifier, textSize: TextUnit = 30.sp){
     Text(
         text = value,
-        modifier = Modifier.fillMaxWidth().heightIn(),
+        modifier = modifier.fillMaxWidth().heightIn(),
         style = TextStyle(
-            fontSize = 30.sp,
+            fontSize = textSize,
             fontWeight = FontWeight.Bold,
             fontFamily = FontFamily(Font(R.font.audiowide)),
             color = colorScheme.secondary
@@ -52,27 +54,27 @@ fun LeftTitleText(value: String){
 }
 
 @Composable
-fun HeadingTextComponent(value: String) {
+fun HeadingTextComponent(value: String, modifier: Modifier = Modifier, textSize: TextUnit = 24.sp, textColor: Color = colorScheme.secondary) {
     Text(
         text = value,
-        modifier = Modifier.fillMaxWidth().heightIn(min = 40.dp),
+        modifier = modifier.fillMaxWidth().heightIn(min = 40.dp),
         style = TextStyle(
-            fontSize = 24.sp,
+            fontSize = textSize,
             fontWeight = FontWeight.Normal,
             fontFamily = FontFamily(Font(R.font.audiowide)),
             textAlign = TextAlign.Center,
-            color = colorScheme.secondary
+            color = textColor
         )
     )
 }
 
 @Composable
-fun LeftHeadingTextComponent(value: String) {
+fun LeftHeadingTextComponent(value: String, modifier: Modifier = Modifier, textSize: TextUnit = 24.sp) {
     Text(
         text = value,
-        modifier = Modifier.fillMaxWidth().heightIn(min = 40.dp),
+        modifier = modifier.fillMaxWidth().heightIn(min = 40.dp),
         style = TextStyle(
-            fontSize = 24.sp,
+            fontSize = textSize,
             fontWeight = FontWeight.Normal,
             fontFamily = FontFamily(Font(R.font.audiowide)),
             color = colorScheme.secondary

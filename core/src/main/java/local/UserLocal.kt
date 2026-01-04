@@ -13,5 +13,8 @@ data class UserLocal(
     val goalWeight: Float,
     val dailyCalories: Int,
     val eatenCaloriesToday: Int,
-    val lastCaloriesResetDate: String // "YYYY-MM-DD"
+    val heightCm: Int,
+    val lastCaloriesResetDate: String, // "YYYY-MM-DD"
+    val gender: String,                // "M" ou "F"
+    val birthDate: String              // "YYYY-MM-DD"
 )

@@ -19,4 +19,17 @@ interface UserLocalDao {
 
     @Query("DELETE FROM user_local")
     suspend fun clear()
+
+    @Query("UPDATE user_local SET currentWeight = :weight")
+    suspend fun updateCurrentWeight(weight: Float)
+
+    @Query("UPDATE user_local SET goalWeight = :weight")
+    suspend fun updateGoalWeight(weight: Float)
+
+    @Query("UPDATE user_local SET bmi = :bmi")
+    suspend fun updateBmi(bmi: Float)
+
+    @Query("UPDATE user_local SET dailyCalories = :calories")
+    suspend fun updateDailyCaloriesValue(calories: Int)
+
 }
