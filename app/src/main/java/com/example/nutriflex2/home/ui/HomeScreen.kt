@@ -1,12 +1,15 @@
 package com.example.nutriflex2.home.ui
 
 import android.os.Build
+import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
@@ -14,11 +17,9 @@ import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.AccountCircle
 import androidx.compose.material.icons.filled.Settings
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
-import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.MaterialTheme.colorScheme
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Surface
@@ -32,6 +33,7 @@ import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
@@ -48,27 +50,48 @@ import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import theme.AppTheme
 
-
 @Composable
-fun HomeScreen(onNavigateToTreino: () -> Unit,
-               onNavigateToDieta: () -> Unit,
-               onAddCaloriesClick: () -> Unit, // botão +
-               viewModel: HomeViewModel = hiltViewModel()){
-
+fun HomeScreen(
+    onNavigateToTreino: () -> Unit,
+    onNavigateToDieta: () -> Unit,
+    onAddCaloriesClick: () -> Unit,
+    viewModel: HomeViewModel = hiltViewModel()
+) {
     val state by viewModel.uiState.collectAsState()
     val scrollState = rememberScrollState()
     val scope = rememberCoroutineScope()
 
-    // sinal para pedir scroll depois de o diálogo aparecer
     var pendingScroll by remember { mutableStateOf(false) }
-
     var selectedRange by remember { mutableStateOf(WeightRange.ONE_MONTH) }
 
-    // quando pendingScroll ficar true, faz o scroll com o novo conteúdo já medido
+    // altura real da barra (ajusta se necessário)
+    val topBarHeightDp = 72.dp
+    val density = androidx.compose.ui.platform.LocalDensity.current
+    val topBarHeightPx = with(density) { topBarHeightDp.toPx() }
+
+    var topBarOffset by remember { mutableStateOf(0f) }
+    var lastScroll by remember { mutableStateOf(0f) }
+
+    // atualiza offset conforme o scroll (efeito progressivo)
+    LaunchedEffect(scrollState.value) {
+        val current = scrollState.value.toFloat()
+        val delta = current - lastScroll
+
+        // a descer -> esconder até -topBarHeightPx
+        if (delta > 0) {
+            topBarOffset = (topBarOffset - delta).coerceAtLeast(-topBarHeightPx)
+        }
+        // a subir -> mostrar até 0
+        if (delta < 0) {
+            topBarOffset = (topBarOffset - delta).coerceAtMost(0f)
+        }
+
+        lastScroll = current
+    }
+
     LaunchedEffect(pendingScroll) {
         if (pendingScroll) {
             scope.launch {
-                // pequeno delay opcional para garantir layout estável
                 delay(50)
                 scrollState.animateScrollTo(scrollState.maxValue)
             }
@@ -76,110 +99,133 @@ fun HomeScreen(onNavigateToTreino: () -> Unit,
         }
     }
 
-    AppTheme() {
+    AppTheme {
         Scaffold(
-            bottomBar = { NFBottomBar(onTreinoClick = onNavigateToTreino,
-            onPerfilClick = {},
-            onDietaClick = onNavigateToDieta) }
-        ) {
-            innerPadding ->
-            Column(modifier = Modifier
-                .padding(innerPadding)
-                .fillMaxSize()
-                .verticalScroll(scrollState),
-                horizontalAlignment = Alignment.CenterHorizontally
+            bottomBar = {
+                NFBottomBar(
+                    onTreinoClick = onNavigateToTreino,
+                    onPerfilClick = {},
+                    onDietaClick = onNavigateToDieta
+                )
+            }
+        ) { innerPadding ->
+            Box(
+                modifier = Modifier
+                    .padding(innerPadding)
+                    .fillMaxSize()
             ) {
-                Row(
+
+                // Conteúdo scrollável
+                Column(
+                    modifier = Modifier
+                        .fillMaxSize()
+                        .verticalScroll(scrollState),
+                    horizontalAlignment = Alignment.CenterHorizontally
+                ) {
+                    // espaço para não ficar tapado quando a barra estiver visível
+                    Spacer(modifier = Modifier.height(topBarHeightDp))
+
+                    CaloriesCard(
+                        remaining = state.remainingCalories,
+                        dailyTarget = state.dailyCalories,
+                        progress = state.progress,
+                        onAddClick = onAddCaloriesClick
+                    )
+
+                    NextWorkoutCard(
+                        workoutName = state.nextWorkoutName,
+                        exerciseCount = state.nextWorkoutExercises,
+                        onStartClick = { onNavigateToTreino() }
+                    )
+
+                    BmiCard(
+                        bmi = state.bmi,
+                        category = state.bmiCategory
+                    )
+
+                    WeightForecastCard(
+                        weeks = state.weeklyProgressWeeks,
+                        goalWeight = state.goalWeight,
+                    )
+
+                    WeightProgressCard(
+                        selectedRange = selectedRange,
+                        history = state.weightHistory,
+                        onRangeChange = { newRange ->
+                            selectedRange = newRange
+                            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+                                viewModel.loadWeightHistory(newRange)
+                            }
+                        }
+                    )
+
+                    WeightsCardRow(
+                        currentWeight = state.currentWeight,
+                        goalWeight = state.goalWeight,
+                        onChangeCurrent = { new ->
+                            viewModel.onChangeCurrentWeight(new, selectedRange)
+                        },
+                        onChangeGoal = { viewModel.onChangeGoalWeight(it) },
+                        onRequestScroll = { pendingScroll = true }
+                    )
+
+                    Spacer(modifier = Modifier.height(20.dp))
+                }
+
+                // Top bar sobreposta, com fundo e alpha
+                Column(
                     modifier = Modifier
                         .fillMaxWidth()
-                        .padding(horizontal = 16.dp, vertical = 12.dp),
-                    horizontalArrangement = Arrangement.SpaceEvenly,
-                    verticalAlignment = Alignment.CenterVertically
+                        .align(Alignment.TopCenter)
+                        .graphicsLayer {
+                            translationY = topBarOffset
+                            // 0 quando escondida, 1 quando visível
+                            val progress =
+                                1f - (-topBarOffset / topBarHeightPx).coerceIn(0f, 1f)
+                            alpha = progress
+                        }
+                        .background(colorScheme.background) // cor de fundo da barra
                 ) {
-                    // Círculo/avatar à esquerda
-                    Surface(
-                        shape = CircleShape,
-                        color = MaterialTheme.colorScheme.primary,
-                        modifier = Modifier.size(52.dp)
+                    Row(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(horizontal = 16.dp, vertical = 12.dp),
+                        horizontalArrangement = Arrangement.SpaceBetween,
+                        verticalAlignment = Alignment.CenterVertically
                     ) {
-                        Icon(
-                        imageVector = Icons.Filled.AccountCircle,
-                        contentDescription = "Perfil",
-                        tint = MaterialTheme.colorScheme.onPrimary
-                    )
-                    }
+                        Spacer(modifier = Modifier.width(42.dp))
 
+                        Box(modifier = Modifier.weight(0.4f)) {
+                            TitleText(
+                                value = stringResource(
+                                    id = com.example.nutriflex2.R.string.app_name
+                                )
+                            )
+                        }
 
-                    Box(modifier = Modifier.weight(0.4f)){
-                        TitleText(value = stringResource(id = com.example.nutriflex2.R.string.app_name))
-                    }
-                    // Círculo vazio/das definições à direita
-                    Surface(
-                        shadowElevation = 8.dp,
-                        shape = CircleShape,
-                        color = colorScheme.outlineVariant,
-                        modifier = Modifier.size(52.dp)
-                    ) {
-                        Icon(
-                            imageVector = Icons.Filled.Settings,
-                            contentDescription = "Definições",
-                            tint = colorScheme.onSurfaceVariant
-                        )
-                    }
-                }
-                HorizontalDivider(modifier = Modifier.width(200.dp),
-                    color = colorScheme.onSurface,
-                    thickness = 1.dp
-                )
-
-                CaloriesCard(
-                    remaining = state.remainingCalories,
-                    dailyTarget = state.dailyCalories,
-                    progress = state.progress,
-                    onAddClick = onAddCaloriesClick
-                )
-
-                NextWorkoutCard(
-                    workoutName = state.nextWorkoutName,
-                    exerciseCount = state.nextWorkoutExercises,
-                    onStartClick = {
-                        // mock: navega sempre com 1
-                        onNavigateToTreino()
-                    }
-                )
-
-                BmiCard(
-                    bmi = state.bmi,
-                    category = state.bmiCategory
-                )
-
-                WeightForecastCard(
-                    weeks = state.weeklyProgressWeeks,
-                    goalWeight = state.goalWeight,
-                )
-
-                WeightProgressCard(
-                    selectedRange = selectedRange,
-                    history = state.weightHistory,
-                    onRangeChange = { newRange ->
-                        selectedRange = newRange
-                        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
-                            viewModel.loadWeightHistory(newRange)
+                        Surface(
+                            shadowElevation = 8.dp,
+                            shape = CircleShape,
+                            color = colorScheme.outlineVariant,
+                            modifier = Modifier.size(42.dp)
+                        ) {
+                            Icon(
+                                imageVector = Icons.Filled.Settings,
+                                contentDescription = "Definições",
+                                tint = colorScheme.onSurfaceVariant
+                            )
                         }
                     }
-                )
 
-
-                WeightsCardRow(
-                    currentWeight = state.currentWeight,
-                    goalWeight = state.goalWeight,
-                    onChangeCurrent = { new ->
-                        viewModel.onChangeCurrentWeight(new, selectedRange)
-                    },
-                    onChangeGoal = { viewModel.onChangeGoalWeight(it) },
-                    onRequestScroll = { pendingScroll = true }
-                )
-
+                    HorizontalDivider(
+                        modifier = Modifier
+                            .align(Alignment.CenterHorizontally)
+                            .width(200.dp)
+                            .padding(vertical = 4.dp),
+                        color = colorScheme.onSurface,
+                        thickness = 1.dp
+                    )
+                }
             }
         }
     }

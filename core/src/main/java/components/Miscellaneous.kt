@@ -28,6 +28,7 @@ import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
@@ -85,6 +86,7 @@ import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.drawText
 import androidx.compose.ui.text.input.VisualTransformation
 import androidx.compose.ui.text.rememberTextMeasurer
+import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.Density
 import androidx.compose.ui.unit.IntSize
 import androidx.compose.ui.unit.dp
@@ -132,6 +134,7 @@ fun StepIndicators(
         horizontalArrangement = Arrangement.spacedBy(7.dp),
         modifier = Modifier
             .fillMaxWidth()
+            .padding(horizontal = 0.dp, vertical = 15.dp)
     ) {
         repeat(totalSteps) { index ->
             val isActive = index <= currentStep   // se currentStep for 0-based
@@ -1312,7 +1315,7 @@ fun WeightProgressCard(
                         clearSelectionSignal++
                         onRangeChange(WeightRange.TWO_WEEKS)
                     },
-                    modifier = Modifier.weight(1f)
+                    modifier = Modifier.weight(1f, fill = false)
                 )
                 WeightRangeButton(
                     text = "1 month",
@@ -1321,7 +1324,7 @@ fun WeightProgressCard(
                         clearSelectionSignal++
                         onRangeChange(WeightRange.ONE_MONTH)
                     },
-                    modifier = Modifier.weight(1f)
+                     modifier = Modifier.weight(1f, fill = false)
                 )
                 WeightRangeButton(
                     text = "3 months",
@@ -1330,7 +1333,7 @@ fun WeightProgressCard(
                         clearSelectionSignal++
                         onRangeChange(WeightRange.THREE_MONTHS)
                     },
-                    modifier = Modifier.weight(1f)
+                     modifier = Modifier.weight(1f, fill = false)
                 )
                 WeightRangeButton(
                     text = "All Time",
@@ -1339,7 +1342,7 @@ fun WeightProgressCard(
                         clearSelectionSignal++
                         onRangeChange(WeightRange.ALL_TIME)
                     },
-                    modifier = Modifier.weight(1f)
+                     modifier = Modifier.weight(1f, fill = false)
                 )
             }
         }
@@ -1367,17 +1370,26 @@ private fun WeightRangeButton(
             .padding(horizontal = 2.dp)
             .clickable(onClick = onClick)   // garante click aqui
     ) {
-        Box(
-            modifier = Modifier
-                .fillMaxSize()
-                .clip(RoundedCornerShape(50))
-                .background(Color.Transparent)
-                .padding(horizontal = 6.dp),
+        BoxWithConstraints(
+            modifier = modifier
+                .heightIn(min = 36.dp)
+                .padding(horizontal = 2.dp)
+                .clickable(onClick = onClick),
             contentAlignment = Alignment.Center
         ) {
+            val dynamicFontSize = when {
+                maxWidth < 60.dp -> 9.sp
+                maxWidth < 80.dp -> 10.sp
+                else -> 12.sp
+            }
+
             Text(
+                modifier = Modifier
+                    .padding(horizontal = 5.dp),
                 text = text,
-                fontSize = 12.sp,
+                fontSize = dynamicFontSize,
+                maxLines = 2,
+                overflow = TextOverflow.Ellipsis,
                 color = if (selected) colorScheme.primary else colorScheme.onSurface
             )
         }

@@ -96,7 +96,7 @@ fun RegistrationScreen3(navController: NavController, viewModel: RegisterViewMod
                         }}
                     )
                 }
-                Spacer(Modifier.weight(0.1f))
+                Spacer(Modifier.weight(0.2f))
             }
         }
     }
