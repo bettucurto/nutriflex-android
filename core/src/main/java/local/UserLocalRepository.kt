@@ -3,12 +3,14 @@ package local
 
 import android.os.Build
 import androidx.annotation.RequiresApi
+import local.tables.UserLocal
+import local.tables.WeightHistory
 import java.time.LocalDate
 import javax.inject.Inject
 
 class UserLocalRepository @Inject constructor(
     private val userLocalDao: UserLocalDao,
-    private val weightHistoryDao: WeightHistoryDao
+    private val weightHistoryDao: WeightHistoryDao,
 ) {
 
     suspend fun saveUserLocal(
@@ -53,6 +55,7 @@ class UserLocalRepository @Inject constructor(
     suspend fun updateGoalWeight(weight: Float) {
         userLocalDao.updateGoalWeight(weight)
     }
+
     suspend fun updateBmi(bmi: Float) {
         userLocalDao.updateBmi(bmi)
     }
@@ -96,7 +99,6 @@ class UserLocalRepository @Inject constructor(
             val date = today.minusWeeks(weekOffset.toLong()).toString() // uma data por semana
 
             val base = 75f
-            // pequena variação semanal só para o gráfico não ser plano
             val variation = ((weekOffset % 5) - 2) * 0.5f
 
             WeightHistory(
@@ -104,7 +106,7 @@ class UserLocalRepository @Inject constructor(
                 date = date,
                 weight = base + variation
             )
-        }.reversed() // mais antigo -> mais recente
+        }.reversed()
 
         entries.forEach { weightHistoryDao.insert(it) }
     }
@@ -116,4 +118,6 @@ class UserLocalRepository @Inject constructor(
     suspend fun updateDailyCaloriesValue(calories: Int) {
         userLocalDao.updateDailyCaloriesValue(calories)
     }
+
+
 }

@@ -31,6 +31,7 @@ import androidx.navigation.NavHostController
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.navigation
+import com.example.nutriflex2.home.account.AccountScreen
 import com.example.nutriflex2.home.ui.HomeScreen
 import kotlinx.coroutines.delay
 import ui.WelcomeScreen
@@ -67,13 +68,27 @@ fun AppNavGraph(navController: NavHostController) {
         composable("homeScreen") {HomeScreen(
             onNavigateToTreino = { /* navController.navigate(...) */ },
             onNavigateToDieta = { /* ... */ },
-            onAddCaloriesClick = {navController.navigate("loginScreen")}
+            onAddCaloriesClick = {navController.navigate("loginScreen")},
+            onNavigateToAccount = { navController.navigate("accountScreen") }
         )}
+
+        composable("accountScreen") {
+            AccountScreen(
+                onBack = { navController.navigate("homeScreen")},
+                onLogout = {
+                    // por exemplo: limpar token e voltar ao login/welcome
+                    navController.navigate("welcomeScreen") {
+                        popUpTo("homeScreen") { inclusive = true }
+                    }
+                }
+            )
+        }
 
         navigation(
             startDestination = "registrationScreen1",
             route = "registrationFlow"
         ) {
+
             composable("registrationScreen1") { backStackEntry ->
                 val parentEntry = remember(backStackEntry) {
                     navController.getBackStackEntry("registrationFlow")

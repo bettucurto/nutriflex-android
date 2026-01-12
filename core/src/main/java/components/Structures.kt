@@ -9,8 +9,7 @@ import androidx.compose.material3.NavigationBar
 import androidx.compose.material3.NavigationBarItem
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
-
-
+import androidx.compose.ui.graphics.vector.ImageVector
 
 
 @Composable
@@ -40,3 +39,9 @@ fun NFBottomBar(
         )
     }
 }
+
+data class TabItem(
+    val text: String,
+    val iconSelected: ImageVector,
+    val iconUnselected: ImageVector
+)

@@ -1,4 +1,4 @@
-package local
+package local.tables
 
 import androidx.room.Entity
 import androidx.room.PrimaryKey

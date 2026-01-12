@@ -7,13 +7,15 @@ import androidx.lifecycle.viewModelScope
 import components.WeightHistoryPoint
 import components.WeightRange
 import dagger.hilt.android.lifecycle.HiltViewModel
+import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.receiveAsFlow
 import kotlinx.coroutines.launch
 import local.UserLocalRepository
+import remote.UserRepository
 import javax.inject.Inject
-
 
 data class HomeUiState(
     val dailyCalories: Int = 0,
@@ -43,7 +45,6 @@ data class HomeUiState(
         get() = if (bmi <= 0f) 0f
         else ((bmi.coerceIn(bmiMin, bmiMax) - bmiMin) / (bmiMax - bmiMin))
 
-    // semanas até ao objetivo usando mesma regra de kg/semana
     val weeklyProgressWeeks: Int?
         get() {
             val deltaKg = goalWeight - currentWeight
@@ -75,13 +76,23 @@ private fun targetKgPerWeek(deltaKg: Float): Float {
     }
 }
 
+// Eventos de UI para toasts, etc.
+sealed class HomeUiEvent {
+    data class ShowToast(val message: String) : HomeUiEvent()
+}
+
 @HiltViewModel
 class HomeViewModel @Inject constructor(
-    private val userLocalRepository: UserLocalRepository
+    private val userLocalRepository: UserLocalRepository,
+    private val userRepository: UserRepository
 ) : ViewModel() {
 
     private val _uiState = MutableStateFlow(HomeUiState())
     val uiState: StateFlow<HomeUiState> = _uiState.asStateFlow()
+
+    // Canal de eventos one-shot (toasts, navegação, etc.)
+    private val _uiEvent = Channel<HomeUiEvent>(Channel.BUFFERED)
+    val uiEvent = _uiEvent.receiveAsFlow()
 
     init {
         viewModelScope.launch {
@@ -99,26 +110,19 @@ class HomeViewModel @Inject constructor(
             )
 
             if (user != null && Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
-                // se ainda não tiver histórico, semeia mock
                 val existing = userLocalRepository.getAllWeightHistory(user.userId)
                 if (existing.isEmpty()) {
                     userLocalRepository.seedMockWeightHistory(user.userId)
                 }
-                // agora carrega normalmente do Room
                 loadWeightHistory(WeightRange.ONE_MONTH)
             }
-
-            //APAGAR HISTORICO DE PESO DO ROOM E ADICIONAR MOCK
-//            if (user != null && Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
-//                userLocalRepository.clearWeightHistoryForUser(user.userId)
-//                userLocalRepository.seedMockWeightHistory(user.userId)
-//                loadWeightHistory(WeightRange.ONE_MONTH)
-//            }
         }
     }
 
-
-    fun onChangeCurrentWeight(newWeight: Float, currentRange: WeightRange) {
+    fun onChangeCurrentWeight(
+        newWeight: Float,
+        currentRange: WeightRange,
+    ) {
         viewModelScope.launch {
             val user = userLocalRepository.getUserLocal() ?: return@launch
             val heightCm = user.heightCm
@@ -127,10 +131,9 @@ class HomeViewModel @Inject constructor(
 
             val today = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
                 java.time.LocalDate.now().toString()
-            } else {
-                ""
-            }
+            } else { "" }
 
+            // 1) Atualiza local
             userLocalRepository.updateCurrentWeight(newWeight)
             userLocalRepository.updateBmi(newBmi)
             userLocalRepository.addWeightEntry(
@@ -149,13 +152,30 @@ class HomeViewModel @Inject constructor(
                     currentWeight = newWeight,
                     goalWeight = _uiState.value.goalWeight
                 )
-                // recarrega histórico para o range atual -> gráfico atualiza logo
                 loadWeightHistory(currentRange)
             }
+
+            // 2) Enviar progresso remoto ou guardar pendente
+            val goalWeight = _uiState.value.goalWeight
+            val dailyCals = _uiState.value.dailyCalories
+
+            viewModelScope.launch {
+                val result = userRepository.createProgress(
+                    idUser = user.userId,
+                    pesoAtual = newWeight,
+                    pesoMeta = goalWeight,
+                    caloriasDiarias = dailyCals
+                )
+                
+            }
+
+            _uiEvent.send(HomeUiEvent.ShowToast("Current weight updated!"))
         }
     }
 
-    fun onChangeGoalWeight(newWeight: Float) {
+    fun onChangeGoalWeight(
+        newWeight: Float,
+    ) {
         viewModelScope.launch {
             val user = userLocalRepository.getUserLocal() ?: return@launch
 
@@ -168,6 +188,22 @@ class HomeViewModel @Inject constructor(
                     goalWeight = newWeight
                 )
             }
+
+            // Enviar registo de progresso com novo objetivo
+            val currentWeight = _uiState.value.currentWeight
+            val dailyCals = _uiState.value.dailyCalories
+
+            viewModelScope.launch {
+                val result = userRepository.createProgress(
+                    idUser = user.userId,
+                    pesoAtual = currentWeight,
+                    pesoMeta = newWeight,
+                    caloriasDiarias = dailyCals
+                )
+
+            }
+
+            _uiEvent.send(HomeUiEvent.ShowToast("Goal weight updated!"))
         }
     }
 
@@ -264,6 +300,4 @@ class HomeViewModel @Inject constructor(
             )
         }
     }
-
-
 }
