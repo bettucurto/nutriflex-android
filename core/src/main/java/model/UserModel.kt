@@ -6,6 +6,7 @@ data class UserDto(
     val nome: String,
     val altura: Int,
     val genero: String,
+    val nivel_atividade: Int,
     val data_nascenca: String    // formato "YYYY-MM-DD"
 )
 
@@ -15,6 +16,7 @@ data class UpdateUserRequest(
     val altura: Int? = null,
     val genero: String? = null,
     val data_nascenca: String? = null,
+    val nivel_atividade: Int ?= null,
     val password: String? = null          // nova password (opcional)
 )
 

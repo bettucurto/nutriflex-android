@@ -16,6 +16,7 @@ data class AccountUiState(
     val newPassword: String = "",
     val height: String = "",
     val dateOfBirth: String = "",
+    val activityLevel: String = "",
     val isLoading: Boolean = false,
     val error: String? = null,
     val successMessage: String? = null
@@ -57,6 +58,7 @@ class AccountViewModel @Inject constructor(
                         name = user.nome,
                         email = user.email,
                         height = user.altura.toString(),
+                        activityLevel = user.nivel_atividade.toString(),
                         dateOfBirth = normalizeDate(user.data_nascenca),
                         isLoading = false
                     )
@@ -98,6 +100,10 @@ class AccountViewModel @Inject constructor(
         uiState.value = uiState.value.copy(height = value)
     }
 
+    fun onActivityLevelChange(value: String) {
+        uiState.value = uiState.value.copy(activityLevel = value)
+    }
+
     fun onDateOfBirthChange(value: String) {
         uiState.value = uiState.value.copy(dateOfBirth = value)
     }
@@ -126,6 +132,7 @@ class AccountViewModel @Inject constructor(
                     altura = uiState.value.height.toFloatOrNull(),
                     genero = null,
                     dataNascenca = uiState.value.dateOfBirth,
+                    nivel_atividade = uiState.value.activityLevel.toInt(),
                     newPassword = uiState.value.newPassword.takeIf { it.isNotBlank() }
                 )
 
@@ -141,7 +148,8 @@ class AccountViewModel @Inject constructor(
                             heightCm = uiState.value.height.toIntOrNull() ?: local.heightCm,
                             dailyCalories = local.dailyCalories,
                             gender = local.gender,
-                            birthDate = normalizeDate(uiState.value.dateOfBirth)
+                            activityLevel = uiState.value.activityLevel.toIntOrNull() ?: local.activityLevel,
+                            birthDate = normalizeDate(uiState.value.dateOfBirth),
                         )
                     }
 
@@ -178,7 +186,6 @@ class AccountViewModel @Inject constructor(
                     // apaga histórico local
                     userLocalRepository.clearWeightHistoryForUser(id)
 
-
                     uiState.value = uiState.value.copy(
                         isLoading = false,
                         successMessage = "All weight records deleted"
@@ -213,7 +220,6 @@ class AccountViewModel @Inject constructor(
                     // limpa todos os dados locais
                     userLocalRepository.clear()
                     userLocalRepository.clearWeightHistoryForUser(id)
-                    
 
                     uiState.value = uiState.value.copy(isLoading = false)
                     onDone()

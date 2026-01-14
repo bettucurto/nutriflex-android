@@ -84,8 +84,11 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.TextMeasurer
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.drawText
+import androidx.compose.ui.text.font.Font
+import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.input.VisualTransformation
 import androidx.compose.ui.text.rememberTextMeasurer
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.Density
 import androidx.compose.ui.unit.IntSize
@@ -291,8 +294,7 @@ fun CaloriesCard(
                             waveSpeed = 20.dp
                         )
                         Column(horizontalAlignment = Alignment.CenterHorizontally) {
-                            HeadingTextComponent(remaining.toString(), textSize = 14.sp)
-                            HeadingTextComponent("remaining", textSize = 14.sp)
+                            HeadingTextComponent(value=("$remaining\nremaining"), textSize = 14.sp)
                         }
                     }
                 }
@@ -326,6 +328,223 @@ fun CaloriesCard(
         }
     }
 }
+
+
+@OptIn(ExperimentalMaterial3ExpressiveApi::class)
+@Composable
+fun NutrientCircle(
+    progress: Float,
+    labelTop: String,
+    valueText: String,
+    unitText: String,
+    showTextInside: Boolean = true,
+    modifier: Modifier = Modifier
+) {
+    val animatedProgress by animateFloatAsState(
+        targetValue = progress.coerceIn(0f, 1f),
+        animationSpec = ProgressIndicatorDefaults.ProgressAnimationSpec,
+        label = "nutrientProgress"
+    )
+
+    Column(
+        modifier = modifier,
+        horizontalAlignment = Alignment.CenterHorizontally
+    ) {
+        if (labelTop.isNotEmpty()) {
+            Text(
+                text = labelTop,
+                fontSize = 18.sp,
+                color = colorScheme.secondary,
+                fontFamily = FontFamily(Font(R.font.audiowide)),
+                textAlign = TextAlign.Center
+            )
+        }
+
+        Box(
+            contentAlignment = Alignment.Center,
+            modifier = Modifier.size(94.dp)
+        ) {
+            val strokeWidthPx = with(LocalDensity.current) { 5.dp.toPx() }
+            val stroke = Stroke(width = strokeWidthPx, cap = StrokeCap.Round)
+
+            CircularWavyProgressIndicator(
+                progress = { animatedProgress },
+                modifier = Modifier.size(74.dp),
+                stroke = stroke,
+                trackStroke = stroke,
+                wavelength = 24.dp,
+                waveSpeed = 18.dp,
+                color = colorScheme.primary,
+            )
+
+            if (showTextInside) {
+                Text(
+                    text = valueText,
+                    fontSize = 14.sp,
+                    color = colorScheme.onSurface,
+                    textAlign = TextAlign.Center
+
+                )
+            }
+        }
+
+        if (unitText.isNotEmpty()) {
+            Text(
+                text = unitText,
+                fontSize = 12.sp,
+                color = colorScheme.primary,
+                textAlign = TextAlign.Center
+
+            )
+        }
+    }
+}
+
+@OptIn(ExperimentalMaterial3ExpressiveApi::class)
+@Composable
+fun DietCaloriesCard(
+    remainingCalories: Int,
+    dailyTargetCalories: Int,
+    caloriesProgress: Float,
+    proteinRemaining: Int,
+    proteinTarget: Int,
+    proteinProgress: Float,
+    carbsRemaining: Int,
+    carbsTarget: Int,
+    carbsProgress: Float,
+    fatRemaining: Int,
+    fatTarget: Int,
+    fatProgress: Float,
+    onAddClick: () -> Unit
+) {
+    val animatedCaloriesProgress by animateFloatAsState(
+        targetValue = caloriesProgress.coerceIn(0f, 1f),
+        animationSpec = ProgressIndicatorDefaults.ProgressAnimationSpec,
+        label = "dietCaloriesProgress"
+    )
+
+    val percentage = (animatedCaloriesProgress * 100).toInt().coerceIn(0, 100)
+
+    Box(
+        modifier = Modifier
+            .fillMaxWidth(0.92f)
+            .height(450.dp) // ajusta a altura se precisares de mais espaço
+    ) {
+        Surface(
+            shape = MaterialTheme.shapes.large,
+            tonalElevation = 2.dp,
+            shadowElevation = 8.dp,
+            color = colorScheme.surface,
+            border = BorderStroke(2.dp, colorScheme.outline),
+            modifier = Modifier.matchParentSize()
+                .padding(vertical = 6.dp)
+        ) {
+            Column(
+                modifier = Modifier
+                    .padding(16.dp)
+                    .fillMaxWidth(),
+                horizontalAlignment = Alignment.CenterHorizontally,
+            ) {
+                // Top: calories big number
+                Column(
+                    horizontalAlignment = Alignment.CenterHorizontally
+                ) {
+                    TitleText(
+                        remainingCalories.toString()
+                    )
+                    HeadingTextComponent(
+                        "Calories Remaining",
+                        textColor = colorScheme.primary,
+                        textSize = 20.sp
+                    )
+                }
+
+                Spacer(modifier = Modifier.height(10.dp))
+
+                // Big circle progress for calories
+                Box(
+                    contentAlignment = Alignment.Center,
+                    modifier = Modifier.size(130.dp)
+                ) {
+                    val strokeWidthPx = with(LocalDensity.current) { 8.dp.toPx() }
+                    val thickStroke = Stroke(width = strokeWidthPx, cap = StrokeCap.Round)
+
+                    CircularWavyProgressIndicator(
+                        progress = { animatedCaloriesProgress },
+                        modifier = Modifier.fillMaxSize(),
+                        stroke = thickStroke,
+                        trackStroke = thickStroke,
+                        wavelength = 40.dp,
+                        waveSpeed = 20.dp,
+                        color = colorScheme.primary,
+                    )
+
+                    Text(
+                        text = "$percentage%",
+                        fontSize = 24.sp,
+                        color = colorScheme.primary,
+                        fontFamily = FontFamily(Font(R.font.audiowide)),
+                    )
+                }
+
+                Spacer(modifier = Modifier.height(10.dp))
+
+                // Row with 3 macro circles
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.Center,
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    NutrientCircle(
+                        progress = proteinProgress,
+                        labelTop = "Protein",
+                        valueText = "${proteinRemaining}g",
+                        unitText = "Remaining",
+                        modifier = Modifier.weight(1f)
+                    )
+                    NutrientCircle(
+                        progress = fatProgress,
+                        labelTop = "Fat",
+                        valueText = "${fatRemaining}g",
+                        unitText = "Remaining",
+                        modifier = Modifier.weight(1f)
+                    )
+                    NutrientCircle(
+                        progress = carbsProgress,
+                        labelTop = "Carbs",
+                        valueText = "${carbsRemaining}g",
+                        unitText = "Remaining",
+                        modifier = Modifier.weight(1f)
+                    )
+                }
+            }
+            Spacer(modifier = Modifier.height(18.dp))
+
+        }
+
+        // Botão + sobreposto no centro em baixo
+        Surface(
+            shape = CircleShape,
+            shadowElevation = 8.dp,
+            color = colorScheme.primary,
+            modifier = Modifier
+                .align(Alignment.BottomCenter)
+                .offset(y = 35.dp)
+                .size(90.dp)
+        ) {
+            IconButton(onClick = onAddClick) {
+                Icon(
+                    imageVector = Icons.Default.Add,
+                    contentDescription = "Add meal",
+                    tint = colorScheme.onPrimary,
+                    modifier = Modifier.fillMaxSize(0.7f)
+                )
+            }
+        }
+    }
+}
+
+
 
 @Composable
 fun NextWorkoutCard(
@@ -1403,3 +1622,39 @@ data class WeightHistoryPoint(
     val date: String,
     val weight: Float
 )
+
+
+@Composable
+fun MacroCard(
+    label: String,
+    remainingGrams: Int,
+    modifier: Modifier = Modifier,
+) {
+    Surface(
+        shape = MaterialTheme.shapes.large,
+        tonalElevation = 2.dp,
+        shadowElevation = 4.dp,
+        border = BorderStroke(2.dp, colorScheme.outline),
+        modifier = modifier
+            .fillMaxWidth(0.4f)
+    ) {
+        Column(
+            modifier = Modifier.padding(12.dp),
+            horizontalAlignment = Alignment.CenterHorizontally,
+            verticalArrangement = Arrangement.SpaceBetween
+        ) {
+            HeadingTextComponent(
+                value = "${remainingGrams}g",
+                textSize = 18.sp
+            )
+            HeadingTextComponent(
+                value = label,
+                textSize = 14.sp
+            )
+            HeadingTextComponent(
+                value = "Remaining",
+                textSize = 12.sp
+            )
+        }
+    }
+}

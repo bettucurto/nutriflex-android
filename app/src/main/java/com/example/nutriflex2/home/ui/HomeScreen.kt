@@ -1,7 +1,10 @@
 package com.example.nutriflex2.home.ui
 
+import HomeMainTab
 import android.os.Build
 import android.widget.Toast
+import androidx.compose.animation.core.animateFloatAsState
+import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -11,13 +14,13 @@ import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.pager.HorizontalPager
+import androidx.compose.foundation.pager.rememberPagerState
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
-import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.AccountCircle
 import androidx.compose.material.icons.filled.Menu
@@ -29,6 +32,7 @@ import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme.colorScheme
 import androidx.compose.material3.ModalDrawerSheet
 import androidx.compose.material3.ModalNavigationDrawer
+import androidx.compose.material3.NavigationBarDefaults
 import androidx.compose.material3.NavigationDrawerItem
 import androidx.compose.material3.NavigationDrawerItemDefaults
 import androidx.compose.material3.Scaffold
@@ -49,22 +53,21 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
-import components.BmiCard
-import components.CaloriesCard
+import com.example.nutriflex2.home.ui.tabs.diet.DietTabScreen
+import com.example.nutriflex2.home.ui.tabs.diet.DietTabViewModel
+import com.example.nutriflex2.home.ui.tabs.training.TrainingTabScreen
 import components.NFBottomBar
-import components.NextWorkoutCard
 import components.TitleText
-import components.WeightForecastCard
-import components.WeightProgressCard
 import components.WeightRange
-import components.WeightsCardRow
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import theme.AppTheme
 
+@OptIn(ExperimentalFoundationApi::class)
 @Composable
 fun HomeScreen(
     onNavigateToTreino: () -> Unit,
@@ -74,49 +77,70 @@ fun HomeScreen(
     viewModel: HomeViewModel = hiltViewModel()
 ) {
     val state by viewModel.uiState.collectAsState()
-    val scrollState = rememberScrollState()
     val drawerState = rememberDrawerState(initialValue = DrawerValue.Closed)
     val scope = rememberCoroutineScope()
     val context = LocalContext.current
 
-    var pendingScroll by remember { mutableStateOf(false) }
-    var selectedRange by remember { mutableStateOf(WeightRange.ONE_MONTH) }
-
-    val drawerItems = listOf("Account", "Settings")
     var selectedDrawerItemIndex by remember { mutableIntStateOf(0) }
 
     val topBarHeightDp = 72.dp
-    val density = androidx.compose.ui.platform.LocalDensity.current
+    val density = LocalDensity.current
     val topBarHeightPx = with(density) { topBarHeightDp.toPx() }
 
-    var topBarOffset by remember { mutableFloatStateOf(0f) }
+    // alvo lógico
+    var topBarTargetOffset by remember { mutableFloatStateOf(0f) }
     var lastScroll by remember { mutableFloatStateOf(0f) }
 
-    LaunchedEffect(scrollState.value) {
-        val current = scrollState.value.toFloat()
+    // valor animado que vai para o graphicsLayer
+    val animatedTopBarOffset by animateFloatAsState(
+        targetValue = topBarTargetOffset,
+        label = "topBarOffsetAnimation"
+    )
+
+
+
+    // Pager para tabs da bottom bar: 0 = Home, 1 = Treino, 2 = Dieta (exemplo)
+    val pagerState = rememberPagerState(
+        initialPage = 1,
+        pageCount = { 3 }
+    )
+
+    // Scroll vertical apenas da tab Home
+    val homeScrollState = rememberScrollState()
+    var pendingScroll by remember { mutableStateOf(false) }
+    var selectedRange by remember { mutableStateOf(WeightRange.ONE_MONTH) }
+
+    LaunchedEffect(pagerState.currentPage) {
+        // anima de onde estiver até 0f
+        topBarTargetOffset = 0f
+    }
+
+
+    LaunchedEffect(homeScrollState.value) {
+        val current = homeScrollState.value.toFloat()
         val delta = current - lastScroll
 
         if (delta > 0) {
-            topBarOffset = (topBarOffset - delta).coerceAtLeast(-topBarHeightPx)
+            topBarTargetOffset = (topBarTargetOffset - delta).coerceAtLeast(-topBarHeightPx)
         }
         if (delta < 0) {
-            topBarOffset = (topBarOffset - delta).coerceAtMost(0f)
+            topBarTargetOffset = (topBarTargetOffset - delta).coerceAtMost(0f)
         }
 
         lastScroll = current
     }
 
+
     LaunchedEffect(pendingScroll) {
         if (pendingScroll) {
             scope.launch {
                 delay(50)
-                scrollState.animateScrollTo(scrollState.maxValue)
+                homeScrollState.animateScrollTo(homeScrollState.maxValue)
             }
             pendingScroll = false
         }
     }
 
-    // Ouvir eventos de UI (toasts)
     LaunchedEffect(Unit) {
         viewModel.uiEvent.collect { event ->
             when (event) {
@@ -135,6 +159,7 @@ fun HomeScreen(
                     Column(
                         modifier = Modifier
                             .fillMaxHeight()
+                            .fillMaxWidth(0.6f)
                             .padding(vertical = 16.dp)
                     ) {
                         Text(
@@ -192,10 +217,18 @@ fun HomeScreen(
             Scaffold(
                 bottomBar = {
                     NFBottomBar(
-                        onTreinoClick = onNavigateToTreino,
-                        onPerfilClick = {},
-                        onDietaClick = onNavigateToDieta
+                        selectedIndex = pagerState.currentPage,
+                        onTreinoClick = {
+                            scope.launch { pagerState.animateScrollToPage(0) }
+                        },
+                        onPerfilClick = {
+                            scope.launch { pagerState.animateScrollToPage(1) }
+                        },
+                        onDietaClick = {
+                            scope.launch { pagerState.animateScrollToPage(2) }
+                        }
                     )
+
                 }
             ) { innerPadding ->
                 Box(
@@ -203,65 +236,46 @@ fun HomeScreen(
                         .padding(innerPadding)
                         .fillMaxSize()
                 ) {
+                    HorizontalPager(
+                        state = pagerState,
+                        modifier = Modifier.fillMaxSize()
+                    ) { page ->
+                        when (page) {
+                            0 -> TrainingTabScreen(
+                                onNavigateToTreino = onNavigateToTreino
+                            )
 
-                    Column(
-                        modifier = Modifier
-                            .fillMaxSize()
-                            .verticalScroll(scrollState),
-                        horizontalAlignment = Alignment.CenterHorizontally
-                    ) {
-                        Spacer(modifier = Modifier.height(topBarHeightDp))
+                            1 -> HomeMainTab(
+                                state = state,
+                                topBarHeightDp = topBarHeightDp,
+                                scrollState = homeScrollState,
+                                selectedRange = selectedRange,
+                                onRangeChange = { newRange ->
+                                    selectedRange = newRange
+                                    if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+                                        viewModel.loadWeightHistory(newRange)
+                                    }
+                                },
+                                onAddCaloriesClick = onAddCaloriesClick,
+                                onNavigateToTreino = onNavigateToTreino,
+                                onChangeCurrentWeight = { new ->
+                                    viewModel.onChangeCurrentWeight(new, selectedRange)
+                                },
+                                onChangeGoalWeight = { new ->
+                                    viewModel.onChangeGoalWeight(new)
+                                },
+                                onRequestScrollToBottom = { pendingScroll = true }
+                            )
 
-                        CaloriesCard(
-                            remaining = state.remainingCalories,
-                            dailyTarget = state.dailyCalories,
-                            progress = state.progress,
-                            onAddClick = onAddCaloriesClick
-                        )
-
-                        NextWorkoutCard(
-                            workoutName = state.nextWorkoutName,
-                            exerciseCount = state.nextWorkoutExercises,
-                            onStartClick = { onNavigateToTreino() }
-                        )
-
-                        BmiCard(
-                            bmi = state.bmi,
-                            category = state.bmiCategory
-                        )
-
-                        WeightForecastCard(
-                            weeks = state.weeklyProgressWeeks,
-                            goalWeight = state.goalWeight,
-                        )
-
-                        WeightProgressCard(
-                            selectedRange = selectedRange,
-                            history = state.weightHistory,
-                            onRangeChange = { newRange ->
-                                selectedRange = newRange
-                                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
-                                    viewModel.loadWeightHistory(newRange)
-                                }
+                            2 -> {
+                                val dietVm: DietTabViewModel = hiltViewModel()
+                                LaunchedEffect(Unit) { dietVm.refreshFromLocal() }
+                                DietTabScreen(
+                                    onNavigateToDieta = onNavigateToDieta,
+                                    viewModel = dietVm
+                                )
                             }
-                        )
-
-                        val context = LocalContext.current
-
-                        WeightsCardRow(
-                            currentWeight = state.currentWeight,
-                            goalWeight = state.goalWeight,
-                            onChangeCurrent = { new ->
-                                viewModel.onChangeCurrentWeight(new, selectedRange)
-                            },
-                            onChangeGoal = {
-                                viewModel.onChangeGoalWeight(it)
-                            },
-                            onRequestScroll = { pendingScroll = true }
-                        )
-
-
-                        Spacer(modifier = Modifier.height(20.dp))
+                        }
                     }
 
                     Column(
@@ -269,12 +283,12 @@ fun HomeScreen(
                             .fillMaxWidth()
                             .align(Alignment.TopCenter)
                             .graphicsLayer {
-                                translationY = topBarOffset
+                                translationY = animatedTopBarOffset
                                 val progress =
-                                    1f - (-topBarOffset / topBarHeightPx).coerceIn(0f, 1f)
+                                    1f - (-animatedTopBarOffset / topBarHeightPx).coerceIn(0f, 1f)
                                 alpha = progress
                             }
-                            .background(colorScheme.background)
+                            .background(NavigationBarDefaults.containerColor)
                     ) {
                         Row(
                             modifier = Modifier

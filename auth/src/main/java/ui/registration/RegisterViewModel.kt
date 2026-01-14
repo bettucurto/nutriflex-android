@@ -14,6 +14,9 @@ import data.model.RegisterRequest
 import data.repository.AuthRepository
 import kotlinx.coroutines.launch
 import local.UserLocalRepository
+import utils.calculateDailyCaloriesForWeightChange
+import utils.calculateMaintenanceCalories
+import utils.targetKgPerWeek
 import javax.inject.Inject
 
 @HiltViewModel
@@ -46,6 +49,12 @@ class RegisterViewModel @Inject constructor(
                 registerUIState = registerUIState.copy(
                     goal = event.goal,
                     goalError = null
+                )
+            }
+            is RegisterUIEvent.RegisterActivityChanged -> {
+                registerUIState = registerUIState.copy(
+                    activityLevel = event.activityLevel,
+                    activityLevelError = null
                 )
             }
             is RegisterUIEvent.RegisterDifficultyChanged -> {
@@ -95,6 +104,7 @@ class RegisterViewModel @Inject constructor(
             RegisterUIEvent.NextClickedStep3 -> validateStep3()
             RegisterUIEvent.NextClickedStep4 -> validateStep4()
             RegisterUIEvent.NextClickedStep5 -> validateStep4()
+            RegisterUIEvent.NextClickedStep6 -> validateStep6()
         }
     }
 
@@ -152,13 +162,31 @@ class RegisterViewModel @Inject constructor(
         )
     }
 
-    // NOVO: regra 0.33 / 0.5 / 1.0 kg por semana
-    private fun targetKgPerWeek(deltaKg: Float): Float {
-        val absDelta = kotlin.math.abs(deltaKg)
-        return when {
-            absDelta < 7f   -> 0.33f   // diferença < 7 kg
-            absDelta < 15f  -> 0.5f    // 7–15 kg
-            else            -> 1.0f    // ≥ 15 kg
+    private fun validateStep6() {
+        var activityLevelError: String? = null
+        if (registerUIState.activityLevel == null) {
+            activityLevelError = "Select an option"
+        }
+        registerUIState = registerUIState.copy(activityLevelError = activityLevelError)
+    }
+
+    private fun calculateBmi(weightKg: Float, heightCm: Int): Float {
+        val heightM = heightCm / 100f
+        return weightKg / (heightM * heightM)
+    }
+
+    @RequiresApi(Build.VERSION_CODES.O)
+    private fun computeAge(birthDate: String): Int {
+        return try {
+            val parts = birthDate.split("-")
+            val year = parts[0].toInt()
+            val month = parts[1].toInt()
+            val day = parts[2].toInt()
+            val dob = java.time.LocalDate.of(year, month, day)
+            val today = java.time.LocalDate.now()
+            java.time.Period.between(dob, today).years
+        } catch (e: Exception) {
+            30
         }
     }
 
@@ -168,6 +196,9 @@ class RegisterViewModel @Inject constructor(
             Log.d("Register", "finalizeAndRegister called")
             val state = registerUIState
 
+            val activityLevel = state.activityLevel ?: return@launch onResult(
+                Result.failure(Exception("Missing activity level"))
+            )
             val heightCm = state.height ?: return@launch onResult(
                 Result.failure(Exception("Missing height"))
             )
@@ -180,38 +211,49 @@ class RegisterViewModel @Inject constructor(
             val age = computeAge(state.birthDate)
 
             val bmi = calculateBmi(weightKg, heightCm)
-            val baseGet = calculateGet(gender, weightKg, heightCm, age)
 
+            // Harris-Benedict + nível de atividade 0–4
+            val generoString = when (gender) {
+                Gender.MALE -> "M"
+                Gender.FEMALE -> "F"
+            }
+            val isMale = generoString == "M"
+
+            val maintenance = calculateMaintenanceCalories(
+                isMale = isMale,
+                weightKg = weightKg,
+                heightCm = heightCm,
+                age = age,
+                activityLevel = activityLevel
+            )
+
+            // peso objetivo
             val finalWeightGoal = if (state.autoWeightGoal) {
-                normalBmiWeightForHeight(heightCm)
+                // aqui podes decidir se queres usar um target de IMC “normal”
+                // vindo de uma função core, por enquanto usa o que user meter
+                state.weightGoal ?: weightKg
             } else {
                 state.weightGoal ?: weightKg
             }
 
             val deltaKg = finalWeightGoal - weightKg
-            val maintenance = baseGet
-
             val kgPerWeek = targetKgPerWeek(deltaKg)
             val kcalPerKg = 7700f
             val weeklyKcal = kgPerWeek * kcalPerKg
             val dailyKcalChange = weeklyKcal / 7f
 
-            val caloriesDaily = if (deltaKg < 0f) {
-                maintenance - dailyKcalChange   // perder peso
-            } else {
-                maintenance + dailyKcalChange   // ganhar peso
-            }
+            // opção 1: usar função genérica de core para daily target
+            val caloriesDaily = calculateDailyCaloriesForWeightChange(
+                maintenanceCalories = maintenance,
+                currentWeightKg = weightKg,
+                goalWeightKg = finalWeightGoal
+            )
 
-            val roundedCalories = caloriesDaily.toInt()
+            val roundedCalories = caloriesDaily
             val roundedWeightGoal =
                 String.format("%.1f", finalWeightGoal).replace(',', '.').toFloat()
 
             registerUIState = state.copy(weightGoal = roundedWeightGoal)
-
-            val generoString = when (gender) {
-                Gender.MALE -> "M"
-                Gender.FEMALE -> "F"
-            }
 
             val request = RegisterRequest(
                 nome = state.name,
@@ -225,7 +267,8 @@ class RegisterViewModel @Inject constructor(
                 peso_meta = roundedWeightGoal,
                 calorias_diarias = roundedCalories,
                 dificuldades_anteriores = state.difficulty ?: 0,
-                objetivo = state.goal ?: 0
+                objetivo = state.goal ?: 0,
+                nivel_atividade = activityLevel
             )
 
             val result = authRepository.register(request)
@@ -250,7 +293,8 @@ class RegisterViewModel @Inject constructor(
                                 heightCm = heightCm,
                                 dailyCalories = dailyCalories,
                                 gender = generoString,
-                                birthDate = state.birthDate
+                                birthDate = state.birthDate,
+                                activityLevel = state.activityLevel
                             )
                         }
                         .onFailure { e ->
@@ -267,64 +311,5 @@ class RegisterViewModel @Inject constructor(
                     onResult(Result.failure(e))
                 }
         }
-    }
-
-    private fun calculateBmi(weightKg: Float, heightCm: Int): Float {
-        val heightM = heightCm / 100f
-        return weightKg / (heightM * heightM)
-    }
-
-    @RequiresApi(Build.VERSION_CODES.O)
-    private fun computeAge(birthDate: String): Int {
-        return try {
-            val parts = birthDate.split("-")
-            val year = parts[0].toInt()
-            val month = parts[1].toInt()
-            val day = parts[2].toInt()
-            val dob = java.time.LocalDate.of(year, month, day)
-            val today = java.time.LocalDate.now()
-            java.time.Period.between(dob, today).years
-        } catch (e: Exception) {
-            30
-        }
-    }
-
-    private fun calculateTmb(
-        gender: Gender,
-        weightKg: Float,
-        heightCm: Int,
-        age: Int
-    ): Float {
-        return if (gender == Gender.MALE) {
-            10f * weightKg + 6.25f * heightCm - 5f * age + 5f
-        } else {
-            10f * weightKg + 6.25f * heightCm - 5f * age - 161f
-        }
-    }
-
-    private fun calculateGet(
-        gender: Gender,
-        weightKg: Float,
-        heightCm: Int,
-        age: Int
-    ): Float {
-        val tmb = calculateTmb(gender, weightKg, heightCm, age)
-        val activityFactor = 1.375f
-        return tmb * activityFactor
-    }
-
-    private fun bmiAdjustmentPercent(bmi: Float): Float {
-        return when {
-            bmi < 18.5f -> 0.05f
-            bmi < 25f -> 0f
-            bmi < 30f -> -0.05f
-            bmi < 40f -> -0.10f
-            else -> -0.175f
-        }
-    }
-
-    private fun normalBmiWeightForHeight(heightCm: Int, targetBmi: Float = 22f): Float {
-        val heightM = heightCm / 100f
-        return targetBmi * heightM * heightM
     }
 }

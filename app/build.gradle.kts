@@ -61,6 +61,9 @@ dependencies {
 
     implementation(project(":auth"))
     implementation(project(":core"))
+    implementation(project(":dieta"))
+
+    implementation(libs.androidx.room.ktx)
 
     testImplementation(libs.junit)
     androidTestImplementation(libs.androidx.junit)

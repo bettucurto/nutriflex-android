@@ -14,31 +14,33 @@ import androidx.compose.ui.graphics.vector.ImageVector
 
 @Composable
 fun NFBottomBar(
-        onTreinoClick: () -> Unit,
-        onPerfilClick: () -> Unit,
-        onDietaClick: () -> Unit
-){
+    selectedIndex: Int,
+    onTreinoClick: () -> Unit,
+    onPerfilClick: () -> Unit,
+    onDietaClick: () -> Unit
+) {
     NavigationBar {
         NavigationBarItem(
-            selected = false, // depois vais ligar isto ao estado atual
+            selected = selectedIndex == 0, // Treino
             onClick = onTreinoClick,
-            icon = { Icon(Icons.Default.FitnessCenter, contentDescription = "Treino") },
-            label = { Text("Treino") }
+            icon = { Icon(Icons.Default.FitnessCenter, contentDescription = "Exercise") },
+            label = { Text("Exercise") }
         )
         NavigationBarItem(
-            selected = true,
+            selected = selectedIndex == 1, // Home / Área Pessoal
             onClick = onPerfilClick,
-            icon = { Icon(Icons.Default.Person, contentDescription = "Área Pessoal") },
-            label = { Text("Área Pessoal") }
+            icon = { Icon(Icons.Default.Person, contentDescription = "Personal Area") },
+            label = { Text("Personal Area") }
         )
         NavigationBarItem(
-            selected = false,
+            selected = selectedIndex == 2, // Dieta
             onClick = onDietaClick,
-            icon = { Icon(Icons.Default.Restaurant, contentDescription = "Dieta") },
-            label = { Text("Dieta") }
+            icon = { Icon(Icons.Default.Restaurant, contentDescription = "Diet") },
+            label = { Text("Diet") }
         )
     }
 }
+
 
 data class TabItem(
     val text: String,

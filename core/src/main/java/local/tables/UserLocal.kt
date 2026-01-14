@@ -15,5 +15,9 @@ data class UserLocal(
     val heightCm: Int,
     val lastCaloriesResetDate: String, // "YYYY-MM-DD"
     val gender: String,                // "M" ou "F"
-    val birthDate: String              // "YYYY-MM-DD"
+    val birthDate: String,             // "YYYY-MM-DD"
+    val dailyCarbsGrams: Int,
+    val dailyProteinGrams: Int,
+    val dailyFatGrams: Int,
+    val activityLevel: Int
 )

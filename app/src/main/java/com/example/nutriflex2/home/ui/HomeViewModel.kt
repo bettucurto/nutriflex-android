@@ -15,6 +15,9 @@ import kotlinx.coroutines.flow.receiveAsFlow
 import kotlinx.coroutines.launch
 import local.UserLocalRepository
 import remote.UserRepository
+import utils.calculateDailyCaloriesForWeightChange
+import utils.calculateMaintenanceCalories
+import utils.targetKgPerWeek
 import javax.inject.Inject
 
 data class HomeUiState(
@@ -64,16 +67,6 @@ data class HomeUiState(
     val progress: Float
         get() = if (dailyCalories <= 0) 0f
         else (eatenCaloriesToday.toFloat() / dailyCalories.toFloat()).coerceIn(0f, 1f)
-}
-
-// função top-level para poder ser usada no getter
-private fun targetKgPerWeek(deltaKg: Float): Float {
-    val absDelta = kotlin.math.abs(deltaKg)
-    return when {
-        absDelta < 7f   -> 0.33f
-        absDelta < 15f  -> 0.5f
-        else            -> 1.0f
-    }
 }
 
 // Eventos de UI para toasts, etc.
@@ -155,18 +148,17 @@ class HomeViewModel @Inject constructor(
                 loadWeightHistory(currentRange)
             }
 
-            // 2) Enviar progresso remoto ou guardar pendente
+            // 2) Enviar progresso
             val goalWeight = _uiState.value.goalWeight
             val dailyCals = _uiState.value.dailyCalories
 
             viewModelScope.launch {
-                val result = userRepository.createProgress(
+                userRepository.createProgress(
                     idUser = user.userId,
                     pesoAtual = newWeight,
                     pesoMeta = goalWeight,
                     caloriasDiarias = dailyCals
                 )
-                
             }
 
             _uiEvent.send(HomeUiEvent.ShowToast("Current weight updated!"))
@@ -194,42 +186,16 @@ class HomeViewModel @Inject constructor(
             val dailyCals = _uiState.value.dailyCalories
 
             viewModelScope.launch {
-                val result = userRepository.createProgress(
+                userRepository.createProgress(
                     idUser = user.userId,
                     pesoAtual = currentWeight,
                     pesoMeta = newWeight,
                     caloriasDiarias = dailyCals
                 )
-
             }
 
             _uiEvent.send(HomeUiEvent.ShowToast("Goal weight updated!"))
         }
-    }
-
-    private fun calculateTmb(
-        gender: String,
-        weightKg: Float,
-        heightCm: Int,
-        age: Int
-    ): Float {
-        val isMale = gender == "M"
-        return if (isMale) {
-            10f * weightKg + 6.25f * heightCm - 5f * age + 5f
-        } else {
-            10f * weightKg + 6.25f * heightCm - 5f * age - 161f
-        }
-    }
-
-    private fun calculateGet(
-        gender: String,
-        weightKg: Float,
-        heightCm: Int,
-        age: Int
-    ): Float {
-        val tmb = calculateTmb(gender, weightKg, heightCm, age)
-        val activityFactor = 1.375f
-        return tmb * activityFactor
     }
 
     @RequiresApi(Build.VERSION_CODES.O)
@@ -240,11 +206,11 @@ class HomeViewModel @Inject constructor(
         val user = userLocalRepository.getUserLocal() ?: return
 
         val heightCm = user.heightCm
-        val gender = user.gender
+        val gender = user.gender           // "M" ou "F"
         val birthDate = user.birthDate
+        val activityLevel = user.activityLevel ?: 0
 
-        val deltaKg = goalWeight - currentWeight
-        if (deltaKg == 0f) return
+        val isMale = gender == "M"
 
         val age = try {
             val (y, m, d) = birthDate.split("-").map { it.toInt() }
@@ -255,18 +221,19 @@ class HomeViewModel @Inject constructor(
             30
         }
 
-        val maintenance = calculateGet(gender, currentWeight, heightCm, age)
+        val maintenance = calculateMaintenanceCalories(
+            isMale = isMale,
+            weightKg = currentWeight,
+            heightCm = heightCm,
+            age = age,
+            activityLevel = activityLevel
+        )
 
-        val kgPerWeek = targetKgPerWeek(deltaKg)
-        val kcalPerKg = 7700f
-        val weeklyKcal = kgPerWeek * kcalPerKg
-        val dailyKcalChange = weeklyKcal / 7f
-
-        val newCalories = if (deltaKg < 0f) {
-            (maintenance - dailyKcalChange).toInt()
-        } else {
-            (maintenance + dailyKcalChange).toInt()
-        }
+        val newCalories = calculateDailyCaloriesForWeightChange(
+            maintenanceCalories = maintenance,
+            currentWeightKg = currentWeight,
+            goalWeightKg = goalWeight
+        )
 
         userLocalRepository.updateDailyCaloriesValue(newCalories)
 

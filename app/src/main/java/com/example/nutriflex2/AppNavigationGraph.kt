@@ -42,15 +42,18 @@ import ui.registration.RegistrationScreen2
 import ui.registration.RegistrationScreen3
 import ui.registration.RegistrationScreen4
 import ui.registration.RegistrationScreen5
+import ui.registration.RegistrationScreen6
 
 private fun screenOrder(route: String?): Int = when (route) {
     "welcomeScreen" -> 0
     "loginScreen" -> 1
     "registrationScreen1" -> 2
-    "registrationScreen2" -> 3
-    "registrationScreen3" -> 4
-    "registrationScreen4" -> 5
-    "registrationScreen5" -> 6
+    "registrationScreen6" -> 3
+    "registrationScreen2" -> 4
+    "registrationScreen3" -> 5
+    "registrationScreen4" -> 6
+    "registrationScreen5" -> 7
+
     else -> -1   // splash ou desconhecido
 }
 @RequiresApi(Build.VERSION_CODES.O)
@@ -123,6 +126,13 @@ fun AppNavGraph(navController: NavHostController) {
                 }
                 val viewModel: RegisterViewModel = hiltViewModel(parentEntry)
                 RegistrationScreen5(navController, viewModel)
+            }
+            composable("registrationScreen6") { backStackEntry ->
+                val parentEntry = remember(backStackEntry) {
+                    navController.getBackStackEntry("registrationFlow")
+                }
+                val viewModel: RegisterViewModel = hiltViewModel(parentEntry)
+                RegistrationScreen6(navController, viewModel)
             }
         }
     }

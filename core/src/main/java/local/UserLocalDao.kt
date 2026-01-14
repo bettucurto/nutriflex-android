@@ -33,4 +33,18 @@ interface UserLocalDao {
     @Query("UPDATE user_local SET dailyCalories = :calories")
     suspend fun updateDailyCaloriesValue(calories: Int)
 
+    @Query(
+        """
+        UPDATE user_local
+        SET dailyCarbsGrams = :carbs,
+            dailyProteinGrams = :protein,
+            dailyFatGrams = :fat
+        """
+    )
+    suspend fun updateDailyMacros(
+        carbs: Int,
+        protein: Int,
+        fat: Int
+    )
+
 }

@@ -19,7 +19,10 @@ import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Divider
+import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.ExposedDropdownMenuBox
+import androidx.compose.material3.ExposedDropdownMenuDefaults
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme.colorScheme
@@ -76,6 +79,23 @@ fun AccountScreen(
         }
     }
 
+    // Opções de nível de atividade (texto que o utilizador vê)
+    val activityLevelOptions = listOf(
+        "Little to no exercise",
+        "Light exercise 1 to 3 times per week",
+        "Moderate exercise 3 to 5 times per week",
+        "Intense exercise 6 to 7 times per week",
+        "Heavy, physical job or intense daily exercise"
+    )
+
+    // Converter o valor guardado (String com índice) para índice selecionado
+    val selectedActivityIndex = state.activityLevel.toIntOrNull()
+        ?.coerceIn(0, activityLevelOptions.lastIndex)
+        ?: 0
+
+    // Texto mostrado no campo do dropdown
+    val selectedActivityText = activityLevelOptions[selectedActivityIndex]
+
     Scaffold(
         topBar = {
             TopAppBar(
@@ -103,8 +123,6 @@ fun AccountScreen(
                 ) { focusManager.clearFocus() },
             horizontalAlignment = Alignment.CenterHorizontally
         ) {
-            // (já não mostramos textos de erro/sucesso aqui)
-
             OutlinedTextField(
                 value = state.name,
                 onValueChange = { viewModel.onNameChange(it) },
@@ -161,6 +179,55 @@ fun AccountScreen(
                 },
                 modifier = Modifier.fillMaxWidth()
             )
+
+            Spacer(Modifier.height(20.dp))
+
+            // --------- Nível de atividade (Exposed Dropdown) ---------
+            var expanded by remember { mutableStateOf(false) }
+
+            Text(
+                text = "Activity level",
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(bottom = 4.dp)
+            )
+
+            ExposedDropdownMenuBox(
+                expanded = expanded,
+                onExpandedChange = { expanded = !expanded },
+                modifier = Modifier.fillMaxWidth()
+            ) {
+                OutlinedTextField(
+                    modifier = Modifier
+                        .menuAnchor()
+                        .fillMaxWidth(),
+                    readOnly = true,
+                    value = selectedActivityText,
+                    onValueChange = {},
+                    label = { Text("Select activity level") },
+                    trailingIcon = {
+                        ExposedDropdownMenuDefaults.TrailingIcon(
+                            expanded = expanded
+                        )
+                    }
+                )
+
+                ExposedDropdownMenu(
+                    expanded = expanded,
+                    onDismissRequest = { expanded = false }
+                ) {
+                    activityLevelOptions.forEachIndexed { index, optionText ->
+                        DropdownMenuItem(
+                            text = { Text(optionText) },
+                            onClick = {
+                                // guarda o índice como String no estado
+                                viewModel.onActivityLevelChange(index.toString())
+                                expanded = false
+                            }
+                        )
+                    }
+                }
+            }
 
             Spacer(Modifier.height(20.dp))
 

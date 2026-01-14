@@ -33,14 +33,16 @@ import theme.AppTheme
 
 
 @Composable
-fun RegistrationScreen2(navController: NavController, viewModel: RegisterViewModel = hiltViewModel()){
+fun RegistrationScreen6(navController: NavController, viewModel: RegisterViewModel = hiltViewModel()){
     AppTheme() {
         val focusManager = LocalFocusManager.current
         val state = viewModel.registerUIState
-        val goalOptions = listOf(
-            "Reach a specific weight",
-            "Feel and become healthier",
-            "I dont feel a need to change weight"
+        val activityLevelOptions = listOf(
+            "Little to no exercise",
+            "Light exercise 1 to 3 times per week",
+            "Moderate exercise 3 to 5 times per week",
+            "Intense exercise 6 to 7 times per week",
+            "Heavy, physical job or intense daily exercise"
         )
 
         Surface(modifier = Modifier
@@ -61,22 +63,22 @@ fun RegistrationScreen2(navController: NavController, viewModel: RegisterViewMod
                 LeftTitleText(stringResource(R.string.titleRegistration2))
                 Spacer(modifier = Modifier.heightIn(20.dp))
                 StepIndicators(1)
-                LeftHeadingTextComponent(stringResource(R.string.SubTitleRegistration2))
+                LeftHeadingTextComponent("How much physical activity do you do?")
                 Spacer(Modifier.weight(0.3f))
 
 
                 TextButtonGroup(
-                    options = goalOptions,
+                    options = activityLevelOptions,
                     selectedIndex = state.goal,
                     onOptionSelected = { index ->
-                        viewModel.onEvent(RegisterUIEvent.RegisterGoalChanged(index))
+                        viewModel.onEvent(RegisterUIEvent.RegisterActivityChanged(index))
                     }
                 )
                 if (state.goalError != null) {
                     Text(
                         text = state.goalError,
                         color = colorScheme.error,
-                        )
+                    )
                 }
 
 
@@ -91,7 +93,7 @@ fun RegistrationScreen2(navController: NavController, viewModel: RegisterViewMod
                     NFButton(text = stringResource(R.string.buttonRegisterScreen1), onButtonClicked = {viewModel.onEvent(RegisterUIEvent.NextClickedStep2)
                         val newState = viewModel.registerUIState
                         if (newState.goalError == null) {
-                            navController.navigate("registrationScreen6")
+                            navController.navigate("registrationScreen3")
                         }}
                     )
                 }

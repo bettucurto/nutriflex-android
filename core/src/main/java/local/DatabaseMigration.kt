@@ -25,3 +25,16 @@ val MIGRATION_2_3 = object : Migration(2, 3) {
     }
 }
 
+val MIGRATION_3_4 = object : Migration(3, 4) {
+    override fun migrate(db: SupportSQLiteDatabase) {
+        db.execSQL("""ALTER TABLE user_local ADD COLUMN dailyCarbsGrams INTEGER NOT NULL DEFAULT 0""")
+        db.execSQL("""ALTER TABLE user_local ADD COLUMN dailyProteinGrams INTEGER NOT NULL DEFAULT 0""")
+        db.execSQL("""ALTER TABLE user_local ADD COLUMN dailyFatGrams INTEGER NOT NULL DEFAULT 0""")
+    }
+}
+
+val MIGRATION_4_5 = object : Migration(4, 5) {
+    override fun migrate(db: SupportSQLiteDatabase) {
+        db.execSQL("""ALTER TABLE user_local ADD COLUMN activityLevel INTEGER NOT NULL DEFAULT 0""")
+    }
+}

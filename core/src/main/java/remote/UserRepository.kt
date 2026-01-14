@@ -34,6 +34,7 @@ class UserRepository @Inject constructor(
         nome: String?,
         altura: Float?,
         genero: String?,
+        nivel_atividade: Int,
         dataNascenca: String?,
     ): Result<Unit> {
         return try {
@@ -43,6 +44,7 @@ class UserRepository @Inject constructor(
                 altura = altura?.toInt(),
                 genero = genero,
                 data_nascenca = dataNascenca,
+                nivel_atividade = nivel_atividade,
                 password = newPassword                   // nova password (já em texto normal)
             )
             val response = api.updateUser(id, body)

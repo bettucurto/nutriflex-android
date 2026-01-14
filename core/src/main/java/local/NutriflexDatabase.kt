@@ -7,7 +7,7 @@ import local.tables.WeightHistory
 
 @Database(
     entities = [UserLocal::class, WeightHistory::class],
-    version = 3,
+    version = 5,
     exportSchema = false
 )
 abstract class NutriflexDatabase : RoomDatabase() {

@@ -5,6 +5,7 @@ import android.os.Build
 import androidx.annotation.RequiresApi
 import local.tables.UserLocal
 import local.tables.WeightHistory
+import utils.calculateDailyMacros
 import java.time.LocalDate
 import javax.inject.Inject
 
@@ -22,13 +23,16 @@ class UserLocalRepository @Inject constructor(
         heightCm: Int,
         dailyCalories: Int,
         gender: String,
-        birthDate: String
+        birthDate: String,
+        activityLevel: Int
     ) {
         val today = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
             LocalDate.now().toString()
         } else {
             ""
         }
+
+        val macros = calculateDailyMacros(dailyCalories)
 
         val user = UserLocal(
             userId = userId,
@@ -41,7 +45,11 @@ class UserLocalRepository @Inject constructor(
             heightCm = heightCm,
             lastCaloriesResetDate = today,
             gender = gender,
-            birthDate = birthDate
+            birthDate = birthDate,
+            dailyCarbsGrams = macros.carbsGrams,
+            dailyProteinGrams = macros.proteinGrams,
+            dailyFatGrams = macros.fatGrams,
+            activityLevel = activityLevel
         )
         userLocalDao.upsert(user)
     }
@@ -117,6 +125,12 @@ class UserLocalRepository @Inject constructor(
 
     suspend fun updateDailyCaloriesValue(calories: Int) {
         userLocalDao.updateDailyCaloriesValue(calories)
+        val macros = calculateDailyMacros(calories)
+        userLocalDao.updateDailyMacros(
+            carbs = macros.carbsGrams,
+            protein = macros.proteinGrams,
+            fat = macros.fatGrams
+        )
     }
 
 
