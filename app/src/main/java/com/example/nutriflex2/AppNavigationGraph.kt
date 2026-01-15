@@ -31,6 +31,7 @@ import androidx.navigation.NavHostController
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.navigation
+import com.example.nutriflex2.diet.search.SearchMealsScreen
 import com.example.nutriflex2.home.account.AccountScreen
 import com.example.nutriflex2.home.ui.HomeScreen
 import kotlinx.coroutines.delay
@@ -68,12 +69,22 @@ fun AppNavGraph(navController: NavHostController) {
         composable("splashScreen") { SplashScreen(navController) }
         composable("welcomeScreen") { WelcomeScreen(navController) }
         composable("loginScreen") { LoginScreen(navController) }
-        composable("homeScreen") {HomeScreen(
-            onNavigateToTreino = { /* navController.navigate(...) */ },
-            onNavigateToDieta = { /* ... */ },
-            onAddCaloriesClick = {navController.navigate("loginScreen")},
-            onNavigateToAccount = { navController.navigate("accountScreen") }
-        )}
+        composable("homeScreen") {
+            HomeScreen(
+                onNavigateToTreino = { /* ... */ },
+                onNavigateToSearchMeals = { navController.navigate("searchMealsScreen") },
+                onNavigateToAccount = { navController.navigate("accountScreen") }
+            )
+        }
+
+        // Novo ecrã de Search Meals
+        composable("searchMealsScreen") {
+            SearchMealsScreen(
+                onBack = { navController.popBackStack() },
+                onOpenFavorites = { /* TODO: navegar para ecrã de favoritos */ },
+                onOpenPhoto = { /* TODO: navegar para captura de foto */ }
+            )
+        }
 
         composable("accountScreen") {
             AccountScreen(

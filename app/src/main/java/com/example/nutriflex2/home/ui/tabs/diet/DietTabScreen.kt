@@ -43,7 +43,7 @@ import kotlinx.coroutines.launch
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun DietTabScreen(
-    onNavigateToDieta: () -> Unit,
+    onNavigateToSearchMeals: () -> Unit,
     viewModel: DietTabViewModel = hiltViewModel(),
 ) {
     val state by viewModel.uiState.collectAsState()
@@ -96,9 +96,13 @@ fun DietTabScreen(
             sheetState = sheetState
         ) {
             LogMealSheetContent(
-                onPhotoClick = { /* TODO: navegar para captura de foto */ },
+                onPhotoClick = { /* TODO: navigate to photo capture */ },
                 onFavoritesClick = { /* TODO */ },
-                onSearchMealsClick = { /* TODO */ },
+                onSearchMealsClick = {
+                    showSheet = false
+                    scope.launch { sheetState.hide() }
+                    onNavigateToSearchMeals()
+                },
                 onSearchRecipesClick = { /* TODO */ }
             )
         }
@@ -173,8 +177,7 @@ private fun LogMealButton(
 ) {
     OutlinedButton(
         onClick = onClick,
-        modifier = modifier
-            .height(80.dp),
+        modifier = modifier.height(80.dp),
         colors = ButtonDefaults.outlinedButtonColors()
     ) {
         Column(

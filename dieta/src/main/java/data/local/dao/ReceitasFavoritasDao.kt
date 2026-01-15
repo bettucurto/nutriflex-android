@@ -20,4 +20,8 @@ interface ReceitasFavoritasDao {
 
     @Delete
     suspend fun deleteReceitaFavorita(receita: ReceitaFavoritaLocal)
+
+    @Query("DELETE FROM receitas_favoritas WHERE id = :id")
+    suspend fun deleteReceitaFavoritaById(id: Int)
+
 }

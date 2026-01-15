@@ -44,4 +44,8 @@ interface RefeicoesDao {
 
     @Delete
     suspend fun deleteIngrediente(ingrediente: IngredienteRefeicaoLocal)
+
+    @Query("DELETE FROM refeicao_ingredientes WHERE id = :id")
+    suspend fun deleteIngredienteById(id: Int)
+
 }

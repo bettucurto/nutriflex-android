@@ -1,5 +1,5 @@
 // dieta/local/DietaDatabase.kt
-package data.local
+package dieta.local
 
 import androidx.room.Database
 import androidx.room.RoomDatabase
@@ -8,7 +8,6 @@ import data.local.dao.RefeicoesDao
 import data.local.tables.IngredienteRefeicaoLocal
 import data.local.tables.ReceitaFavoritaLocal
 import data.local.tables.RefeicaoFavoritaLocal
-
 
 @Database(
     entities = [
@@ -20,6 +19,7 @@ import data.local.tables.RefeicaoFavoritaLocal
     exportSchema = false
 )
 abstract class DietaDatabase : RoomDatabase() {
+
     abstract fun refeicoesDao(): RefeicoesDao
     abstract fun receitasFavoritasDao(): ReceitasFavoritasDao
 }

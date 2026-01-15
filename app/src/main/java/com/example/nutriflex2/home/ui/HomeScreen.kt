@@ -71,8 +71,7 @@ import theme.AppTheme
 @Composable
 fun HomeScreen(
     onNavigateToTreino: () -> Unit,
-    onNavigateToDieta: () -> Unit,
-    onAddCaloriesClick: () -> Unit,
+    onNavigateToSearchMeals: () -> Unit,
     onNavigateToAccount: () -> Unit,
     viewModel: HomeViewModel = hiltViewModel()
 ) {
@@ -256,7 +255,7 @@ fun HomeScreen(
                                         viewModel.loadWeightHistory(newRange)
                                     }
                                 },
-                                onAddCaloriesClick = onAddCaloriesClick,
+                                onNavigateToSearchMeals = onNavigateToSearchMeals,
                                 onNavigateToTreino = onNavigateToTreino,
                                 onChangeCurrentWeight = { new ->
                                     viewModel.onChangeCurrentWeight(new, selectedRange)
@@ -271,13 +270,12 @@ fun HomeScreen(
                                 val dietVm: DietTabViewModel = hiltViewModel()
                                 LaunchedEffect(Unit) { dietVm.refreshFromLocal() }
                                 DietTabScreen(
-                                    onNavigateToDieta = onNavigateToDieta,
+                                    onNavigateToSearchMeals = onNavigateToSearchMeals,
                                     viewModel = dietVm
                                 )
                             }
                         }
                     }
-
                     Column(
                         modifier = Modifier
                             .fillMaxWidth()

@@ -1,4 +1,3 @@
-
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
@@ -27,7 +26,6 @@ import components.WeightRange
 import components.WeightsCardRow
 import kotlinx.coroutines.launch
 
-
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun HomeMainTab(
@@ -36,7 +34,7 @@ fun HomeMainTab(
     scrollState: androidx.compose.foundation.ScrollState,
     selectedRange: WeightRange,
     onRangeChange: (WeightRange) -> Unit,
-    onAddCaloriesClick: () -> Unit,           // podes remover se já não precisares
+    onNavigateToSearchMeals: () -> Unit,
     onNavigateToTreino: () -> Unit,
     onChangeCurrentWeight: (Float) -> Unit,
     onChangeGoalWeight: (Float) -> Unit,
@@ -108,7 +106,11 @@ fun HomeMainTab(
             LogMealSheetContent(
                 onPhotoClick = { /* TODO */ },
                 onFavoritesClick = { /* TODO */ },
-                onSearchMealsClick = { /* TODO */ },
+                onSearchMealsClick = {
+                    showSheet = false
+                    scope.launch { sheetState.hide() }
+                    onNavigateToSearchMeals()
+                },
                 onSearchRecipesClick = { /* TODO */ }
             )
         }

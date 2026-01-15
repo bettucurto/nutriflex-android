@@ -1,4 +1,5 @@
-package remote
+// app/src/main/java/com/example/nutriflex2/di/NetworkModule.kt
+package com.example.nutriflex2.di
 
 import dagger.Module
 import dagger.Provides

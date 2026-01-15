@@ -1,3 +1,4 @@
+// app/src/main/java/com/example/nutriflex2/di/DatabaseModule.kt
 package com.example.nutriflex2.di
 
 import android.content.Context
@@ -7,9 +8,9 @@ import dagger.Provides
 import dagger.hilt.InstallIn
 import dagger.hilt.android.qualifiers.ApplicationContext
 import dagger.hilt.components.SingletonComponent
-import data.local.DietaDatabase
 import data.local.dao.ReceitasFavoritasDao
 import data.local.dao.RefeicoesDao
+import dieta.local.DietaDatabase
 import local.MIGRATION_1_2
 import local.MIGRATION_2_3
 import local.MIGRATION_3_4
@@ -28,8 +29,8 @@ object DatabaseModule {
     @Singleton
     fun provideNutriflexDatabase(
         @ApplicationContext context: Context
-    ): NutriflexDatabase {
-        return Room.databaseBuilder(
+    ): NutriflexDatabase =
+        Room.databaseBuilder(
             context,
             NutriflexDatabase::class.java,
             "nutriflex_core.db"
@@ -41,26 +42,25 @@ object DatabaseModule {
                 MIGRATION_4_5
             )
             .build()
-    }
 
     @Provides
     fun provideUserLocalDao(db: NutriflexDatabase): UserLocalDao = db.userLocalDao()
 
     @Provides
-    fun provideWeightHistoryDao(db: NutriflexDatabase): WeightHistoryDao = db.weightHistoryDao()
+    fun provideWeightHistoryDao(db: NutriflexDatabase): WeightHistoryDao =
+        db.weightHistoryDao()
 
     // ---------- DIETA DB ----------
     @Provides
     @Singleton
     fun provideDietaDatabase(
         @ApplicationContext context: Context
-    ): DietaDatabase {
-        return Room.databaseBuilder(
+    ): DietaDatabase =
+        Room.databaseBuilder(
             context,
             DietaDatabase::class.java,
             "nutriflex_dieta.db"
         ).build()
-    }
 
     @Provides
     fun provideRefeicoesDao(db: DietaDatabase): RefeicoesDao = db.refeicoesDao()

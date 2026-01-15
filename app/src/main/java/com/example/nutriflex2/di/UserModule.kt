@@ -1,4 +1,4 @@
-package di
+package com.example.nutriflex2.di
 
 import dagger.Module
 import dagger.Provides

@@ -1,5 +1,4 @@
-// core/src/main/java/core/di/CoreModule.kt
-package di
+package com.example.nutriflex2.di
 
 import android.content.Context
 import dagger.Module
