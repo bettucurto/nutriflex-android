@@ -63,6 +63,7 @@ data class FatSecretFoodDto(
     val descricao_en: String,
     val tipo: String,
     val url: String,
+    val image: String?,
     val calories: String?,
     val carbs_grams: String?,
     val protein_grams: String?,

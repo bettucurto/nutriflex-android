@@ -50,6 +50,9 @@ kotlin {
 dependencies {
     implementation("androidx.hilt:hilt-navigation-compose:1.2.0")
 
+    implementation("io.coil-kt:coil-compose:2.6.0")
+
+
     implementation(libs.androidx.core.ktx)
     implementation(libs.androidx.lifecycle.runtime.ktx)
     implementation(libs.androidx.activity.compose)
@@ -63,6 +66,7 @@ dependencies {
     implementation(project(":auth"))
     implementation(project(":core"))
     implementation(project(":dieta"))
+    implementation(libs.androidx.compose.ui.ui)
 
     val room_version = "2.8.4"
     implementation("androidx.room:room-runtime:$room_version")

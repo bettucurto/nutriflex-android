@@ -28,9 +28,12 @@ import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.navigation.NavBackStackEntry
 import androidx.navigation.NavController
 import androidx.navigation.NavHostController
+import androidx.navigation.NavType
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.navigation
+import androidx.navigation.navArgument
+import com.example.nutriflex2.diet.detail.FoodDetailScreen
 import com.example.nutriflex2.diet.search.SearchMealsScreen
 import com.example.nutriflex2.home.account.AccountScreen
 import com.example.nutriflex2.home.ui.HomeScreen
@@ -82,7 +85,19 @@ fun AppNavGraph(navController: NavHostController) {
             SearchMealsScreen(
                 onBack = { navController.popBackStack() },
                 onOpenFavorites = { /* TODO: navegar para ecrã de favoritos */ },
-                onOpenPhoto = { /* TODO: navegar para captura de foto */ }
+                onOpenPhoto = { /* TODO: navegar para captura de foto */ },
+                navController = navController,
+            )
+        }
+        composable(
+            "foodDetail/{foodId}",
+            arguments = listOf(navArgument("foodId") { type = NavType.StringType })
+        ) { backStackEntry ->
+            val foodId = backStackEntry.arguments?.getString("foodId") ?: ""
+            FoodDetailScreen(
+                foodId = foodId,
+                onBack = { navController.popBackStack() },
+                onAddToMeal = { /* TODO: navigate to meals or show meal selector */ }
             )
         }
 

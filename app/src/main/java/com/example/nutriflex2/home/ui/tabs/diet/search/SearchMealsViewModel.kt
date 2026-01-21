@@ -20,11 +20,8 @@ enum class CalorieRangeFilter {
 data class SearchMealsUiState(
     val query: String = "",
     val isLoading: Boolean = false,
-    val history: List<FatSecretFood> = emptyList(),
 
-    // filtered list shown in UI
     val suggestions: List<FatSecretFood> = emptyList(),
-    // raw API results before filters
     val rawResults: List<FatSecretFood> = emptyList(),
     val errorMessage: String? = null,
 
@@ -37,6 +34,7 @@ data class SearchMealsUiState(
     val fatMax: Int = 100,
 )
 
+
 @HiltViewModel
 class SearchMealsViewModel @Inject constructor(
     private val dietaRepository: DietaRepository,
@@ -46,6 +44,16 @@ class SearchMealsViewModel @Inject constructor(
     val uiState: StateFlow<SearchMealsUiState> = _uiState.asStateFlow()
 
     private var searchJob: Job? = null
+
+    init {
+        // pesquisa inicial para não começar vazio
+        viewModelScope.launch {
+            // podes trocar "chicken" por algo mais neutro, tipo "apple"
+            val defaultQuery = "Apple"
+            _uiState.value = _uiState.value.copy(query = defaultQuery)
+            searchFoods(defaultQuery)
+        }
+    }
 
     fun onQueryChange(newQuery: String) {
         _uiState.value = _uiState.value.copy(query = newQuery)
@@ -82,12 +90,6 @@ class SearchMealsViewModel @Inject constructor(
                 suggestions = emptyList()
             )
         }
-    }
-
-    fun onAddFoodToHistory(food: FatSecretFood) {
-        val history = _uiState.value.history.toMutableList()
-        history.add(0, food)
-        _uiState.value = _uiState.value.copy(history = history.distinctBy { it.id })
     }
 
     // --------- Filters API (called from UI) ---------

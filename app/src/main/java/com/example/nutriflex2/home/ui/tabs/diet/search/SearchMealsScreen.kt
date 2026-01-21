@@ -14,9 +14,11 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.ArrowBack
 import androidx.compose.material.icons.filled.ExpandLess
@@ -24,6 +26,7 @@ import androidx.compose.material.icons.filled.ExpandMore
 import androidx.compose.material.icons.filled.Favorite
 import androidx.compose.material.icons.filled.PhotoCamera
 import androidx.compose.material.icons.filled.Search
+import androidx.compose.material3.ElevatedButton
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.ExperimentalMaterial3ExpressiveApi
 import androidx.compose.material3.FilterChip
@@ -46,15 +49,24 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
+import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.hilt.navigation.compose.hiltViewModel
+import androidx.navigation.NavController
+import coil.compose.AsyncImage
+import coil.request.ImageRequest
 import com.example.dieta.domain.FatSecretFood
+import com.example.nutriflex2.R
 import components.LeftTitleText
 
 @OptIn(ExperimentalMaterial3Api::class, ExperimentalMaterial3ExpressiveApi::class)
 @Composable
 fun SearchMealsScreen(
+    navController: NavController,
     onBack: () -> Unit,
     onOpenFavorites: () -> Unit,
     onOpenPhoto: () -> Unit,
@@ -103,7 +115,7 @@ fun SearchMealsScreen(
                 modifier = Modifier.fillMaxWidth(),
                 horizontalArrangement = Arrangement.spacedBy(12.dp)
             ) {
-                androidx.compose.material3.ElevatedButton(
+                ElevatedButton(
                     onClick = onOpenPhoto,
                     modifier = Modifier.weight(1f)
                 ) {
@@ -111,7 +123,7 @@ fun SearchMealsScreen(
                     Spacer(Modifier.width(6.dp))
                     Text("Photo")
                 }
-                androidx.compose.material3.ElevatedButton(
+                ElevatedButton(
                     onClick = onOpenFavorites,
                     modifier = Modifier.weight(1f)
                 ) {
@@ -263,19 +275,6 @@ fun SearchMealsScreen(
 
             Spacer(modifier = Modifier.height(16.dp))
 
-            // History
-            if (state.history.isNotEmpty()) {
-                Text("History", style = MaterialTheme.typography.titleSmall)
-                Spacer(modifier = Modifier.height(8.dp))
-                state.history.firstOrNull()?.let { food ->
-                    FoodRow(
-                        food = food,
-                        onAddClick = { viewModel.onAddFoodToHistory(food) }
-                    )
-                }
-                Spacer(modifier = Modifier.height(16.dp))
-            }
-
             // Suggestions / loading
             if (state.isLoading) {
                 Box(
@@ -294,7 +293,8 @@ fun SearchMealsScreen(
                     items(state.suggestions) { food ->
                         FoodRow(
                             food = food,
-                            onAddClick = { viewModel.onAddFoodToHistory(food) }
+                            onAddClick = {},
+                            navController = navController
                         )
                     }
                 }
@@ -355,25 +355,53 @@ fun MacroRangeSection(
     }
 }
 
+
 @Composable
 fun FoodRow(
     food: FatSecretFood,
+    navController: NavController,
     onAddClick: () -> Unit,
 ) {
+    val context = LocalContext.current
+
     Surface(
         shape = MaterialTheme.shapes.medium,
         color = colorScheme.surface,
         tonalElevation = 2.dp,
         shadowElevation = 4.dp,
         border = BorderStroke(2.dp, colorScheme.primary),
-        modifier = Modifier.fillMaxWidth()
+        modifier = Modifier
+            .fillMaxWidth()
+            .clickable{navController.navigate("foodDetail/${food.id}")}
     ) {
         Row(
             modifier = Modifier
-                .clickable { /* open details in the future */ }
                 .padding(12.dp),
             verticalAlignment = Alignment.CenterVertically
         ) {
+            // DEBUG: ver o que chega da API
+            println("FOOD IMAGE URL: ${food.image}")
+
+            AsyncImage(
+                model = ImageRequest.Builder(context)
+                    .data(food.image)
+                    .crossfade(true)
+                    .build(),
+                contentDescription = food.nomeEn,
+                modifier = Modifier
+                    .size(48.dp)
+                    .clip(RoundedCornerShape(8.dp)),
+                contentScale = ContentScale.Crop,
+                placeholder = painterResource(R.drawable.nutrilogo),
+                error = painterResource(R.drawable.nutrilogo),
+                onError = { state ->
+                    state.result.throwable.printStackTrace()
+                    println("COIL ERROR: ${state.result.throwable.message}")
+                }
+            )
+
+            Spacer(Modifier.width(12.dp))
+
             Column(modifier = Modifier.weight(1f)) {
                 Text(
                     food.nomeEn,
@@ -386,6 +414,7 @@ fun FoodRow(
                     color = colorScheme.onSurface
                 )
             }
+
             IconButton(onClick = onAddClick) {
                 Text("+", fontSize = 20.sp, color = colorScheme.primary)
             }

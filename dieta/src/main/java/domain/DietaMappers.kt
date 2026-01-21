@@ -102,6 +102,7 @@ fun FatSecretFoodDto.toDomain(): FatSecretFood =
         descricaoEn = descricao_en,
         tipo = tipo,
         url = url,
+        image = image,
         calories = calories?.toIntOrNull(),
         carbsGrams = carbs_grams?.toDoubleOrNull(),
         proteinGrams = protein_grams?.toDoubleOrNull(),

@@ -39,6 +39,7 @@ data class FatSecretFood(
     val tipo: String,
     val url: String,
     val calories: Int?,
+    val image: String?,
     val carbsGrams: Double?,
     val proteinGrams: Double?,
     val fatGrams: Double?,
