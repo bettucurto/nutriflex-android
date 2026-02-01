@@ -123,6 +123,7 @@ class UserLocalRepository @Inject constructor(
         weightHistoryDao.deleteByUserId(userId)
     }
 
+    //quando alterar a quantidade de calorias que a pessoa deve comer por dia
     suspend fun updateDailyCaloriesValue(calories: Int) {
         userLocalDao.updateDailyCaloriesValue(calories)
         val macros = calculateDailyMacros(calories)

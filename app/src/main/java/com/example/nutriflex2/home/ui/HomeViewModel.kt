@@ -284,7 +284,6 @@ class HomeViewModel @Inject constructor(
     fun onMealLogged() {
         viewModelScope.launch {
             Log.d("HomeViewModel", "onMealLogged called")
-            _uiEvent.send(HomeUiEvent.ShowToast("Meal Logged Successfully!"))
             val user = userLocalRepository.getUserLocal() ?: return@launch
             _uiState.value = _uiState.value.copy(
                 dailyCalories = user.dailyCalories,
