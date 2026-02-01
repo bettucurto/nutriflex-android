@@ -8,7 +8,7 @@ import androidx.room.PrimaryKey
 data class IngredienteRefeicaoLocal(
     @PrimaryKey(autoGenerate = true) val id: Int = 0,
     val alimentoApiId: String,
-    val porcaoGramas: Double,
+    val tipoPorcao: String,
     val quantidadePorcoes: Double,
     val idRefeicao: Int,
 )

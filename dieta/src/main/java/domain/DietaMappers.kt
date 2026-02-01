@@ -11,6 +11,7 @@ import com.example.dieta.remote.FatSecretRecipeNutritionDto
 import com.example.dieta.remote.FatSecretRecipeSearchResponse
 import com.example.dieta.remote.FatSecretRecipeServingDto
 import com.example.dieta.remote.FatSecretRecipeSummaryDto
+import com.example.dieta.remote.FatSecretServingDto
 import com.example.dieta.remote.IngredienteDto
 import com.example.dieta.remote.ReceitaFavoritaDto
 import com.example.dieta.remote.RefeicaoDto
@@ -47,7 +48,7 @@ fun IngredienteRefeicaoLocal.toDomain(): IngredienteRefeicao =
     IngredienteRefeicao(
         id = id,
         alimentoApiId = alimentoApiId,
-        porcaoGramas = porcaoGramas,
+        tipoPorcao = tipoPorcao,
         quantidadePorcoes = quantidadePorcoes,
         refeicaoId = idRefeicao,
     )
@@ -56,7 +57,7 @@ fun IngredienteDto.toDomain(): IngredienteRefeicao =
     IngredienteRefeicao(
         id = id,
         alimentoApiId = alimentoapiid,
-        porcaoGramas = porcaogramas,
+        tipoPorcao = tipoporcao,
         quantidadePorcoes = quantidadeporcoes,
         refeicaoId = idrefeicao ?: 0,
     )
@@ -65,7 +66,7 @@ fun IngredienteRefeicao.toLocal(): IngredienteRefeicaoLocal =
     IngredienteRefeicaoLocal(
         id = id,
         alimentoApiId = alimentoApiId,
-        porcaoGramas = porcaoGramas,
+        tipoPorcao = tipoPorcao,
         quantidadePorcoes = quantidadePorcoes,
         idRefeicao = refeicaoId,
     )
@@ -115,18 +116,55 @@ fun FatSecretFoodDto.toDomain(): FatSecretFood =
 
 
 
+// NOVO
+fun FatSecretServingDto.toDomain(): FatSecretServing =
+    FatSecretServing(
+        id = servingid,
+        description = servingdescription,
+        metricAmount = metricservingamount,
+        metricUnit = metricservingunit,
+        numberOfUnits = numberofunits,
+        calories = calories.toDoubleOrNull() ?: 0.0,
+        carbs = carbohydrate.toDoubleOrNull() ?: 0.0,
+        protein = protein.toDoubleOrNull() ?: 0.0,
+        fat = fat.toDoubleOrNull() ?: 0.0,
+        saturatedfat = saturatedfat?.toDoubleOrNull() ?: 0.0,
+        cholesterol = cholesterol?.toDoubleOrNull() ?: 0.0,
+        sodium = sodium?.toDoubleOrNull() ?: 0.0,
+        fiber = fiber?.toDoubleOrNull() ?: 0.0,
+        sugar = sugar?.toDoubleOrNull() ?: 0.0,
+        vitamina = 0.0,      // Premier - 0 até teres acesso
+        vitaminc = 0.0,      // Premier - 0 até teres acesso
+        calcium = 0.0,       // Premier - 0 até teres acesso
+        iron = 0.0           // Premier - 0 até teres acesso
+    )
+
 fun FatSecretFoodDetailsDto.toDomain(): FatSecretFoodDetails =
     FatSecretFoodDetails(
         id = id,
-        nomeEn = nome_en,
+        nomeEn = nomeen,
         porcao = porcao,
         calorias = calorias,
         proteina = proteina,
         gordura = gordura,
         carboidratos = carboidratos,
-        image = image,          // novo
+        image = image ?: getFallbackImage(nomeen),
+        servings = servings.map { it.toDomain() },
+        allergens = allergens.map { FatSecretAllergen(it.id, it.name, it.value) },
+        preferences = preferences.map { FatSecretPreference(it.id, it.name, it.value) }
     )
 
+
+fun getFallbackImage(foodName: String): String {
+    val lower = foodName.lowercase()
+    return when {
+        lower.contains("apple") || lower.contains("maçã") ->
+            "https://m.ftscrt.com/static/recipe/apple-placeholder.jpg"
+        lower.contains("chicken") || lower.contains("frango") ->
+            "https://m.ftscrt.com/static/recipe/chicken-breast.jpg"
+        else -> "https://m.ftscrt.com/static/generic-food.jpg"
+    }
+}
 
 // --------- FatSecret receitas (lista) ---------
 

@@ -109,7 +109,7 @@ fun RegistrationScreen1(navController: NavController, viewModel: RegisterViewMod
                         NFButton(text = stringResource(R.string.buttonRegisterScreen1), onButtonClicked = {viewModel.onEvent(RegisterUIEvent.NextClickedStep1)
                             val newState = viewModel.registerUIState
                             if (newState.isStep1Valid) {
-                                navController.navigate("registrationScreen2")
+                                navController.navigate("registrationScreen6")
                             }}
                         )
                     }

@@ -1,6 +1,7 @@
 package com.example.nutriflex2.home.ui
 
 import android.os.Build
+import android.util.Log
 import androidx.annotation.RequiresApi
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
@@ -23,6 +24,14 @@ import javax.inject.Inject
 data class HomeUiState(
     val dailyCalories: Int = 0,
     val eatenCaloriesToday: Int = 0,
+
+    val dailyCarbsGrams: Int = 0,
+    val dailyProteinGrams: Int = 0,
+    val dailyFatGrams: Int = 0,
+    val eatenProteinGrams: Int = 0,
+    val eatenCarbsGrams: Int = 0,
+    val eatenFatGrams: Int = 0,
+
     val nextWorkoutId: Int? = 1,
     val nextWorkoutName: String = "Superior",
     val nextWorkoutExercises: Int = 6,
@@ -67,6 +76,27 @@ data class HomeUiState(
     val progress: Float
         get() = if (dailyCalories <= 0) 0f
         else (eatenCaloriesToday.toFloat() / dailyCalories.toFloat()).coerceIn(0f, 1f)
+
+    val remainingProtein: Int
+        get() = (dailyProteinGrams - eatenProteinGrams).coerceAtLeast(0)
+
+    val remainingCarbs: Int
+        get() = (dailyCarbsGrams - eatenCarbsGrams).coerceAtLeast(0)
+
+    val remainingFat: Int
+        get() = (dailyFatGrams - eatenFatGrams).coerceAtLeast(0)
+
+    val proteinProgress: Float
+        get() = if (dailyProteinGrams == 0) 0f
+        else (eatenProteinGrams.toFloat() / dailyProteinGrams.toFloat()).coerceIn(0f, 1f)
+
+    val carbsProgress: Float
+        get() = if (dailyCarbsGrams == 0) 0f
+        else (eatenCarbsGrams.toFloat() / dailyCarbsGrams.toFloat()).coerceIn(0f, 1f)
+
+    val fatProgress: Float
+        get() = if (dailyFatGrams == 0) 0f
+        else (eatenFatGrams.toFloat() / dailyFatGrams.toFloat()).coerceIn(0f, 1f)
 }
 
 // Eventos de UI para toasts, etc.
@@ -90,10 +120,19 @@ class HomeViewModel @Inject constructor(
     init {
         viewModelScope.launch {
             val user = userLocalRepository.getUserLocal()
+            onMealLogged()
 
             _uiState.value = HomeUiState(
                 dailyCalories = user?.dailyCalories ?: 0,
                 eatenCaloriesToday = user?.eatenCaloriesToday ?: 0,
+
+                dailyCarbsGrams = user?.dailyCarbsGrams ?: 0,
+                dailyProteinGrams = user?.dailyProteinGrams ?: 0,
+                dailyFatGrams = user?.dailyFatGrams ?: 0,
+                eatenProteinGrams = user?.eatenProteinToday ?: 0,
+                eatenCarbsGrams = user?.eatenCarbsToday ?: 0,
+                eatenFatGrams = user?.eatenFatToday ?: 0,
+
                 nextWorkoutId = 1,
                 nextWorkoutName = "Superior",
                 nextWorkoutExercises = 6,
@@ -241,6 +280,25 @@ class HomeViewModel @Inject constructor(
             dailyCalories = newCalories
         )
     }
+
+    fun onMealLogged() {
+        viewModelScope.launch {
+            Log.d("HomeViewModel", "onMealLogged called")
+            _uiEvent.send(HomeUiEvent.ShowToast("Meal Logged Successfully!"))
+            val user = userLocalRepository.getUserLocal() ?: return@launch
+            _uiState.value = _uiState.value.copy(
+                dailyCalories = user.dailyCalories,
+                eatenCaloriesToday = user.eatenCaloriesToday,
+                dailyCarbsGrams = user.dailyCarbsGrams,
+                dailyProteinGrams = user.dailyProteinGrams,
+                dailyFatGrams = user.dailyFatGrams,
+                eatenProteinGrams = user.eatenProteinToday,
+                eatenCarbsGrams = user.eatenCarbsToday,
+                eatenFatGrams = user.eatenFatToday
+            )
+        }
+    }
+
 
     @RequiresApi(Build.VERSION_CODES.O)
     fun loadWeightHistory(range: WeightRange) {

@@ -242,7 +242,6 @@ class RegisterViewModel @Inject constructor(
             val weeklyKcal = kgPerWeek * kcalPerKg
             val dailyKcalChange = weeklyKcal / 7f
 
-            // opção 1: usar função genérica de core para daily target
             val caloriesDaily = calculateDailyCaloriesForWeightChange(
                 maintenanceCalories = maintenance,
                 currentWeightKg = weightKg,

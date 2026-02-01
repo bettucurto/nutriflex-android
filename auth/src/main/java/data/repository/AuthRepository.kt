@@ -46,7 +46,7 @@ class AuthRepository @Inject constructor(
 
     suspend fun register(request: RegisterRequest): Result<RegisterResponse> {
         return try {
-            Log.d("Register", "request objetivo=${request.objetivo}, dificuldade=${request.dificuldades_anteriores}")
+            Log.d("Register", "request objetivo=${request.objetivo}, dificuldade=${request.dificuldades_anteriores}, password= ${request.password}")
             val response = api.register(request)
             if (response.isSuccessful && response.body() != null) {
                 val body = response.body()!!

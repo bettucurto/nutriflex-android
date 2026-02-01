@@ -65,11 +65,13 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.draw.shadow
 import androidx.compose.ui.geometry.CornerRadius
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.geometry.Rect
 import androidx.compose.ui.geometry.RoundRect
 import androidx.compose.ui.geometry.Size
+import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.Path
 import androidx.compose.ui.graphics.StrokeCap
@@ -132,7 +134,7 @@ fun DividerTextComponent(){
 fun StepIndicators(
     currentStep: Int, // 0-based ou 1-based, já explico
 ) {
-    val totalSteps = 5
+    val totalSteps = 6
     Row(
         horizontalArrangement = Arrangement.spacedBy(7.dp),
         modifier = Modifier
@@ -262,8 +264,22 @@ fun CaloriesCard(
             shape = MaterialTheme.shapes.large,
             tonalElevation = 2.dp,
             shadowElevation = 8.dp,
-            border = BorderStroke(2.dp, colorScheme.outline),
+            border = BorderStroke(
+                width = 2.dp,
+                brush = Brush.linearGradient(
+                    colors = listOf(
+                        colorScheme.primary,
+                        colorScheme.secondary
+                    )
+                )
+            ),
             modifier = Modifier.matchParentSize()
+                .shadow(
+                    elevation = 8.dp,
+                    shape = MaterialTheme.shapes.large,
+                    ambientColor = MaterialTheme.colorScheme.primary,
+                    spotColor = MaterialTheme.colorScheme.primary
+                )
         ) {
             Row(
                 modifier = Modifier.padding(16.dp),
@@ -294,7 +310,7 @@ fun CaloriesCard(
                             waveSpeed = 20.dp
                         )
                         Column(horizontalAlignment = Alignment.CenterHorizontally) {
-                            HeadingTextComponent(value=("$remaining\nremaining"), textSize = 14.sp)
+                            HeadingTextComponent(value=("$remaining\nremaining"), textSize = 15.sp)
                         }
                     }
                 }
@@ -433,11 +449,25 @@ fun DietCaloriesCard(
         Surface(
             shape = MaterialTheme.shapes.large,
             tonalElevation = 2.dp,
-            shadowElevation = 8.dp,
+            shadowElevation = 0.dp,
             color = colorScheme.surface,
-            border = BorderStroke(2.dp, colorScheme.outline),
+            border = BorderStroke(
+                width = 2.dp,
+                brush = Brush.linearGradient(
+                    colors = listOf(
+                        colorScheme.primary,
+                        colorScheme.secondary
+                    )
+                )
+            ),
             modifier = Modifier.matchParentSize()
                 .padding(vertical = 6.dp)
+                .shadow(
+                    elevation = 8.dp,
+                    shape = MaterialTheme.shapes.large,
+                    ambientColor = MaterialTheme.colorScheme.primary,
+                    spotColor = MaterialTheme.colorScheme.primary
+                )
         ) {
             Column(
                 modifier = Modifier
@@ -555,12 +585,26 @@ fun NextWorkoutCard(
     Surface(
         shape = MaterialTheme.shapes.large,
         tonalElevation = 2.dp,
-        shadowElevation = 8.dp,
-        border = BorderStroke(2.dp, colorScheme.outline),
+        shadowElevation = 0.dp,
+        border = BorderStroke(
+            width = 2.dp,
+            brush = Brush.linearGradient(
+                colors = listOf(
+                    colorScheme.primary,
+                    colorScheme.secondary
+                )
+            )
+        ),
         modifier = Modifier
             .padding(top = 30.dp)
             .fillMaxWidth(0.85f)
             .height(200.dp)
+            .shadow(
+                elevation = 8.dp,
+                shape = MaterialTheme.shapes.large,
+                ambientColor = MaterialTheme.colorScheme.primary,
+                spotColor = MaterialTheme.colorScheme.primary
+            )
     ) {
         Column(
             modifier = Modifier
@@ -672,8 +716,22 @@ private fun SingleWeightCard(
         shape = MaterialTheme.shapes.large,
         tonalElevation = 2.dp,
         shadowElevation = 8.dp,
-        border = BorderStroke(2.dp, colorScheme.outline),
+        border = BorderStroke(
+            width = 2.dp,
+            brush = Brush.linearGradient(
+                colors = listOf(
+                    colorScheme.primary,
+                    colorScheme.secondary
+                )
+            )
+        ),
         modifier = modifier.height(140.dp)
+            .shadow(
+                elevation = 8.dp,
+                shape = MaterialTheme.shapes.large,
+                ambientColor = MaterialTheme.colorScheme.primary,
+                spotColor = MaterialTheme.colorScheme.primary
+            )
     ) {
         Column(
             modifier = Modifier
@@ -762,11 +820,25 @@ fun WeightForecastCard(
     Surface(
         shape = MaterialTheme.shapes.large,
         tonalElevation = 2.dp,
-        shadowElevation = 8.dp,
-        border = BorderStroke(2.dp, colorScheme.outline),
+        shadowElevation = 0.dp,
+        border = BorderStroke(
+            width = 2.dp,
+            brush = Brush.linearGradient(
+                colors = listOf(
+                    colorScheme.primary,
+                    colorScheme.secondary
+                )
+            )
+        ),
         modifier = Modifier
             .padding(top = 24.dp)
             .fillMaxWidth(0.85f)
+            .shadow(
+                elevation = 8.dp,
+                shape = MaterialTheme.shapes.large,
+                ambientColor = MaterialTheme.colorScheme.primary,
+                spotColor = MaterialTheme.colorScheme.primary
+            )
     ) {
         Column(
             modifier = Modifier
@@ -805,11 +877,25 @@ fun BmiCard(
     Surface(
         shape = MaterialTheme.shapes.large,
         tonalElevation = 2.dp,
-        shadowElevation = 8.dp,
-        border = BorderStroke(2.dp, colorScheme.outline),
+        shadowElevation = 0.dp,
+        border = BorderStroke(
+            width = 2.dp,
+            brush = Brush.linearGradient(
+                colors = listOf(
+                    colorScheme.primary,
+                    colorScheme.secondary
+                )
+            )
+        ),
         modifier = Modifier
             .padding(top = 24.dp, bottom = 32.dp)
             .fillMaxWidth(0.85f)
+            .shadow(
+                elevation = 8.dp,
+                shape = MaterialTheme.shapes.large,
+                ambientColor = MaterialTheme.colorScheme.primary,
+                spotColor = MaterialTheme.colorScheme.primary
+            )
     ) {
         Column(
             modifier = Modifier
@@ -1477,11 +1563,26 @@ fun WeightProgressCard(
     Surface(
         shape = MaterialTheme.shapes.large,
         tonalElevation = 2.dp,
-        shadowElevation = 8.dp,
-        border = BorderStroke(2.dp, colorScheme.outline),
+        shadowElevation = 0.dp,
+        border = BorderStroke(
+            width = 2.dp,
+            brush = Brush.linearGradient(
+                colors = listOf(
+                    colorScheme.primary,
+                    colorScheme.secondary
+                )
+            )
+        ),
         modifier = modifier
             .padding(top = 24.dp)
             .fillMaxWidth(0.85f)
+            .shadow(
+                elevation = 8.dp,
+                shape = MaterialTheme.shapes.large,
+                ambientColor = MaterialTheme.colorScheme.primary,
+                spotColor = MaterialTheme.colorScheme.primary
+            )
+
     ) {
         Column(
             modifier = Modifier

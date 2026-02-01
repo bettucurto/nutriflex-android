@@ -15,6 +15,7 @@ import local.MIGRATION_1_2
 import local.MIGRATION_2_3
 import local.MIGRATION_3_4
 import local.MIGRATION_4_5
+import local.MIGRATION_5_6
 import local.NutriflexDatabase
 import local.UserLocalDao
 import local.WeightHistoryDao
@@ -39,7 +40,8 @@ object DatabaseModule {
                 MIGRATION_1_2,
                 MIGRATION_2_3,
                 MIGRATION_3_4,
-                MIGRATION_4_5
+                MIGRATION_4_5,
+                MIGRATION_5_6
             )
             .build()
 
@@ -60,7 +62,9 @@ object DatabaseModule {
             context,
             DietaDatabase::class.java,
             "nutriflex_dieta.db"
-        ).build()
+        )
+            .addMigrations(DietaDatabase.MIGRATION_1_2)
+            .build()
 
     @Provides
     fun provideRefeicoesDao(db: DietaDatabase): RefeicoesDao = db.refeicoesDao()

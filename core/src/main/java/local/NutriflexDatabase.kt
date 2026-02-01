@@ -11,7 +11,7 @@ import local.tables.WeightHistory
         UserLocal::class,
         WeightHistory::class,
     ],
-    version = 5, // manténs a versão que já tinhas no core
+    version = 6, // manténs a versão que já tinhas no core
     exportSchema = false
 )
 abstract class NutriflexDatabase : RoomDatabase() {

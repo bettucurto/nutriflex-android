@@ -46,13 +46,13 @@ class DietaRepository @Inject constructor(
     suspend fun addIngredientToMeal(
         mealId: Int,
         alimentoApiId: String,
-        porcaoGramas: Double,
+        tipoPorcao: String,
         quantidadePorcoes: Double,
     ) {
         // remoto
         remote.addIngrediente(
             alimentoApiId = alimentoApiId,
-            porcaoGramas = porcaoGramas,
+            tipoPorcao = tipoPorcao,
             quantidadePorcoes = quantidadePorcoes,
             idRefeicao = mealId,
         )
@@ -60,7 +60,7 @@ class DietaRepository @Inject constructor(
         val localEntity = IngredienteRefeicaoLocal(
             id = 0,
             alimentoApiId = alimentoApiId,
-            porcaoGramas = porcaoGramas,
+            tipoPorcao = tipoPorcao,
             quantidadePorcoes = quantidadePorcoes,
             idRefeicao = mealId,
         )
@@ -70,21 +70,21 @@ class DietaRepository @Inject constructor(
     suspend fun updateIngredient(
         id: Int,
         alimentoApiId: String,
-        porcaoGramas: Double,
+        tipoPorcao: String,
         quantidadePorcoes: Double,
         mealId: Int,
     ) {
         remote.updateIngrediente(
             id = id,
             alimentoApiId = alimentoApiId,
-            porcaoGramas = porcaoGramas,
+            tipoPorcao = tipoPorcao,
             quantidadePorcoes = quantidadePorcoes,
             idRefeicao = mealId,
         )
         val localEntity = IngredienteRefeicaoLocal(
             id = id,
             alimentoApiId = alimentoApiId,
-            porcaoGramas = porcaoGramas,
+            tipoPorcao = tipoPorcao,
             quantidadePorcoes = quantidadePorcoes,
             idRefeicao = mealId,
         )
@@ -117,6 +117,7 @@ class DietaRepository @Inject constructor(
         local.deleteReceitaFavoritaById(localId)
     }
 
+
     // ---------- FATSECRET FOODS (Search Meals) ----------
 
     suspend fun searchFoods(query: String): List<FatSecretFood> =
@@ -124,6 +125,10 @@ class DietaRepository @Inject constructor(
 
     suspend fun getFoodDetails(id: String): FatSecretFoodDetails =
         remote.buscarAlimentoFatSecretPorId(id).toDomain()
+
+    suspend fun searchAutocomplete(query: String): List<String> =
+        remote.buscarAutocomplete(query).map { it.nome }
+
 
     // ---------- FATSECRET RECIPES (para uso futuro) ----------
 

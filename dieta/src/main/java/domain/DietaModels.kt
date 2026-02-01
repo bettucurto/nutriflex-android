@@ -18,7 +18,7 @@ data class Refeicao(
 data class IngredienteRefeicao(
     val id: Int,
     val alimentoApiId: String,
-    val porcaoGramas: Double,
+    val tipoPorcao: String,
     val quantidadePorcoes: Double,
     val refeicaoId: Int,
 )
@@ -49,6 +49,41 @@ data class FatSecretFood(
 )
 
 // Detalhes de um alimento específico
+
+
+data class FatSecretServing(
+    val id: String,
+    val description: String,
+    val metricAmount: Double?,
+    val metricUnit: String?,
+    val numberOfUnits: Double?,
+    val calories: Double,
+    val carbs: Double,
+    val protein: Double,
+    val fat: Double,
+    val saturatedfat: Double,
+    val cholesterol: Double,
+    val sodium: Double,
+    val fiber: Double,
+    val sugar: Double,
+    val vitamina: Double,        // Premier
+    val vitaminc: Double,        // Premier
+    val calcium: Double,         // Premier
+    val iron: Double             // Premier
+)
+
+data class FatSecretAllergen(
+    val id: String,
+    val name: String,
+    val value: String
+)
+
+data class FatSecretPreference(
+    val id: String,
+    val name: String,
+    val value: String
+)
+
 data class FatSecretFoodDetails(
     val id: String,
     val nomeEn: String,
@@ -57,7 +92,10 @@ data class FatSecretFoodDetails(
     val proteina: String,
     val gordura: String,
     val carboidratos: String,
-    val image: String?,        // novo
+    val image: String,
+    val servings: List<FatSecretServing>,
+    val allergens: List<FatSecretAllergen>,
+    val preferences: List<FatSecretPreference>
 )
 
 

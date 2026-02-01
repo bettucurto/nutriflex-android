@@ -4,6 +4,7 @@ import android.util.Log
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.interaction.MutableInteractionSource
+import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
@@ -62,11 +63,13 @@ fun LoginScreen(navController: NavController, viewModel: LoginViewModel = hiltVi
                     focusManager.clearFocus()
                 }
         ) {
-            Column(modifier = Modifier.fillMaxSize()) {
+            Column(modifier = Modifier.fillMaxSize(),
+                verticalArrangement = Arrangement.Center) {
+                Spacer(Modifier.height(20.dp))
 
                 HeadingTextComponent(stringResource(R.string.headingTitleLoginScreen))
                 TitleText(stringResource(R.string.titleLoginScreen))
-                Spacer(Modifier.height(30.dp))
+                Spacer(Modifier.height(120.dp))
 
                 IconTextField(stringResource(R.string.textField1LoginScreen),
                     Icons.Outlined.Email,
@@ -88,7 +91,7 @@ fun LoginScreen(navController: NavController, viewModel: LoginViewModel = hiltVi
                         color = colorScheme.error
                     )
                 }
-                Spacer(Modifier.weight(1f))
+                Spacer(Modifier.height(50.dp))
 
                 NFButton(stringResource(id= R.string.btnLoginScreen), onButtonClicked = {viewModel.onEvent(
                     LoginUIEvent.LoginButtonClicked)

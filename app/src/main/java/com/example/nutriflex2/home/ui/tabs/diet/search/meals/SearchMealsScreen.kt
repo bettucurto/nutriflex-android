@@ -5,6 +5,8 @@ import androidx.compose.animation.expandVertically
 import androidx.compose.animation.shrinkVertically
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.interaction.MutableInteractionSource
+import androidx.compose.foundation.interaction.collectIsFocusedAsState
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -26,6 +28,8 @@ import androidx.compose.material.icons.filled.ExpandMore
 import androidx.compose.material.icons.filled.Favorite
 import androidx.compose.material.icons.filled.PhotoCamera
 import androidx.compose.material.icons.filled.Search
+import androidx.compose.material3.DropdownMenu
+import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.ElevatedButton
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.ExperimentalMaterial3ExpressiveApi
@@ -50,11 +54,15 @@ import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.focus.FocusRequester
+import androidx.compose.ui.focus.focusRequester
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.platform.LocalFocusManager
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.compose.ui.window.PopupProperties
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.navigation.NavController
 import coil.compose.AsyncImage
@@ -62,6 +70,7 @@ import coil.request.ImageRequest
 import com.example.dieta.domain.FatSecretFood
 import com.example.nutriflex2.R
 import components.LeftTitleText
+
 
 @OptIn(ExperimentalMaterial3Api::class, ExperimentalMaterial3ExpressiveApi::class)
 @Composable
@@ -74,6 +83,12 @@ fun SearchMealsScreen(
 ) {
     val state by viewModel.uiState.collectAsState()
     val filtersExpanded = remember { mutableStateOf(false) }
+
+    // Foco correto para Material3
+    val interactionSource = remember { MutableInteractionSource() }
+    val isFocused by interactionSource.collectIsFocusedAsState()
+    val focusManager = LocalFocusManager.current
+    val focusRequester = remember { FocusRequester() }
 
     Scaffold(
         topBar = {
@@ -97,17 +112,44 @@ fun SearchMealsScreen(
                 .fillMaxSize()
         ) {
             // Search bar
-            OutlinedTextField(
-                value = state.query,
-                onValueChange = { viewModel.onQueryChange(it) },
-                modifier = Modifier.fillMaxWidth(),
-                leadingIcon = {
-                    Icon(Icons.Default.Search, contentDescription = null)
-                },
-                placeholder = { Text("Search food") },
-                singleLine = true
-            )
+            Box {
+                Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                    OutlinedTextField(
+                        value = state.query,
+                        onValueChange = { newValue -> viewModel.onQueryChange(newValue) },
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .focusRequester(focusRequester), // <-- aqui
+                        leadingIcon = { Icon(Icons.Default.Search, null) },
+                        placeholder = { Text("Search food") },
+                        singleLine = true,
+                        interactionSource = interactionSource,
+                    )
 
+                    // DROPDOWN (só com foco + condições)
+                    DropdownMenu(
+                        expanded = isFocused &&
+                                state.autocompleteSuggestions.isNotEmpty() &&
+                                state.query.length >= 2 &&
+                                !state.isLoading,
+                        modifier = Modifier.fillMaxWidth(0.92f),
+                        onDismissRequest = { focusManager.clearFocus() },
+                        properties = PopupProperties(focusable = false)
+                    ) {
+                        state.autocompleteSuggestions.take(3).forEach { suggestion ->
+                            DropdownMenuItem(
+                                text = { Text(text = suggestion, style = MaterialTheme.typography.bodyMedium) },
+                                onClick = {
+                                    viewModel.onQueryChange(suggestion)
+                                    focusManager.clearFocus()
+                                },
+
+                            )
+                        }
+                    }
+
+                }
+            }
             Spacer(modifier = Modifier.height(12.dp))
 
             // Photo + Favorites buttons

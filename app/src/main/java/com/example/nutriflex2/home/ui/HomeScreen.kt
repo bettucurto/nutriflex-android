@@ -96,7 +96,15 @@ fun HomeScreen(
         label = "topBarOffsetAnimation"
     )
 
-
+    LaunchedEffect(Unit) {
+        viewModel.uiEvent.collect { event ->
+            when (event) {
+                is HomeUiEvent.ShowToast -> {
+                    Toast.makeText(context, event.message, Toast.LENGTH_SHORT).show()
+                }
+            }
+        }
+    }
 
     // Pager para tabs da bottom bar: 0 = Home, 1 = Treino, 2 = Dieta (exemplo)
     val pagerState = rememberPagerState(
@@ -137,16 +145,6 @@ fun HomeScreen(
                 homeScrollState.animateScrollTo(homeScrollState.maxValue)
             }
             pendingScroll = false
-        }
-    }
-
-    LaunchedEffect(Unit) {
-        viewModel.uiEvent.collect { event ->
-            when (event) {
-                is HomeUiEvent.ShowToast -> {
-                    Toast.makeText(context, event.message, Toast.LENGTH_SHORT).show()
-                }
-            }
         }
     }
 

@@ -27,21 +27,23 @@ data class UpdateRefeicaoRequest(
 data class IngredienteDto(
     val id: Int,
     val alimentoapiid: String,
-    val porcaogramas: Double,
+    val tipoporcao: String,
     val quantidadeporcoes: Double,
     val idrefeicao: Int?,
 )
 
 data class CreateIngredienteRequest(
     val alimentoapiid: String,
-    val porcaogramas: Double,
+    val tipoporcao: String,
     val quantidadeporcoes: Double,
     val idrefeicao: Int,
 )
 
+data class StringDto(val nome: String)
+
 data class UpdateIngredienteRequest(
     val alimentoapiid: String,
-    val porcaogramas: Double,
+    val tipoporcao: String,
     val quantidadeporcoes: Double,
     val idrefeicao: Int,
 )
@@ -78,16 +80,58 @@ data class MacroSplitDto(
     val fat: Int?
 )
 
+data class FatSecretAllergenDto(
+    val id: String,
+    val name: String,
+    val value: String
+)
+
+data class FatSecretPreferenceDto(
+    val id: String,
+    val name: String,
+    val value: String
+)
+
 data class FatSecretFoodDetailsDto(
     val id: String,
-    val nome_en: String,
-    val descricao_en: String,
+    val nomeen: String,
+    val descricaoen: String,
     val porcao: String,
     val calorias: String,
     val proteina: String,
     val gordura: String,
     val carboidratos: String,
-    val image: String?,        // novo campo (URL ou null)
+    val image: String?,
+    val servings: List<FatSecretServingDto>,
+    val allergens: List<FatSecretAllergenDto> = emptyList(),
+    val preferences: List<FatSecretPreferenceDto> = emptyList()
+)
+
+
+// NOVO
+data class FatSecretServingDto(
+    val servingid: String,
+    val servingdescription: String,
+    val metricservingamount: Double?,
+    val metricservingunit: String?,   // "g", "ml" ou "oz"
+    val numberofunits: Double?,
+    val measurementdescription: String?,
+    val calories: String,
+    val carbohydrate: String,
+    val protein: String,
+    val fat: String,
+    val saturatedfat: String?,
+    val polyunsaturatedfat: String?,
+    val monounsaturatedfat: String?,
+    val cholesterol: String?,
+    val sodium: String?,
+    val potassium: String?,
+    val fiber: String?,
+    val sugar: String?,
+    val vitamina: String?,
+    val vitaminc: String?,
+    val calcium: String?,
+    val iron: String?
 )
 
 
@@ -176,6 +220,8 @@ data class FatSecretRecipeDetailsDto(
     val directions: List<FatSecretRecipeDirectionDto>,
 )
 
+
+
 data class FatSecretRecipeDetailsResponse(
     val sucesso: Boolean,
     val receita: FatSecretRecipeDetailsDto,
@@ -229,6 +275,9 @@ interface DietaApiService {
     suspend fun addIngrediente(
         @Body body: CreateIngredienteRequest,
     ): SimpleMessageResponse
+
+    @GET("refeicoes/autocomplete")
+    suspend fun buscarAutocomplete(@Query("q") q: String): List<StringDto>
 
     @PUT("refeicoes/ingredientes/{id}")
     suspend fun updateIngrediente(

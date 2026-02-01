@@ -32,6 +32,7 @@ data class SearchMealsUiState(
     val proteinMax: Int = 100,
     val fatMin: Int = 0,
     val fatMax: Int = 100,
+    val autocompleteSuggestions: List<String> = emptyList(),
 )
 
 
@@ -56,19 +57,33 @@ class SearchMealsViewModel @Inject constructor(
     }
 
     fun onQueryChange(newQuery: String) {
-        _uiState.value = _uiState.value.copy(query = newQuery)
+        _uiState.value = _uiState.value.copy(query = newQuery, autocompleteSuggestions = emptyList())
 
         searchJob?.cancel()
         if (newQuery.isBlank()) {
             _uiState.value = _uiState.value.copy(
                 suggestions = emptyList(),
-                rawResults = emptyList()
+                rawResults = emptyList(),
+                autocompleteSuggestions = emptyList()
             )
             return
         }
 
+        // autocomplete imediato (sem debounce)
+        if (newQuery.length >= 2) {
+            viewModelScope.launch {
+                try {
+                    val suggestions = dietaRepository.searchAutocomplete(newQuery)
+                    _uiState.value = _uiState.value.copy(autocompleteSuggestions = suggestions)
+                } catch (e: Exception) {
+                    // ignora erro de autocomplete
+                }
+            }
+        }
+
+        // pesquisa completa com debounce
         searchJob = viewModelScope.launch {
-            delay(300L) // debounce
+            delay(300L)
             searchFoods(newQuery)
         }
     }

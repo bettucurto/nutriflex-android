@@ -71,7 +71,10 @@ class DietTabViewModel @Inject constructor(
                 eatenCaloriesToday = user?.eatenCaloriesToday ?: 0,
                 dailyCarbsGrams = user?.dailyCarbsGrams ?: 0,
                 dailyProteinGrams = user?.dailyProteinGrams ?: 0,
-                dailyFatGrams = user?.dailyFatGrams ?: 0
+                dailyFatGrams = user?.dailyFatGrams ?: 0,
+                eatenProteinGrams = user?.eatenProteinToday ?: 0,
+                eatenCarbsGrams = user?.eatenCarbsToday ?: 0,
+                eatenFatGrams = user?.eatenFatToday ?: 0,
             )
         }
     }

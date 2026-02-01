@@ -32,14 +32,14 @@ class DietaRemoteRepository @Inject constructor(
 
     suspend fun addIngrediente(
         alimentoApiId: String,
-        porcaoGramas: Double,
+        tipoPorcao: String,
         quantidadePorcoes: Double,
         idRefeicao: Int,
     ): SimpleMessageResponse =
         api.addIngrediente(
             CreateIngredienteRequest(
                 alimentoapiid = alimentoApiId,
-                porcaogramas = porcaoGramas,
+                tipoporcao = tipoPorcao,
                 quantidadeporcoes = quantidadePorcoes,
                 idrefeicao = idRefeicao,
             )
@@ -48,7 +48,7 @@ class DietaRemoteRepository @Inject constructor(
     suspend fun updateIngrediente(
         id: Int,
         alimentoApiId: String,
-        porcaoGramas: Double,
+        tipoPorcao: String,
         quantidadePorcoes: Double,
         idRefeicao: Int,
     ): SimpleMessageResponse =
@@ -56,7 +56,7 @@ class DietaRemoteRepository @Inject constructor(
             id,
             UpdateIngredienteRequest(
                 alimentoapiid = alimentoApiId,
-                porcaogramas = porcaoGramas,
+                tipoporcao = tipoPorcao,
                 quantidadeporcoes = quantidadePorcoes,
                 idrefeicao = idRefeicao,
             )
@@ -86,6 +86,10 @@ class DietaRemoteRepository @Inject constructor(
 
     suspend fun buscarAlimentoFatSecretPorId(id: String): FatSecretFoodDetailsDto =
         api.buscarAlimentoFatSecretPorId(id)
+
+    suspend fun buscarAutocomplete(query: String): List<StringDto> =
+        api.buscarAutocomplete(query)
+
 
     // --- FatSecret receitas ---
     suspend fun searchReceitasFatSecret(

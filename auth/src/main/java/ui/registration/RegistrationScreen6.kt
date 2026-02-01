@@ -69,14 +69,14 @@ fun RegistrationScreen6(navController: NavController, viewModel: RegisterViewMod
 
                 TextButtonGroup(
                     options = activityLevelOptions,
-                    selectedIndex = state.goal,
+                    selectedIndex = state.activityLevel,
                     onOptionSelected = { index ->
                         viewModel.onEvent(RegisterUIEvent.RegisterActivityChanged(index))
                     }
                 )
-                if (state.goalError != null) {
+                if (state.activityLevelError != null) {
                     Text(
-                        text = state.goalError,
+                        text = state.activityLevelError,
                         color = colorScheme.error,
                     )
                 }
@@ -90,10 +90,10 @@ fun RegistrationScreen6(navController: NavController, viewModel: RegisterViewMod
                 )
                 {
                     BackButton(onButtonClicked = {navController.popBackStack()})
-                    NFButton(text = stringResource(R.string.buttonRegisterScreen1), onButtonClicked = {viewModel.onEvent(RegisterUIEvent.NextClickedStep2)
+                    NFButton(text = stringResource(R.string.buttonRegisterScreen1), onButtonClicked = {viewModel.onEvent(RegisterUIEvent.NextClickedStep6)
                         val newState = viewModel.registerUIState
                         if (newState.goalError == null) {
-                            navController.navigate("registrationScreen3")
+                            navController.navigate("registrationScreen2")
                         }}
                     )
                 }

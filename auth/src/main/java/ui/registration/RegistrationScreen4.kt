@@ -60,7 +60,7 @@ fun RegistrationScreen4(navController: NavController, viewModel: RegisterViewMod
             ){
                 LeftTitleText(stringResource(R.string.titleRegistration2))
                 Spacer(modifier = Modifier.heightIn(20.dp))
-                StepIndicators(3)
+                StepIndicators(4)
                 LeftHeadingTextComponent(stringResource(R.string.SubTitleRegistration1))
                 Spacer(modifier = Modifier.heightIn(30.dp))
                 NumberTextField(allowDecimal = false,textIcon = "CM",textState = state.height?.toString() ?: "", labelValue = stringResource(R.string.textField1RegisterScreen4),

@@ -47,12 +47,6 @@ fun RegistrationScreen5(navController: NavController, viewModel: RegisterViewMod
     AppTheme() {
         val focusManager = LocalFocusManager.current
         val state = viewModel.registerUIState
-        val difficultyOptions = listOf(
-            "I've had a lot of difficulties",
-            "I've had some difficulties",
-            "I've never had difficulties",
-            "I've never tried"
-        )
 
         Surface(modifier = Modifier
             .fillMaxSize()
@@ -71,7 +65,7 @@ fun RegistrationScreen5(navController: NavController, viewModel: RegisterViewMod
             ){
                 LeftTitleText(stringResource(R.string.titleRegistration3))
                 Spacer(modifier = Modifier.heightIn(20.dp))
-                StepIndicators(4)
+                StepIndicators(5)
                 LeftHeadingTextComponent(stringResource(R.string.SubTitleRegistration5))
                 Spacer(Modifier.weight(0.1f))
 

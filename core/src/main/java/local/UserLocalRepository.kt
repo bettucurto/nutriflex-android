@@ -133,5 +133,20 @@ class UserLocalRepository @Inject constructor(
         )
     }
 
+    @RequiresApi(Build.VERSION_CODES.O)
+    suspend fun addDailyMacrosEaten(userId: Int, protein: Double, carbs: Double, fat: Double) {
+        val user = userLocalDao.getUser() ?: return
+        val today = LocalDate.now().toString()
+
+        val newProtein = if (user.lastCaloriesResetDate == today)
+            user.eatenProteinToday + protein.toInt() else protein.toInt()
+        val newCarbs = if (user.lastCaloriesResetDate == today)
+            user.eatenCarbsToday + carbs.toInt() else carbs.toInt()
+        val newFat = if (user.lastCaloriesResetDate == today)
+            user.eatenFatToday + fat.toInt() else fat.toInt()
+
+        userLocalDao.updateDailyMacrosEaten(newProtein, newCarbs, newFat, today)
+    }
+
 
 }

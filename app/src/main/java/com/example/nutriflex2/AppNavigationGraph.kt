@@ -37,6 +37,8 @@ import com.example.nutriflex2.diet.detail.FoodDetailScreen
 import com.example.nutriflex2.diet.search.SearchMealsScreen
 import com.example.nutriflex2.home.account.AccountScreen
 import com.example.nutriflex2.home.ui.HomeScreen
+import com.example.nutriflex2.home.ui.HomeViewModel
+import com.example.nutriflex2.home.ui.tabs.diet.DietTabViewModel
 import kotlinx.coroutines.delay
 import ui.WelcomeScreen
 import ui.login.LoginScreen
@@ -80,7 +82,6 @@ fun AppNavGraph(navController: NavHostController) {
             )
         }
 
-        // Novo ecrã de Search Meals
         composable("searchMealsScreen") {
             SearchMealsScreen(
                 onBack = { navController.popBackStack() },
@@ -94,12 +95,28 @@ fun AppNavGraph(navController: NavHostController) {
             arguments = listOf(navArgument("foodId") { type = NavType.StringType })
         ) { backStackEntry ->
             val foodId = backStackEntry.arguments?.getString("foodId") ?: ""
+
+            val homeViewModel: HomeViewModel =
+                hiltViewModel(navController.getBackStackEntry("homeScreen"))
+            val dietVm: DietTabViewModel =
+                hiltViewModel(navController.getBackStackEntry("homeScreen"))
+
             FoodDetailScreen(
                 foodId = foodId,
                 onBack = { navController.popBackStack() },
-                onAddToMeal = { /* TODO: navigate to meals or show meal selector */ }
+                onAddToMeal = {
+                    homeViewModel.onMealLogged()
+                    dietVm.refreshFromLocal()
+                    navController.navigate("homeScreen") {
+                        popUpTo("homeScreen") { inclusive = true }
+                    }
+                }
             )
         }
+
+
+
+
 
         composable("accountScreen") {
             AccountScreen(
@@ -124,6 +141,13 @@ fun AppNavGraph(navController: NavHostController) {
                 }
                 val viewModel: RegisterViewModel = hiltViewModel(parentEntry)
                 RegistrationScreen1(navController, viewModel)
+            }
+            composable("registrationScreen6") { backStackEntry ->
+                val parentEntry = remember(backStackEntry) {
+                    navController.getBackStackEntry("registrationFlow")
+                }
+                val viewModel: RegisterViewModel = hiltViewModel(parentEntry)
+                RegistrationScreen6(navController, viewModel)
             }
             composable("registrationScreen2") { backStackEntry ->
                 val parentEntry = remember(backStackEntry) {
@@ -153,13 +177,7 @@ fun AppNavGraph(navController: NavHostController) {
                 val viewModel: RegisterViewModel = hiltViewModel(parentEntry)
                 RegistrationScreen5(navController, viewModel)
             }
-            composable("registrationScreen6") { backStackEntry ->
-                val parentEntry = remember(backStackEntry) {
-                    navController.getBackStackEntry("registrationFlow")
-                }
-                val viewModel: RegisterViewModel = hiltViewModel(parentEntry)
-                RegistrationScreen6(navController, viewModel)
-            }
+
         }
     }
 }
