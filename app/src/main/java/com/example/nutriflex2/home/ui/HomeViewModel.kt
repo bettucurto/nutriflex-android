@@ -1,23 +1,37 @@
 package com.example.nutriflex2.home.ui
 
 import android.os.Build
+import android.util.Log
 import androidx.annotation.RequiresApi
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import components.WeightHistoryPoint
 import components.WeightRange
 import dagger.hilt.android.lifecycle.HiltViewModel
+import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.receiveAsFlow
 import kotlinx.coroutines.launch
 import local.UserLocalRepository
+import remote.UserRepository
+import utils.calculateDailyCaloriesForWeightChange
+import utils.calculateMaintenanceCalories
+import utils.targetKgPerWeek
 import javax.inject.Inject
-
 
 data class HomeUiState(
     val dailyCalories: Int = 0,
     val eatenCaloriesToday: Int = 0,
+
+    val dailyCarbsGrams: Int = 0,
+    val dailyProteinGrams: Int = 0,
+    val dailyFatGrams: Int = 0,
+    val eatenProteinGrams: Int = 0,
+    val eatenCarbsGrams: Int = 0,
+    val eatenFatGrams: Int = 0,
+
     val nextWorkoutId: Int? = 1,
     val nextWorkoutName: String = "Superior",
     val nextWorkoutExercises: Int = 6,
@@ -43,7 +57,6 @@ data class HomeUiState(
         get() = if (bmi <= 0f) 0f
         else ((bmi.coerceIn(bmiMin, bmiMax) - bmiMin) / (bmiMax - bmiMin))
 
-    // semanas até ao objetivo usando mesma regra de kg/semana
     val weeklyProgressWeeks: Int?
         get() {
             val deltaKg = goalWeight - currentWeight
@@ -63,33 +76,63 @@ data class HomeUiState(
     val progress: Float
         get() = if (dailyCalories <= 0) 0f
         else (eatenCaloriesToday.toFloat() / dailyCalories.toFloat()).coerceIn(0f, 1f)
+
+    val remainingProtein: Int
+        get() = (dailyProteinGrams - eatenProteinGrams).coerceAtLeast(0)
+
+    val remainingCarbs: Int
+        get() = (dailyCarbsGrams - eatenCarbsGrams).coerceAtLeast(0)
+
+    val remainingFat: Int
+        get() = (dailyFatGrams - eatenFatGrams).coerceAtLeast(0)
+
+    val proteinProgress: Float
+        get() = if (dailyProteinGrams == 0) 0f
+        else (eatenProteinGrams.toFloat() / dailyProteinGrams.toFloat()).coerceIn(0f, 1f)
+
+    val carbsProgress: Float
+        get() = if (dailyCarbsGrams == 0) 0f
+        else (eatenCarbsGrams.toFloat() / dailyCarbsGrams.toFloat()).coerceIn(0f, 1f)
+
+    val fatProgress: Float
+        get() = if (dailyFatGrams == 0) 0f
+        else (eatenFatGrams.toFloat() / dailyFatGrams.toFloat()).coerceIn(0f, 1f)
 }
 
-// função top-level para poder ser usada no getter
-private fun targetKgPerWeek(deltaKg: Float): Float {
-    val absDelta = kotlin.math.abs(deltaKg)
-    return when {
-        absDelta < 7f   -> 0.33f
-        absDelta < 15f  -> 0.5f
-        else            -> 1.0f
-    }
+// Eventos de UI para toasts, etc.
+sealed class HomeUiEvent {
+    data class ShowToast(val message: String) : HomeUiEvent()
 }
 
 @HiltViewModel
 class HomeViewModel @Inject constructor(
-    private val userLocalRepository: UserLocalRepository
+    private val userLocalRepository: UserLocalRepository,
+    private val userRepository: UserRepository
 ) : ViewModel() {
 
     private val _uiState = MutableStateFlow(HomeUiState())
     val uiState: StateFlow<HomeUiState> = _uiState.asStateFlow()
 
+    // Canal de eventos one-shot (toasts, navegação, etc.)
+    private val _uiEvent = Channel<HomeUiEvent>(Channel.BUFFERED)
+    val uiEvent = _uiEvent.receiveAsFlow()
+
     init {
         viewModelScope.launch {
             val user = userLocalRepository.getUserLocal()
+            onMealLogged()
 
             _uiState.value = HomeUiState(
                 dailyCalories = user?.dailyCalories ?: 0,
                 eatenCaloriesToday = user?.eatenCaloriesToday ?: 0,
+
+                dailyCarbsGrams = user?.dailyCarbsGrams ?: 0,
+                dailyProteinGrams = user?.dailyProteinGrams ?: 0,
+                dailyFatGrams = user?.dailyFatGrams ?: 0,
+                eatenProteinGrams = user?.eatenProteinToday ?: 0,
+                eatenCarbsGrams = user?.eatenCarbsToday ?: 0,
+                eatenFatGrams = user?.eatenFatToday ?: 0,
+
                 nextWorkoutId = 1,
                 nextWorkoutName = "Superior",
                 nextWorkoutExercises = 6,
@@ -99,26 +142,19 @@ class HomeViewModel @Inject constructor(
             )
 
             if (user != null && Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
-                // se ainda não tiver histórico, semeia mock
                 val existing = userLocalRepository.getAllWeightHistory(user.userId)
                 if (existing.isEmpty()) {
                     userLocalRepository.seedMockWeightHistory(user.userId)
                 }
-                // agora carrega normalmente do Room
                 loadWeightHistory(WeightRange.ONE_MONTH)
             }
-
-            //APAGAR HISTORICO DE PESO DO ROOM E ADICIONAR MOCK
-//            if (user != null && Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
-//                userLocalRepository.clearWeightHistoryForUser(user.userId)
-//                userLocalRepository.seedMockWeightHistory(user.userId)
-//                loadWeightHistory(WeightRange.ONE_MONTH)
-//            }
         }
     }
 
-
-    fun onChangeCurrentWeight(newWeight: Float, currentRange: WeightRange) {
+    fun onChangeCurrentWeight(
+        newWeight: Float,
+        currentRange: WeightRange,
+    ) {
         viewModelScope.launch {
             val user = userLocalRepository.getUserLocal() ?: return@launch
             val heightCm = user.heightCm
@@ -127,10 +163,9 @@ class HomeViewModel @Inject constructor(
 
             val today = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
                 java.time.LocalDate.now().toString()
-            } else {
-                ""
-            }
+            } else { "" }
 
+            // 1) Atualiza local
             userLocalRepository.updateCurrentWeight(newWeight)
             userLocalRepository.updateBmi(newBmi)
             userLocalRepository.addWeightEntry(
@@ -149,13 +184,29 @@ class HomeViewModel @Inject constructor(
                     currentWeight = newWeight,
                     goalWeight = _uiState.value.goalWeight
                 )
-                // recarrega histórico para o range atual -> gráfico atualiza logo
                 loadWeightHistory(currentRange)
             }
+
+            // 2) Enviar progresso
+            val goalWeight = _uiState.value.goalWeight
+            val dailyCals = _uiState.value.dailyCalories
+
+            viewModelScope.launch {
+                userRepository.createProgress(
+                    idUser = user.userId,
+                    pesoAtual = newWeight,
+                    pesoMeta = goalWeight,
+                    caloriasDiarias = dailyCals
+                )
+            }
+
+            _uiEvent.send(HomeUiEvent.ShowToast("Current weight updated!"))
         }
     }
 
-    fun onChangeGoalWeight(newWeight: Float) {
+    fun onChangeGoalWeight(
+        newWeight: Float,
+    ) {
         viewModelScope.launch {
             val user = userLocalRepository.getUserLocal() ?: return@launch
 
@@ -168,32 +219,22 @@ class HomeViewModel @Inject constructor(
                     goalWeight = newWeight
                 )
             }
-        }
-    }
 
-    private fun calculateTmb(
-        gender: String,
-        weightKg: Float,
-        heightCm: Int,
-        age: Int
-    ): Float {
-        val isMale = gender == "M"
-        return if (isMale) {
-            10f * weightKg + 6.25f * heightCm - 5f * age + 5f
-        } else {
-            10f * weightKg + 6.25f * heightCm - 5f * age - 161f
-        }
-    }
+            // Enviar registo de progresso com novo objetivo
+            val currentWeight = _uiState.value.currentWeight
+            val dailyCals = _uiState.value.dailyCalories
 
-    private fun calculateGet(
-        gender: String,
-        weightKg: Float,
-        heightCm: Int,
-        age: Int
-    ): Float {
-        val tmb = calculateTmb(gender, weightKg, heightCm, age)
-        val activityFactor = 1.375f
-        return tmb * activityFactor
+            viewModelScope.launch {
+                userRepository.createProgress(
+                    idUser = user.userId,
+                    pesoAtual = currentWeight,
+                    pesoMeta = newWeight,
+                    caloriasDiarias = dailyCals
+                )
+            }
+
+            _uiEvent.send(HomeUiEvent.ShowToast("Goal weight updated!"))
+        }
     }
 
     @RequiresApi(Build.VERSION_CODES.O)
@@ -204,11 +245,11 @@ class HomeViewModel @Inject constructor(
         val user = userLocalRepository.getUserLocal() ?: return
 
         val heightCm = user.heightCm
-        val gender = user.gender
+        val gender = user.gender           // "M" ou "F"
         val birthDate = user.birthDate
+        val activityLevel = user.activityLevel ?: 0
 
-        val deltaKg = goalWeight - currentWeight
-        if (deltaKg == 0f) return
+        val isMale = gender == "M"
 
         val age = try {
             val (y, m, d) = birthDate.split("-").map { it.toInt() }
@@ -219,18 +260,19 @@ class HomeViewModel @Inject constructor(
             30
         }
 
-        val maintenance = calculateGet(gender, currentWeight, heightCm, age)
+        val maintenance = calculateMaintenanceCalories(
+            isMale = isMale,
+            weightKg = currentWeight,
+            heightCm = heightCm,
+            age = age,
+            activityLevel = activityLevel
+        )
 
-        val kgPerWeek = targetKgPerWeek(deltaKg)
-        val kcalPerKg = 7700f
-        val weeklyKcal = kgPerWeek * kcalPerKg
-        val dailyKcalChange = weeklyKcal / 7f
-
-        val newCalories = if (deltaKg < 0f) {
-            (maintenance - dailyKcalChange).toInt()
-        } else {
-            (maintenance + dailyKcalChange).toInt()
-        }
+        val newCalories = calculateDailyCaloriesForWeightChange(
+            maintenanceCalories = maintenance,
+            currentWeightKg = currentWeight,
+            goalWeightKg = goalWeight
+        )
 
         userLocalRepository.updateDailyCaloriesValue(newCalories)
 
@@ -238,6 +280,25 @@ class HomeViewModel @Inject constructor(
             dailyCalories = newCalories
         )
     }
+
+    fun onMealLogged() {
+        viewModelScope.launch {
+            Log.d("HomeViewModel", "onMealLogged called")
+            _uiEvent.send(HomeUiEvent.ShowToast("Meal Logged Successfully!"))
+            val user = userLocalRepository.getUserLocal() ?: return@launch
+            _uiState.value = _uiState.value.copy(
+                dailyCalories = user.dailyCalories,
+                eatenCaloriesToday = user.eatenCaloriesToday,
+                dailyCarbsGrams = user.dailyCarbsGrams,
+                dailyProteinGrams = user.dailyProteinGrams,
+                dailyFatGrams = user.dailyFatGrams,
+                eatenProteinGrams = user.eatenProteinToday,
+                eatenCarbsGrams = user.eatenCarbsToday,
+                eatenFatGrams = user.eatenFatToday
+            )
+        }
+    }
+
 
     @RequiresApi(Build.VERSION_CODES.O)
     fun loadWeightHistory(range: WeightRange) {
@@ -264,6 +325,4 @@ class HomeViewModel @Inject constructor(
             )
         }
     }
-
-
 }

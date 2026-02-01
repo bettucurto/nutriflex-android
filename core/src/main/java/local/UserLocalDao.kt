@@ -4,6 +4,7 @@ import androidx.room.Dao
 import androidx.room.Insert
 import androidx.room.OnConflictStrategy
 import androidx.room.Query
+import local.tables.UserLocal
 
 @Dao
 interface UserLocalDao {
@@ -31,5 +32,22 @@ interface UserLocalDao {
 
     @Query("UPDATE user_local SET dailyCalories = :calories")
     suspend fun updateDailyCaloriesValue(calories: Int)
+
+    @Query(
+        """
+        UPDATE user_local
+        SET dailyCarbsGrams = :carbs,
+            dailyProteinGrams = :protein,
+            dailyFatGrams = :fat
+        """
+    )
+    suspend fun updateDailyMacros(
+        carbs: Int,
+        protein: Int,
+        fat: Int
+    )
+
+    @Query("UPDATE user_local SET eatenProteinToday = :protein, eatenCarbsToday = :carbs, eatenFatToday = :fat, lastCaloriesResetDate = :date WHERE lastCaloriesResetDate = :date OR 1=1")
+    suspend fun updateDailyMacrosEaten(protein: Int, carbs: Int, fat: Int, date: String)
 
 }

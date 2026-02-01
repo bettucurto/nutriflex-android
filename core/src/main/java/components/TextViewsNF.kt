@@ -57,7 +57,7 @@ fun LeftTitleText(value: String, modifier: Modifier = Modifier, textSize: TextUn
 fun HeadingTextComponent(value: String, modifier: Modifier = Modifier, textSize: TextUnit = 24.sp, textColor: Color = colorScheme.secondary) {
     Text(
         text = value,
-        modifier = modifier.fillMaxWidth().heightIn(min = 40.dp),
+        modifier = modifier.fillMaxWidth(),
         style = TextStyle(
             fontSize = textSize,
             fontWeight = FontWeight.Normal,

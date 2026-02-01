@@ -3,12 +3,15 @@ package local
 
 import android.os.Build
 import androidx.annotation.RequiresApi
+import local.tables.UserLocal
+import local.tables.WeightHistory
+import utils.calculateDailyMacros
 import java.time.LocalDate
 import javax.inject.Inject
 
 class UserLocalRepository @Inject constructor(
     private val userLocalDao: UserLocalDao,
-    private val weightHistoryDao: WeightHistoryDao
+    private val weightHistoryDao: WeightHistoryDao,
 ) {
 
     suspend fun saveUserLocal(
@@ -20,13 +23,16 @@ class UserLocalRepository @Inject constructor(
         heightCm: Int,
         dailyCalories: Int,
         gender: String,
-        birthDate: String
+        birthDate: String,
+        activityLevel: Int
     ) {
         val today = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
             LocalDate.now().toString()
         } else {
             ""
         }
+
+        val macros = calculateDailyMacros(dailyCalories)
 
         val user = UserLocal(
             userId = userId,
@@ -39,7 +45,11 @@ class UserLocalRepository @Inject constructor(
             heightCm = heightCm,
             lastCaloriesResetDate = today,
             gender = gender,
-            birthDate = birthDate
+            birthDate = birthDate,
+            dailyCarbsGrams = macros.carbsGrams,
+            dailyProteinGrams = macros.proteinGrams,
+            dailyFatGrams = macros.fatGrams,
+            activityLevel = activityLevel
         )
         userLocalDao.upsert(user)
     }
@@ -53,6 +63,7 @@ class UserLocalRepository @Inject constructor(
     suspend fun updateGoalWeight(weight: Float) {
         userLocalDao.updateGoalWeight(weight)
     }
+
     suspend fun updateBmi(bmi: Float) {
         userLocalDao.updateBmi(bmi)
     }
@@ -96,7 +107,6 @@ class UserLocalRepository @Inject constructor(
             val date = today.minusWeeks(weekOffset.toLong()).toString() // uma data por semana
 
             val base = 75f
-            // pequena variação semanal só para o gráfico não ser plano
             val variation = ((weekOffset % 5) - 2) * 0.5f
 
             WeightHistory(
@@ -104,7 +114,7 @@ class UserLocalRepository @Inject constructor(
                 date = date,
                 weight = base + variation
             )
-        }.reversed() // mais antigo -> mais recente
+        }.reversed()
 
         entries.forEach { weightHistoryDao.insert(it) }
     }
@@ -115,5 +125,28 @@ class UserLocalRepository @Inject constructor(
 
     suspend fun updateDailyCaloriesValue(calories: Int) {
         userLocalDao.updateDailyCaloriesValue(calories)
+        val macros = calculateDailyMacros(calories)
+        userLocalDao.updateDailyMacros(
+            carbs = macros.carbsGrams,
+            protein = macros.proteinGrams,
+            fat = macros.fatGrams
+        )
     }
+
+    @RequiresApi(Build.VERSION_CODES.O)
+    suspend fun addDailyMacrosEaten(userId: Int, protein: Double, carbs: Double, fat: Double) {
+        val user = userLocalDao.getUser() ?: return
+        val today = LocalDate.now().toString()
+
+        val newProtein = if (user.lastCaloriesResetDate == today)
+            user.eatenProteinToday + protein.toInt() else protein.toInt()
+        val newCarbs = if (user.lastCaloriesResetDate == today)
+            user.eatenCarbsToday + carbs.toInt() else carbs.toInt()
+        val newFat = if (user.lastCaloriesResetDate == today)
+            user.eatenFatToday + fat.toInt() else fat.toInt()
+
+        userLocalDao.updateDailyMacrosEaten(newProtein, newCarbs, newFat, today)
+    }
+
+
 }

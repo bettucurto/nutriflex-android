@@ -2,7 +2,6 @@ package data.repository
 
 import android.util.Log
 import com.google.gson.Gson
-import data.model.ErrorResponse
 import data.model.LoginRequest
 import data.model.LoginResponse
 import data.model.RegisterRequest
@@ -10,6 +9,7 @@ import data.model.RegisterResponse
 import data.model.UserWithProgressDto
 import data.remote.AuthApiService
 import datastore.TokenManager
+import model.ErrorResponse
 import javax.inject.Inject
 
 class AuthRepository @Inject constructor(
@@ -32,10 +32,10 @@ class AuthRepository @Inject constructor(
                         val error = Gson().fromJson(errorBody, ErrorResponse::class.java)
                         error.error
                     } catch (e: Exception) {
-                        "Erro no login (${response.code()})"
+                        "Error on login (${response.code()})"
                     }
                 } else {
-                    "Erro no login (${response.code()})"
+                    "Error on login (${response.code()})"
                 }
                 Result.failure(Exception(message))
             }
@@ -46,7 +46,7 @@ class AuthRepository @Inject constructor(
 
     suspend fun register(request: RegisterRequest): Result<RegisterResponse> {
         return try {
-            Log.d("Register", "request objetivo=${request.objetivo}, dificuldade=${request.dificuldades_anteriores}")
+            Log.d("Register", "request objetivo=${request.objetivo}, dificuldade=${request.dificuldades_anteriores}, password= ${request.password}")
             val response = api.register(request)
             if (response.isSuccessful && response.body() != null) {
                 val body = response.body()!!
@@ -60,10 +60,10 @@ class AuthRepository @Inject constructor(
                         val error = Gson().fromJson(errorBody, ErrorResponse::class.java)
                         error.error
                     } catch (e: Exception) {
-                        "Erro no registo (${response.code()})"
+                        "Error on registration (${response.code()})"
                     }
                 } else {
-                    "Erro no registo (${response.code()})"
+                    "Error on registration (${response.code()})"
                 }
                 Result.failure(Exception(message))
             }
@@ -84,10 +84,10 @@ class AuthRepository @Inject constructor(
                         val error = Gson().fromJson(errorBody, ErrorResponse::class.java)
                         error.error
                     } catch (e: Exception) {
-                        "Erro ao obter utilizador (${response.code()})"
+                        "Error on getting user (${response.code()})"
                     }
                 } else {
-                    "Erro ao obter utilizador (${response.code()})"
+                    "Error on getting user (${response.code()})"
                 }
                 Result.failure(Exception(message))
             }

@@ -102,7 +102,8 @@ class LoginViewModel @Inject constructor(
                                 heightCm = userDto.altura,
                                 dailyCalories = dailyCalories,
                                 gender = userDto.genero,           // ou mapear para "M"/"F"
-                                birthDate = userDto.data_nascenca
+                                birthDate = userDto.data_nascenca,
+                                activityLevel = userDto.nivel_atividade
                             )
                         }
                         .onFailure {

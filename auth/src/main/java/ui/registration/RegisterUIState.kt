@@ -26,6 +26,9 @@ data class RegisterUIState (
     val weightGoalError: String? = null,
     val autoWeightGoal: Boolean = false,
     val isStep4Valid: Boolean = false,
-    val registerError: String? = null
-)
+    val registerError: String? = null,
+    val activityLevel: Int? = null,
+    val activityLevelError: String? = null,
+
+    )
 

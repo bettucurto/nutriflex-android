@@ -28,10 +28,17 @@ import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.navigation.NavBackStackEntry
 import androidx.navigation.NavController
 import androidx.navigation.NavHostController
+import androidx.navigation.NavType
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.navigation
+import androidx.navigation.navArgument
+import com.example.nutriflex2.diet.detail.FoodDetailScreen
+import com.example.nutriflex2.diet.search.SearchMealsScreen
+import com.example.nutriflex2.home.account.AccountScreen
 import com.example.nutriflex2.home.ui.HomeScreen
+import com.example.nutriflex2.home.ui.HomeViewModel
+import com.example.nutriflex2.home.ui.tabs.diet.DietTabViewModel
 import kotlinx.coroutines.delay
 import ui.WelcomeScreen
 import ui.login.LoginScreen
@@ -41,15 +48,18 @@ import ui.registration.RegistrationScreen2
 import ui.registration.RegistrationScreen3
 import ui.registration.RegistrationScreen4
 import ui.registration.RegistrationScreen5
+import ui.registration.RegistrationScreen6
 
 private fun screenOrder(route: String?): Int = when (route) {
     "welcomeScreen" -> 0
     "loginScreen" -> 1
     "registrationScreen1" -> 2
-    "registrationScreen2" -> 3
-    "registrationScreen3" -> 4
-    "registrationScreen4" -> 5
-    "registrationScreen5" -> 6
+    "registrationScreen6" -> 3
+    "registrationScreen2" -> 4
+    "registrationScreen3" -> 5
+    "registrationScreen4" -> 6
+    "registrationScreen5" -> 7
+
     else -> -1   // splash ou desconhecido
 }
 @RequiresApi(Build.VERSION_CODES.O)
@@ -64,22 +74,80 @@ fun AppNavGraph(navController: NavHostController) {
         composable("splashScreen") { SplashScreen(navController) }
         composable("welcomeScreen") { WelcomeScreen(navController) }
         composable("loginScreen") { LoginScreen(navController) }
-        composable("homeScreen") {HomeScreen(
-            onNavigateToTreino = { /* navController.navigate(...) */ },
-            onNavigateToDieta = { /* ... */ },
-            onAddCaloriesClick = {navController.navigate("loginScreen")}
-        )}
+        composable("homeScreen") {
+            HomeScreen(
+                onNavigateToTreino = { /* ... */ },
+                onNavigateToSearchMeals = { navController.navigate("searchMealsScreen") },
+                onNavigateToAccount = { navController.navigate("accountScreen") }
+            )
+        }
+
+        composable("searchMealsScreen") {
+            SearchMealsScreen(
+                onBack = { navController.popBackStack() },
+                onOpenFavorites = { /* TODO: navegar para ecrã de favoritos */ },
+                onOpenPhoto = { /* TODO: navegar para captura de foto */ },
+                navController = navController,
+            )
+        }
+        composable(
+            "foodDetail/{foodId}",
+            arguments = listOf(navArgument("foodId") { type = NavType.StringType })
+        ) { backStackEntry ->
+            val foodId = backStackEntry.arguments?.getString("foodId") ?: ""
+
+            val homeViewModel: HomeViewModel =
+                hiltViewModel(navController.getBackStackEntry("homeScreen"))
+            val dietVm: DietTabViewModel =
+                hiltViewModel(navController.getBackStackEntry("homeScreen"))
+
+            FoodDetailScreen(
+                foodId = foodId,
+                onBack = { navController.popBackStack() },
+                onAddToMeal = {
+                    homeViewModel.onMealLogged()
+                    dietVm.refreshFromLocal()
+                    navController.navigate("homeScreen") {
+                        popUpTo("homeScreen") { inclusive = true }
+                    }
+                }
+            )
+        }
+
+
+
+
+
+        composable("accountScreen") {
+            AccountScreen(
+                onBack = { navController.navigate("homeScreen")},
+                onLogout = {
+                    // por exemplo: limpar token e voltar ao login/welcome
+                    navController.navigate("welcomeScreen") {
+                        popUpTo("homeScreen") { inclusive = true }
+                    }
+                }
+            )
+        }
 
         navigation(
             startDestination = "registrationScreen1",
             route = "registrationFlow"
         ) {
+
             composable("registrationScreen1") { backStackEntry ->
                 val parentEntry = remember(backStackEntry) {
                     navController.getBackStackEntry("registrationFlow")
                 }
                 val viewModel: RegisterViewModel = hiltViewModel(parentEntry)
                 RegistrationScreen1(navController, viewModel)
+            }
+            composable("registrationScreen6") { backStackEntry ->
+                val parentEntry = remember(backStackEntry) {
+                    navController.getBackStackEntry("registrationFlow")
+                }
+                val viewModel: RegisterViewModel = hiltViewModel(parentEntry)
+                RegistrationScreen6(navController, viewModel)
             }
             composable("registrationScreen2") { backStackEntry ->
                 val parentEntry = remember(backStackEntry) {
@@ -109,6 +177,7 @@ fun AppNavGraph(navController: NavHostController) {
                 val viewModel: RegisterViewModel = hiltViewModel(parentEntry)
                 RegistrationScreen5(navController, viewModel)
             }
+
         }
     }
 }

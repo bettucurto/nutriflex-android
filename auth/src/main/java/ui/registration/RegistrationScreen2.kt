@@ -60,7 +60,7 @@ fun RegistrationScreen2(navController: NavController, viewModel: RegisterViewMod
             ){
                 LeftTitleText(stringResource(R.string.titleRegistration2))
                 Spacer(modifier = Modifier.heightIn(20.dp))
-                StepIndicators(1)
+                StepIndicators(2)
                 LeftHeadingTextComponent(stringResource(R.string.SubTitleRegistration2))
                 Spacer(Modifier.weight(0.3f))
 

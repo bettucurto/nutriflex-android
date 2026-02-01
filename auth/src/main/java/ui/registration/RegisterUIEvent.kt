@@ -26,6 +26,8 @@ sealed class RegisterUIEvent {
 
     data class RegisterPasswordChanged(val password:String) : RegisterUIEvent()
 
+    data class RegisterActivityChanged(val activityLevel: Int): RegisterUIEvent()
+
     object NextClickedStep1 : RegisterUIEvent()
 
     object NextClickedStep2 : RegisterUIEvent()
@@ -35,5 +37,8 @@ sealed class RegisterUIEvent {
     object NextClickedStep4 : RegisterUIEvent()
 
     object NextClickedStep5 : RegisterUIEvent()
+
+    object NextClickedStep6 : RegisterUIEvent()
+
 
 }

@@ -7,6 +7,7 @@ data class UserWithProgressDto(
     val altura: Int,
     val genero: String,
     val data_nascenca: String,
+    val nivel_atividade: Int,
     val progress: UserProgressDto?
 )
 

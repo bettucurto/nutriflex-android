@@ -12,5 +12,6 @@ data class RegisterRequest(
     val peso_meta: Float,
     val calorias_diarias: Int,
     val dificuldades_anteriores: Int?,  // 0..3 ou null
-    val objetivo: Int?                  // 0..2 ou null
+    val objetivo: Int?,                  // 0..2 ou null
+    val nivel_atividade: Int?
 )
