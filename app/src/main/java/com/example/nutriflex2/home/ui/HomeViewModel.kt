@@ -118,6 +118,8 @@ class HomeViewModel @Inject constructor(
     val uiEvent = _uiEvent.receiveAsFlow()
 
     init {
+        checkAndResetDailyCaloriesAndMacros()
+
         viewModelScope.launch {
             val user = userLocalRepository.getUserLocal()
             onMealLogged()
@@ -297,6 +299,13 @@ class HomeViewModel @Inject constructor(
             )
         }
     }
+
+    fun checkAndResetDailyCaloriesAndMacros() {
+        viewModelScope.launch {
+            userLocalRepository.checkAndResetDailyCaloriesAndMacros()
+        }
+    }
+
 
 
     @RequiresApi(Build.VERSION_CODES.O)

@@ -80,17 +80,3 @@ fun WelcomeScreen(navController: NavController) {
 }
 
 
-//@Composable
-//fun GradienteCircular() {
-//    AppTheme() {
-//        val gradient = Brush.radialGradient(
-//            0.4f to colorScheme.onPrimary,
-//            1.0f to colorScheme.primary,
-//            1.0f to colorScheme.secondary,
-//            //center = Offset( 550.0f,  1050.0f),
-//            radius = 1500.0f,
-//            tileMode = TileMode.Repeated
-//        )
-//        Box(modifier = Modifier.background(gradient))
-//    }
-//}

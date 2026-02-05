@@ -39,6 +39,7 @@ import com.example.nutriflex2.home.account.AccountScreen
 import com.example.nutriflex2.home.ui.HomeScreen
 import com.example.nutriflex2.home.ui.HomeViewModel
 import com.example.nutriflex2.home.ui.tabs.diet.DietTabViewModel
+import com.example.nutriflex2.home.ui.tabs.diet.search.recipes.SearchRecipeScreen
 import kotlinx.coroutines.delay
 import ui.WelcomeScreen
 import ui.login.LoginScreen
@@ -78,6 +79,7 @@ fun AppNavGraph(navController: NavHostController) {
             HomeScreen(
                 onNavigateToTreino = { /* ... */ },
                 onNavigateToSearchMeals = { navController.navigate("searchMealsScreen") },
+                onNavigateToSearchRecipes = { navController.navigate("searchRecipeScreen") },
                 onNavigateToAccount = { navController.navigate("accountScreen") }
             )
         }
@@ -90,16 +92,31 @@ fun AppNavGraph(navController: NavHostController) {
                 navController = navController,
             )
         }
+
+        composable("searchRecipeScreen") {
+            SearchRecipeScreen(
+                onBack = { navController.popBackStack() },
+                onOpenFavorites = { /* TODO: navegar para ecrã de favoritos */ },
+                onOpenPhoto = { /* TODO: navegar para captura de foto */ },
+                navController = navController,
+            )
+        }
+
         composable(
-            "foodDetail/{foodId}",
-            arguments = listOf(navArgument("foodId") { type = NavType.StringType })
+            route = "foodDetail/{foodId}",
+            arguments = listOf(
+                navArgument("foodId") { type = NavType.StringType }
+            )
         ) { backStackEntry ->
             val foodId = backStackEntry.arguments?.getString("foodId") ?: ""
 
-            val homeViewModel: HomeViewModel =
-                hiltViewModel(navController.getBackStackEntry("homeScreen"))
-            val dietVm: DietTabViewModel =
-                hiltViewModel(navController.getBackStackEntry("homeScreen"))
+            // Memoiza o backStackEntry do homeScreen para cumprir a regra do lint
+            val homeEntry = remember(backStackEntry) {
+                navController.getBackStackEntry("homeScreen")
+            }
+
+            val homeViewModel: HomeViewModel = hiltViewModel(homeEntry)
+            val dietVm: DietTabViewModel = hiltViewModel(homeEntry)
 
             FoodDetailScreen(
                 foodId = foodId,
@@ -113,9 +130,6 @@ fun AppNavGraph(navController: NavHostController) {
                 }
             )
         }
-
-
-
 
 
         composable("accountScreen") {

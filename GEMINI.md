@@ -32,7 +32,7 @@ The backend is a Node.js server using the Express.js framework.
 
 *   User authentication (registration and login) with JWT.
 *   API endpoints for managing users, workouts, and meals.
-*   Integration with TensorFlow.js for machine learning features.
+*   Integration with `nutrifoods`, a custom-trained AI for food identification. In the future, a second AI will be integrated to work in tandem with `nutrifoods`, allowing for the direct extraction of macronutrient information from an image.
 *   Fuzzy search with Fuse.js.
 *   Google Translate integration.
 

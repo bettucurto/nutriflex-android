@@ -41,13 +41,13 @@ interface UserLocalDao {
             dailyFatGrams = :fat
         """
     )
-    suspend fun updateDailyMacros(
+    suspend fun updateDailyMacrosValue(
         carbs: Int,
         protein: Int,
         fat: Int
     )
 
     @Query("UPDATE user_local SET eatenProteinToday = :protein, eatenCarbsToday = :carbs, eatenFatToday = :fat, lastCaloriesResetDate = :date WHERE lastCaloriesResetDate = :date OR 1=1")
-    suspend fun updateDailyMacrosEaten(protein: Int, carbs: Int, fat: Int, date: String)
+    suspend fun updateDailyMacros(protein: Int, carbs: Int, fat: Int, date: String)
 
 }

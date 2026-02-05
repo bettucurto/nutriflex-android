@@ -182,14 +182,11 @@ class FoodDetailViewModel @Inject constructor(
         carbs: Double,
         fat: Double
     ) {
-        val user = userLocalRepository.getUserLocal() ?: return
-
         // Soma calorias do dia
         userLocalRepository.addCaloriesEaten(calories.toInt())
 
         // Soma macros do dia
         userLocalRepository.addDailyMacrosEaten(
-            userId = user.userId,
             protein = protein,
             carbs = carbs,
             fat = fat

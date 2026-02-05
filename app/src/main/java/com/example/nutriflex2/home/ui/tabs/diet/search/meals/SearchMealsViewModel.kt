@@ -4,6 +4,7 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.example.dieta.domain.DietaRepository
 import com.example.dieta.domain.FatSecretFood
+import components.CalorieRangeFilter
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.delay
@@ -12,10 +13,6 @@ import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.launch
 import javax.inject.Inject
-
-enum class CalorieRangeFilter {
-    NONE, UNDER_100, FROM_100_TO_250, FROM_250_TO_500, OVER_500
-}
 
 data class SearchMealsUiState(
     val query: String = "",

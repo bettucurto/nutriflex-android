@@ -141,6 +141,7 @@ class DietaRepository @Inject constructor(
     ): FatSecretRecipeSearchResult =
         remote.searchReceitasFatSecret(query, maxResults, page, type, calories).toDomain()
 
+
     suspend fun getRecipeDetails(id: String): FatSecretRecipe =
         remote.getReceitaById(id).toDomain()
 }

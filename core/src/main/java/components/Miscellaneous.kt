@@ -248,6 +248,8 @@ fun CaloriesCard(
     progress: Float,
     onAddClick: () -> Unit
 ) {
+    val cardShape = RoundedCornerShape(32.dp)
+
     val animatedProgress by animateFloatAsState(
         targetValue = progress.coerceIn(0f, 1f),
         animationSpec = ProgressIndicatorDefaults.ProgressAnimationSpec,
@@ -256,12 +258,11 @@ fun CaloriesCard(
 
     Box(
         modifier = Modifier
-            .padding(top = 16.dp)
-            .fillMaxWidth(0.85f)
+            .fillMaxWidth(0.95f)
             .height(200.dp)
     ) {
         Surface(
-            shape = MaterialTheme.shapes.large,
+            shape = cardShape,
             tonalElevation = 2.dp,
             shadowElevation = 8.dp,
             border = BorderStroke(
@@ -276,7 +277,7 @@ fun CaloriesCard(
             modifier = Modifier.matchParentSize()
                 .shadow(
                     elevation = 8.dp,
-                    shape = MaterialTheme.shapes.large,
+                    shape = cardShape,
                     ambientColor = MaterialTheme.colorScheme.primary,
                     spotColor = MaterialTheme.colorScheme.primary
                 )
@@ -330,7 +331,7 @@ fun CaloriesCard(
             color = colorScheme.primary,
             modifier = Modifier
                 .align(Alignment.BottomEnd)
-                .offset(x = 20.dp, y = 20.dp)
+                .offset(x = 0.dp, y = 20.dp)
                 .size(70.dp)
         ) {
             IconButton(onClick = onAddClick) {
@@ -433,6 +434,8 @@ fun DietCaloriesCard(
     fatProgress: Float,
     onAddClick: () -> Unit
 ) {
+    val cardShape = RoundedCornerShape(32.dp)
+
     val animatedCaloriesProgress by animateFloatAsState(
         targetValue = caloriesProgress.coerceIn(0f, 1f),
         animationSpec = ProgressIndicatorDefaults.ProgressAnimationSpec,
@@ -443,11 +446,11 @@ fun DietCaloriesCard(
 
     Box(
         modifier = Modifier
-            .fillMaxWidth(0.92f)
+            .fillMaxWidth(0.95f)
             .height(450.dp) // ajusta a altura se precisares de mais espaço
     ) {
         Surface(
-            shape = MaterialTheme.shapes.large,
+            shape = cardShape,
             tonalElevation = 2.dp,
             shadowElevation = 0.dp,
             color = colorScheme.surface,
@@ -464,7 +467,7 @@ fun DietCaloriesCard(
                 .padding(vertical = 6.dp)
                 .shadow(
                     elevation = 8.dp,
-                    shape = MaterialTheme.shapes.large,
+                    shape = cardShape,
                     ambientColor = MaterialTheme.colorScheme.primary,
                     spotColor = MaterialTheme.colorScheme.primary
                 )
@@ -582,8 +585,10 @@ fun NextWorkoutCard(
     exerciseCount: Int,
     onStartClick: () -> Unit
 ) {
+    val cardShape = RoundedCornerShape(32.dp)
+
     Surface(
-        shape = MaterialTheme.shapes.large,
+        shape = cardShape,
         tonalElevation = 2.dp,
         shadowElevation = 0.dp,
         border = BorderStroke(
@@ -596,12 +601,11 @@ fun NextWorkoutCard(
             )
         ),
         modifier = Modifier
-            .padding(top = 30.dp)
-            .fillMaxWidth(0.85f)
+            .fillMaxWidth(0.95f)
             .height(200.dp)
             .shadow(
                 elevation = 8.dp,
-                shape = MaterialTheme.shapes.large,
+                shape = cardShape,
                 ambientColor = MaterialTheme.colorScheme.primary,
                 spotColor = MaterialTheme.colorScheme.primary
             )
@@ -646,8 +650,7 @@ fun WeightsCardRow(
     Row(
         horizontalArrangement = Arrangement.spacedBy(8.dp),
         modifier = Modifier
-            .padding(top = 24.dp)
-            .fillMaxWidth(0.85f)
+            .fillMaxWidth(0.95f)
     ) {
         Column(
             modifier = Modifier.weight(1f),
@@ -712,8 +715,10 @@ private fun SingleWeightCard(
     onClick: () -> Unit,
     modifier: Modifier = Modifier
 ) {
+    val cardShape = RoundedCornerShape(32.dp)
+
     Surface(
-        shape = MaterialTheme.shapes.large,
+        shape = cardShape,
         tonalElevation = 2.dp,
         shadowElevation = 8.dp,
         border = BorderStroke(
@@ -728,7 +733,7 @@ private fun SingleWeightCard(
         modifier = modifier.height(140.dp)
             .shadow(
                 elevation = 8.dp,
-                shape = MaterialTheme.shapes.large,
+                shape = cardShape,
                 ambientColor = MaterialTheme.colorScheme.primary,
                 spotColor = MaterialTheme.colorScheme.primary
             )
@@ -817,8 +822,9 @@ fun WeightForecastCard(
     weeks: Int?,
     goalWeight: Float
 ) {
+    val cardShape = RoundedCornerShape(32.dp)
     Surface(
-        shape = MaterialTheme.shapes.large,
+        shape = cardShape,
         tonalElevation = 2.dp,
         shadowElevation = 0.dp,
         border = BorderStroke(
@@ -831,11 +837,10 @@ fun WeightForecastCard(
             )
         ),
         modifier = Modifier
-            .padding(top = 24.dp)
-            .fillMaxWidth(0.85f)
+            .fillMaxWidth(0.95f)
             .shadow(
                 elevation = 8.dp,
-                shape = MaterialTheme.shapes.large,
+                shape = cardShape,
                 ambientColor = MaterialTheme.colorScheme.primary,
                 spotColor = MaterialTheme.colorScheme.primary
             )
@@ -869,17 +874,20 @@ fun WeightForecastCard(
     }
 }
 
+@OptIn(ExperimentalMaterial3ExpressiveApi::class)
 @Composable
 fun BmiCard(
     bmi: Float,
     category: String
 ) {
+    val cardShape = RoundedCornerShape(32.dp)
+
     Surface(
-        shape = MaterialTheme.shapes.large,
+        shape = cardShape,
         tonalElevation = 2.dp,
         shadowElevation = 0.dp,
         border = BorderStroke(
-            width = 2.dp,
+            width = 4.dp,
             brush = Brush.linearGradient(
                 colors = listOf(
                     colorScheme.primary,
@@ -888,11 +896,10 @@ fun BmiCard(
             )
         ),
         modifier = Modifier
-            .padding(top = 24.dp, bottom = 32.dp)
-            .fillMaxWidth(0.85f)
+            .fillMaxWidth(0.95f)
             .shadow(
                 elevation = 8.dp,
-                shape = MaterialTheme.shapes.large,
+                shape = cardShape,
                 ambientColor = MaterialTheme.colorScheme.primary,
                 spotColor = MaterialTheme.colorScheme.primary
             )
@@ -900,14 +907,15 @@ fun BmiCard(
         Column(
             modifier = Modifier
                 .padding(16.dp)
-                .fillMaxWidth()
+                .fillMaxWidth(),
+
         ) {
             LeftTitleText("Your BMI", textSize = 18.sp)
 
             Spacer(Modifier.height(8.dp))
 
             Surface(
-                shape = MaterialTheme.shapes.medium,
+                shape = MaterialTheme.shapes.extraExtraLarge,
                 border = BorderStroke(1.dp, colorScheme.outline),
                 modifier = Modifier.fillMaxWidth()
             ) {
@@ -1557,11 +1565,13 @@ fun WeightProgressCard(
     onRangeChange: (WeightRange) -> Unit,
     modifier: Modifier = Modifier
 ) {
+    val cardShape = RoundedCornerShape(32.dp)
+
     val pointCount = history.size
     var clearSelectionSignal by remember { mutableStateOf(0) }
 
     Surface(
-        shape = MaterialTheme.shapes.large,
+        shape = cardShape,
         tonalElevation = 2.dp,
         shadowElevation = 0.dp,
         border = BorderStroke(
@@ -1574,11 +1584,10 @@ fun WeightProgressCard(
             )
         ),
         modifier = modifier
-            .padding(top = 24.dp)
-            .fillMaxWidth(0.85f)
+            .fillMaxWidth(0.95f)
             .shadow(
                 elevation = 8.dp,
-                shape = MaterialTheme.shapes.large,
+                shape = cardShape,
                 ambientColor = MaterialTheme.colorScheme.primary,
                 spotColor = MaterialTheme.colorScheme.primary
             )

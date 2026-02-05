@@ -33,6 +33,7 @@ import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
@@ -44,6 +45,7 @@ import kotlinx.coroutines.launch
 @Composable
 fun DietTabScreen(
     onNavigateToSearchMeals: () -> Unit,
+    onNavigateToSearchRecipes: () -> Unit,
     viewModel: DietTabViewModel = hiltViewModel(),
 ) {
     val state by viewModel.uiState.collectAsState()
@@ -54,7 +56,7 @@ fun DietTabScreen(
 
     Surface(
         modifier = Modifier.fillMaxSize(),
-        color = colorScheme.background
+        color = Color.Transparent
     ) {
         Column(
             modifier = Modifier
@@ -103,7 +105,11 @@ fun DietTabScreen(
                     scope.launch { sheetState.hide() }
                     onNavigateToSearchMeals()
                 },
-                onSearchRecipesClick = { /* TODO */ }
+                onSearchRecipesClick = {
+                    showSheet = false
+                    scope.launch { sheetState.hide() }
+                    onNavigateToSearchRecipes()
+                }
             )
         }
     }

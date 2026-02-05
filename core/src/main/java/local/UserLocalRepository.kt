@@ -68,15 +68,7 @@ class UserLocalRepository @Inject constructor(
         userLocalDao.updateBmi(bmi)
     }
 
-    @RequiresApi(Build.VERSION_CODES.O)
-    suspend fun addCaloriesEaten(calories: Int) {
-        val user = userLocalDao.getUser() ?: return
-        val today = java.time.LocalDate.now().toString()
-        val newTotal =
-            if (user.lastCaloriesResetDate == today) user.eatenCaloriesToday + calories
-            else calories
-        userLocalDao.updateDailyCalories(newTotal, today)
-    }
+
 
     suspend fun clear() = userLocalDao.clear()
 
@@ -127,7 +119,7 @@ class UserLocalRepository @Inject constructor(
     suspend fun updateDailyCaloriesValue(calories: Int) {
         userLocalDao.updateDailyCaloriesValue(calories)
         val macros = calculateDailyMacros(calories)
-        userLocalDao.updateDailyMacros(
+        userLocalDao.updateDailyMacrosValue(
             carbs = macros.carbsGrams,
             protein = macros.proteinGrams,
             fat = macros.fatGrams
@@ -135,18 +127,36 @@ class UserLocalRepository @Inject constructor(
     }
 
     @RequiresApi(Build.VERSION_CODES.O)
-    suspend fun addDailyMacrosEaten(userId: Int, protein: Double, carbs: Double, fat: Double) {
+    suspend fun checkAndResetDailyCaloriesAndMacros() {
+        val today = LocalDate.now().toString()
+        val user = userLocalDao.getUser() ?: return
+        if (user.lastCaloriesResetDate != today) {
+            userLocalDao.updateDailyCalories(0, today)
+            userLocalDao.updateDailyMacros(0, 0, 0, today)
+        }
+    }
+
+    @RequiresApi(Build.VERSION_CODES.O)
+    suspend fun addCaloriesEaten(calories: Int) {
+        checkAndResetDailyCaloriesAndMacros()
         val user = userLocalDao.getUser() ?: return
         val today = LocalDate.now().toString()
 
-        val newProtein = if (user.lastCaloriesResetDate == today)
-            user.eatenProteinToday + protein.toInt() else protein.toInt()
-        val newCarbs = if (user.lastCaloriesResetDate == today)
-            user.eatenCarbsToday + carbs.toInt() else carbs.toInt()
-        val newFat = if (user.lastCaloriesResetDate == today)
-            user.eatenFatToday + fat.toInt() else fat.toInt()
+        userLocalDao.updateDailyCalories(user.eatenCaloriesToday + calories, today)
+    }
 
-        userLocalDao.updateDailyMacrosEaten(newProtein, newCarbs, newFat, today)
+    @RequiresApi(Build.VERSION_CODES.O)
+    suspend fun addDailyMacrosEaten(protein: Double, carbs: Double, fat: Double) {
+        checkAndResetDailyCaloriesAndMacros()
+        val user = userLocalDao.getUser() ?: return
+        val today = LocalDate.now().toString()
+
+        val newProtein =  protein.toInt() + user.eatenProteinToday
+        val newCarbs =  carbs.toInt() + user.eatenCarbsToday
+        val newFat =  fat.toInt() + user.eatenFatToday
+
+
+        userLocalDao.updateDailyMacros(newProtein, newCarbs, newFat, today)
     }
 
 

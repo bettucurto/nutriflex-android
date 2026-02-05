@@ -69,6 +69,7 @@ import coil.compose.AsyncImage
 import coil.request.ImageRequest
 import com.example.dieta.domain.FatSecretFood
 import com.example.nutriflex2.R
+import components.CalorieRangeFilter
 import components.LeftTitleText
 
 
@@ -93,7 +94,7 @@ fun SearchMealsScreen(
     Scaffold(
         topBar = {
             TopAppBar(
-                title = { LeftTitleText("Diet") },
+                title = { LeftTitleText("Meals") },
                 navigationIcon = {
                     IconButton(onClick = onBack) {
                         Icon(

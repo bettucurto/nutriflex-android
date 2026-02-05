@@ -1,3 +1,4 @@
+
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
@@ -35,6 +36,7 @@ fun HomeMainTab(
     selectedRange: WeightRange,
     onRangeChange: (WeightRange) -> Unit,
     onNavigateToSearchMeals: () -> Unit,
+    onNavigateToSearchRecipes: () -> Unit,
     onNavigateToTreino: () -> Unit,
     onChangeCurrentWeight: (Float) -> Unit,
     onChangeGoalWeight: (Float) -> Unit,
@@ -44,13 +46,15 @@ fun HomeMainTab(
     var showSheet by remember { mutableStateOf(false) }
     val scope = rememberCoroutineScope()
 
+
+
     Column(
         modifier = Modifier
             .fillMaxSize()
             .verticalScroll(scrollState),
         horizontalAlignment = Alignment.CenterHorizontally
     ) {
-        Spacer(modifier = Modifier.height(topBarHeightDp))
+        Spacer(modifier = Modifier.height(topBarHeightDp+ 12.dp))
 
         CaloriesCard(
             remaining = state.remainingCalories,
@@ -62,27 +66,40 @@ fun HomeMainTab(
             }
         )
 
+        Spacer(modifier = Modifier.height(30.dp))
+
         NextWorkoutCard(
             workoutName = state.nextWorkoutName,
             exerciseCount = state.nextWorkoutExercises,
             onStartClick = { onNavigateToTreino() }
         )
 
+        Spacer(modifier = Modifier.height(30.dp))
+
+
         BmiCard(
             bmi = state.bmi,
             category = state.bmiCategory
         )
+
+        Spacer(modifier = Modifier.height(30.dp))
+
 
         WeightForecastCard(
             weeks = state.weeklyProgressWeeks,
             goalWeight = state.goalWeight,
         )
 
+        Spacer(modifier = Modifier.height(5.dp))
+
+
         WeightProgressCard(
             selectedRange = selectedRange,
             history = state.weightHistory,
             onRangeChange = onRangeChange
         )
+
+        Spacer(modifier = Modifier.height(30.dp))
 
         WeightsCardRow(
             currentWeight = state.currentWeight,
@@ -111,7 +128,11 @@ fun HomeMainTab(
                     scope.launch { sheetState.hide() }
                     onNavigateToSearchMeals()
                 },
-                onSearchRecipesClick = { /* TODO */ }
+                onSearchRecipesClick = {
+                    showSheet = false
+                    scope.launch { sheetState.hide() }
+                    onNavigateToSearchRecipes()
+                }
             )
         }
     }

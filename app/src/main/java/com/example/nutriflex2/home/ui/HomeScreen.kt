@@ -3,7 +3,13 @@ package com.example.nutriflex2.home.ui
 import HomeMainTab
 import android.os.Build
 import android.widget.Toast
+import androidx.compose.animation.core.LinearEasing
+import androidx.compose.animation.core.RepeatMode
+import androidx.compose.animation.core.animateFloat
 import androidx.compose.animation.core.animateFloatAsState
+import androidx.compose.animation.core.infiniteRepeatable
+import androidx.compose.animation.core.rememberInfiniteTransition
+import androidx.compose.animation.core.tween
 import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
@@ -51,6 +57,9 @@ import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.geometry.Offset
+import androidx.compose.ui.graphics.Brush
+import androidx.compose.ui.graphics.TileMode
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalDensity
@@ -72,9 +81,35 @@ import theme.AppTheme
 fun HomeScreen(
     onNavigateToTreino: () -> Unit,
     onNavigateToSearchMeals: () -> Unit,
+    onNavigateToSearchRecipes: () -> Unit,
     onNavigateToAccount: () -> Unit,
     viewModel: HomeViewModel = hiltViewModel()
 ) {
+
+    //LÓGICA DO GRADIENTE
+    val gradientColors = listOf(
+        colorScheme.secondary,
+        colorScheme.primary,
+        colorScheme.secondary
+    )
+    val transition = rememberInfiniteTransition(label = "bg_anim")
+    val translateAnim by transition.animateFloat(
+        initialValue = 0f,
+        targetValue = 1000f,
+        animationSpec = infiniteRepeatable(
+            animation = tween(durationMillis = 7000, easing = LinearEasing),
+            repeatMode = RepeatMode.Restart
+        ),
+        label = "bg_translate"
+    )
+    val animatedBrush = Brush.linearGradient(
+        colors = gradientColors,
+        start = Offset(translateAnim, translateAnim),
+        end = Offset(translateAnim + 1000f, translateAnim + 1000f),
+        tileMode = TileMode.Mirror
+    )
+
+    //Viewmodels
     val state by viewModel.uiState.collectAsState()
     val drawerState = rememberDrawerState(initialValue = DrawerValue.Closed)
     val scope = rememberCoroutineScope()
@@ -158,6 +193,7 @@ fun HomeScreen(
                             .fillMaxHeight()
                             .fillMaxWidth(0.6f)
                             .padding(vertical = 16.dp)
+
                     ) {
                         Text(
                             text = stringResource(id = com.example.nutriflex2.R.string.app_name),
@@ -232,6 +268,7 @@ fun HomeScreen(
                     modifier = Modifier
                         .padding(innerPadding)
                         .fillMaxSize()
+                        .background(brush = animatedBrush)
                 ) {
                     HorizontalPager(
                         state = pagerState,
@@ -242,33 +279,41 @@ fun HomeScreen(
                                 onNavigateToTreino = onNavigateToTreino
                             )
 
-                            1 -> HomeMainTab(
-                                state = state,
-                                topBarHeightDp = topBarHeightDp,
-                                scrollState = homeScrollState,
-                                selectedRange = selectedRange,
-                                onRangeChange = { newRange ->
-                                    selectedRange = newRange
-                                    if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
-                                        viewModel.loadWeightHistory(newRange)
-                                    }
-                                },
-                                onNavigateToSearchMeals = onNavigateToSearchMeals,
-                                onNavigateToTreino = onNavigateToTreino,
-                                onChangeCurrentWeight = { new ->
-                                    viewModel.onChangeCurrentWeight(new, selectedRange)
-                                },
-                                onChangeGoalWeight = { new ->
-                                    viewModel.onChangeGoalWeight(new)
-                                },
-                                onRequestScrollToBottom = { pendingScroll = true }
-                            )
+                            1 -> {
+                                val homeViewModel: HomeViewModel =
+                                    hiltViewModel()
+                                LaunchedEffect(Unit) { homeViewModel.onMealLogged() }
+                                HomeMainTab(
+                                    state = state,
+                                    topBarHeightDp = topBarHeightDp,
+                                    scrollState = homeScrollState,
+                                    selectedRange = selectedRange,
+                                    onRangeChange = { newRange ->
+                                        selectedRange = newRange
+                                        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+                                            viewModel.loadWeightHistory(newRange)
+                                        }
+                                    },
+                                    onNavigateToSearchMeals = onNavigateToSearchMeals,
+                                    onNavigateToTreino = onNavigateToTreino,
+                                    onChangeCurrentWeight = { new ->
+                                        viewModel.onChangeCurrentWeight(new, selectedRange)
+                                    },
+                                    onChangeGoalWeight = { new ->
+                                        viewModel.onChangeGoalWeight(new)
+                                    },
+                                    onRequestScrollToBottom = { pendingScroll = true },
+                                    onNavigateToSearchRecipes = onNavigateToSearchRecipes
+
+                                )
+                            }
 
                             2 -> {
                                 val dietVm: DietTabViewModel = hiltViewModel()
                                 LaunchedEffect(Unit) { dietVm.refreshFromLocal() }
                                 DietTabScreen(
                                     onNavigateToSearchMeals = onNavigateToSearchMeals,
+                                    onNavigateToSearchRecipes = onNavigateToSearchRecipes,
                                     viewModel = dietVm
                                 )
                             }
