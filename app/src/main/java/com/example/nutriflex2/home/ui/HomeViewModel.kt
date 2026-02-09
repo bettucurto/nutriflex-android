@@ -283,21 +283,19 @@ class HomeViewModel @Inject constructor(
         )
     }
 
-    fun onMealLogged() {
-        viewModelScope.launch {
-            Log.d("HomeViewModel", "onMealLogged called")
-            val user = userLocalRepository.getUserLocal() ?: return@launch
-            _uiState.value = _uiState.value.copy(
-                dailyCalories = user.dailyCalories,
-                eatenCaloriesToday = user.eatenCaloriesToday,
-                dailyCarbsGrams = user.dailyCarbsGrams,
-                dailyProteinGrams = user.dailyProteinGrams,
-                dailyFatGrams = user.dailyFatGrams,
-                eatenProteinGrams = user.eatenProteinToday,
-                eatenCarbsGrams = user.eatenCarbsToday,
-                eatenFatGrams = user.eatenFatToday
-            )
-        }
+    suspend fun onMealLogged() {
+        Log.d("HomeViewModel", "onMealLogged called")
+        val user = userLocalRepository.getUserLocal() ?: return
+        _uiState.value = _uiState.value.copy(
+            dailyCalories = user.dailyCalories,
+            eatenCaloriesToday = user.eatenCaloriesToday,
+            dailyCarbsGrams = user.dailyCarbsGrams,
+            dailyProteinGrams = user.dailyProteinGrams,
+            dailyFatGrams = user.dailyFatGrams,
+            eatenProteinGrams = user.eatenProteinToday,
+            eatenCarbsGrams = user.eatenCarbsToday,
+            eatenFatGrams = user.eatenFatToday
+        )
     }
 
     fun checkAndResetDailyCaloriesAndMacros() {

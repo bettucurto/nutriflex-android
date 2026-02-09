@@ -38,6 +38,9 @@ runtimeVersion = "1.10.1"
 androidxUi = "1.10.1"
 roomRuntimeJvm = "2.8.4"
 sqliteKtx = "2.6.2"
+foundationLayoutVersion = "1.10.2"
+uiGraphicsVersion = "1.10.2"
+androidxUiVersion = "1.10.2"
 
 [libraries]
 androidx-core-ktx = { group = "androidx.core", name = "core-ktx", version.ref = "coreKtx" }
@@ -83,6 +86,9 @@ androidx-runtime = { group = "androidx.compose.runtime", name = "runtime", versi
 androidx-compose-ui-ui = { group = "androidx.compose.ui", name = "ui", version.ref = "androidxUi" }
 androidx-room-runtime-jvm = { group = "androidx.room", name = "room-runtime-jvm", version.ref = "roomRuntimeJvm" }
 androidx-sqlite-ktx = { group = "androidx.sqlite", name = "sqlite-ktx", version.ref = "sqliteKtx" }
+androidx-foundation-layout = { group = "androidx.compose.foundation", name = "foundation-layout", version.ref = "foundationLayoutVersion" }
+ui-graphics = { group = "androidx.compose.ui", name = "ui-graphics", version.ref = "uiGraphicsVersion" }
+androidx-compose-ui-ui2 = { group = "androidx.compose.ui", name = "ui", version.ref = "androidxUiVersion" }
 
 [plugins]
 android-application = { id = "com.android.application", version.ref = "agp" }

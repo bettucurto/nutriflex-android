@@ -16,7 +16,7 @@ import kotlinx.coroutines.launch
 import local.UserLocalRepository
 import javax.inject.Inject
 
-data class FoodDetailUiState(
+data class MealInfoUiState(
     val isLoading: Boolean = true,
     val food: FatSecretFoodDetails? = null,
     val error: String? = null,
@@ -41,14 +41,14 @@ data class FoodDetailUiState(
 )
 
 @HiltViewModel
-class FoodDetailViewModel @Inject constructor(
+class MealInfoViewModel @Inject constructor(
     private val repository: DietaRepository,
     private val userLocalRepository: UserLocalRepository,
     savedStateHandle: SavedStateHandle
 ) : ViewModel() {
 
-    private val _uiState = MutableStateFlow(FoodDetailUiState())
-    val uiState: StateFlow<FoodDetailUiState> = _uiState.asStateFlow()
+    private val _uiState = MutableStateFlow(MealInfoUiState())
+    val uiState: StateFlow<MealInfoUiState> = _uiState.asStateFlow()
 
     // NULL se for "pesquisa normal", tem valor se for "criar refeição favorita"
     private var mealId: Int? = null
@@ -97,7 +97,7 @@ class FoodDetailViewModel @Inject constructor(
             val initialPortion =
                 if (adjustedServings.getOrNull(firstServingIndex)?.description == "Grams") 100.0 else 1.0
 
-            _uiState.value = FoodDetailUiState(
+            _uiState.value = MealInfoUiState(
                 isLoading = false,
                 food = details,
                 servings = adjustedServings,
@@ -121,7 +121,7 @@ class FoodDetailViewModel @Inject constructor(
         _uiState.value = _uiState.value.copy(portionCount = newCount).recalculate()
     }
 
-    private fun FoodDetailUiState.recalculate(): FoodDetailUiState {
+    private fun MealInfoUiState.recalculate(): MealInfoUiState {
         val serving = servings.getOrNull(selectedServingIndex) ?: return this
         val factor = portionCount.coerceAtLeast(0.0)
 

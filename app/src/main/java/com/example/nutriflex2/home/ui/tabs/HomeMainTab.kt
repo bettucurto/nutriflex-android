@@ -2,10 +2,15 @@
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.HorizontalDivider
+import androidx.compose.material3.MaterialTheme.colorScheme
 import androidx.compose.material3.ModalBottomSheet
+import androidx.compose.material3.Text
 import androidx.compose.material3.rememberModalBottomSheetState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
@@ -15,7 +20,13 @@ import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.text.font.Font
+import androidx.compose.ui.text.font.FontFamily
+import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
+import com.example.components.R
 import com.example.nutriflex2.home.ui.HomeUiState
 import com.example.nutriflex2.home.ui.tabs.diet.LogMealSheetContent
 import components.BmiCard
@@ -54,12 +65,39 @@ fun HomeMainTab(
             .verticalScroll(scrollState),
         horizontalAlignment = Alignment.CenterHorizontally
     ) {
-        Spacer(modifier = Modifier.height(topBarHeightDp+ 12.dp))
+        Text(text = "WELCOME",
+            fontWeight = FontWeight.Bold,
+            fontFamily = FontFamily(Font(R.font.formulacondensedbold)),
+            fontSize = 115.sp,
+            modifier = Modifier.fillMaxWidth()
+                .padding(top = 100.dp),
+            color = colorScheme.surface,
+            textAlign = TextAlign.Center
+        )
+
+        HorizontalDivider(
+            modifier = Modifier
+                .align(Alignment.CenterHorizontally)
+                .fillMaxWidth(0.95f)
+                .padding(vertical = 4.dp),
+            color = colorScheme.surface,
+            thickness = 1.dp
+        )
 
         CaloriesCard(
-            remaining = state.remainingCalories,
-            dailyTarget = state.dailyCalories,
-            progress = state.progress,
+            remainingCalories = state.dailyCalories - state.eatenCaloriesToday, // ou state.remaining se tiver essa lógica
+            dailyCalories = state.dailyCalories,
+            eatenCalories = state.eatenCaloriesToday,
+
+            eatenProtein = state.eatenProteinGrams,
+            dailyProtein = state.dailyProteinGrams,
+
+            eatenCarbs = state.eatenCarbsGrams,
+            dailyCarbs = state.dailyCarbsGrams,
+
+            eatenFat = state.eatenFatGrams,
+            dailyFat = state.dailyFatGrams,
+
             onAddClick = {
                 showSheet = true
                 scope.launch { sheetState.show() }
@@ -89,9 +127,6 @@ fun HomeMainTab(
             weeks = state.weeklyProgressWeeks,
             goalWeight = state.goalWeight,
         )
-
-        Spacer(modifier = Modifier.height(5.dp))
-
 
         WeightProgressCard(
             selectedRange = selectedRange,

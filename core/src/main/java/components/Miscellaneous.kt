@@ -1,11 +1,13 @@
 package components
 
+import android.graphics.Paint
+import android.graphics.Typeface
 import android.os.Build
 import androidx.annotation.RequiresApi
 import androidx.compose.animation.Animatable
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.core.Animatable
-import androidx.compose.animation.core.LinearEasing
+import androidx.compose.animation.core.FastOutSlowInEasing
 import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.animation.core.tween
 import androidx.compose.animation.fadeIn
@@ -14,6 +16,7 @@ import androidx.compose.animation.scaleIn
 import androidx.compose.animation.scaleOut
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.Canvas
+import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
@@ -22,6 +25,8 @@ import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.BoxWithConstraints
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.IntrinsicSize
+import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxHeight
@@ -33,24 +38,32 @@ import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.layout.wrapContentHeight
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.DateRange
-import androidx.compose.material3.CircularWavyProgressIndicator
+import androidx.compose.material.icons.filled.LocalFireDepartment
+import androidx.compose.material.icons.outlined.BreakfastDining
+import androidx.compose.material.icons.outlined.FitnessCenter
+import androidx.compose.material.icons.outlined.PlayCircleOutline
+import androidx.compose.material.icons.outlined.WaterDrop
+import androidx.compose.material3.Button
+import androidx.compose.material3.ButtonDefaults
+import androidx.compose.material3.Card
+import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.DatePicker
 import androidx.compose.material3.DatePickerDialog
 import androidx.compose.material3.ExperimentalMaterial3Api
-import androidx.compose.material3.ExperimentalMaterial3ExpressiveApi
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
+import androidx.compose.material3.LinearProgressIndicator
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.MaterialTheme.colorScheme
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.OutlinedTextFieldDefaults
-import androidx.compose.material3.ProgressIndicatorDefaults
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
@@ -64,6 +77,7 @@ import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.blur
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.shadow
 import androidx.compose.ui.geometry.CornerRadius
@@ -71,23 +85,28 @@ import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.geometry.Rect
 import androidx.compose.ui.geometry.RoundRect
 import androidx.compose.ui.geometry.Size
+import androidx.compose.ui.graphics.BlendMode
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.Path
 import androidx.compose.ui.graphics.StrokeCap
+import androidx.compose.ui.graphics.asComposePath
 import androidx.compose.ui.graphics.drawscope.DrawScope
+import androidx.compose.ui.graphics.drawscope.Fill
 import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.ui.graphics.drawscope.drawIntoCanvas
 import androidx.compose.ui.graphics.nativeCanvas
 import androidx.compose.ui.graphics.toArgb
+import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.input.pointer.pointerInput
+import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalDensity
+import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.TextMeasurer
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.drawText
-import androidx.compose.ui.text.font.Font
-import androidx.compose.ui.text.font.FontFamily
+import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.VisualTransformation
 import androidx.compose.ui.text.rememberTextMeasurer
 import androidx.compose.ui.text.style.TextAlign
@@ -104,7 +123,9 @@ import java.time.LocalDate
 import java.time.ZoneId
 import java.time.format.DateTimeFormatter
 import java.time.temporal.ChronoUnit
+import kotlin.math.cos
 import kotlin.math.max
+import kotlin.math.sin
 import kotlin.math.sqrt
 
 @Composable
@@ -240,184 +261,365 @@ fun BirthDateField(
 }
 
 enum class Gender { MALE, FEMALE }
-@OptIn(ExperimentalMaterial3ExpressiveApi::class)
 @Composable
 fun CaloriesCard(
-    remaining: Int,
-    dailyTarget: Int,
-    progress: Float,
-    onAddClick: () -> Unit
-) {
-    val cardShape = RoundedCornerShape(32.dp)
+    remainingCalories: Int,
+    dailyCalories: Int,
+    eatenCalories: Int,
 
-    val animatedProgress by animateFloatAsState(
-        targetValue = progress.coerceIn(0f, 1f),
-        animationSpec = ProgressIndicatorDefaults.ProgressAnimationSpec,
-        label = "caloriesProgress"
+    eatenProtein: Int,
+    dailyProtein: Int,
+
+    eatenCarbs: Int,
+    dailyCarbs: Int,
+
+    eatenFat: Int,
+    dailyFat: Int,
+
+    onAddClick: () -> Unit,
+    modifier: Modifier = Modifier
+) {
+    // Cores dos Macros (Mantemos fixas pois são cores de dados/identidade visual)
+    // Elas são brilhantes o suficiente para funcionar bem no Dark e Light mode
+    val greenColor = Color(0xFF5BC895)
+    val carbColor = Color(0xFF3896C7)
+    val fatColor = Color(0xFFFBB040)
+    val primaryColor = colorScheme.primary
+
+
+    // Cores Dinâmicas (Mudam com o tema)
+    // Surface: Branco no Light, Cinza escuro/Preto no Dark
+    val cardContainerColor = MaterialTheme.colorScheme.surface
+    // OnSurface: Preto no Light, Branco no Dark
+    val titleTextColor = MaterialTheme.colorScheme.onSurface
+    // OnSurfaceVariant: Cinza no Light, Cinza claro no Dark
+    val subtitleTextColor = MaterialTheme.colorScheme.onSurfaceVariant
+    // OutlineVariant: Cor sutil para bordas e trilhos
+    val trackColor = MaterialTheme.colorScheme.surfaceVariant.copy()
+    val borderColor = MaterialTheme.colorScheme.outlineVariant.copy()
+
+    // Cálculo do progresso
+    val calorieProgress = if (dailyCalories > 0) {
+        eatenCalories.toFloat() / dailyCalories.toFloat()
+    } else 0f
+
+    val animatedCalorieProgress by animateFloatAsState(
+        targetValue = calorieProgress.coerceIn(0f, 1f),
+        animationSpec = tween(durationMillis = 1000),
+        label = "mainProgress"
     )
 
-    Box(
-        modifier = Modifier
+    Card(
+        shape = RoundedCornerShape(24.dp),
+        colors = CardDefaults.cardColors(containerColor = cardContainerColor),
+        elevation = CardDefaults.cardElevation(defaultElevation = 4.dp),
+        border = BorderStroke(1.dp, borderColor),
+        modifier = modifier
             .fillMaxWidth(0.95f)
-            .height(200.dp)
+            .height(IntrinsicSize.Min)
+            .clickable { onAddClick() }
     ) {
-        Surface(
-            shape = cardShape,
-            tonalElevation = 2.dp,
-            shadowElevation = 8.dp,
-            border = BorderStroke(
-                width = 2.dp,
-                brush = Brush.linearGradient(
-                    colors = listOf(
-                        colorScheme.primary,
-                        colorScheme.secondary
+        Box(modifier = Modifier.fillMaxSize()) {
+
+            // 1. DECORAÇÃO DE FUNDO (Lado Esquerdo)
+            Canvas(modifier = Modifier.matchParentSize()) {
+                val width = size.width
+                val height = size.height
+                val decorationWidth = width * 0.45f // Ocupa aprox 40% da largura
+
+                val path = Path().apply {
+                    moveTo(0f, 0f)
+                    lineTo(decorationWidth, 0f)
+                    // Curva suave (Bézier quadrática) para criar o formato orgânico
+                    quadraticBezierTo(
+                        decorationWidth * 1.25f, // Ponto de controle puxa para a esquerda
+                        height / 2f,
+                        decorationWidth,        // Volta para a largura original
+                        height
                     )
+                    lineTo(0f, height)
+                    close()
+                }
+
+                // Desenha a forma com opacidade muito baixa
+                drawPath(
+                    path = path,
+                    color = primaryColor.copy(alpha = 0.4f) // Bem suave
                 )
-            ),
-            modifier = Modifier.matchParentSize()
-                .shadow(
-                    elevation = 8.dp,
-                    shape = cardShape,
-                    ambientColor = MaterialTheme.colorScheme.primary,
-                    spotColor = MaterialTheme.colorScheme.primary
-                )
-        ) {
+            }
+
+            // 2. CONTEÚDO PRINCIPAL
             Row(
-                modifier = Modifier.padding(16.dp),
+                modifier = Modifier
+                    .padding(24.dp)
+                    .fillMaxSize(),
                 verticalAlignment = Alignment.CenterVertically,
                 horizontalArrangement = Arrangement.SpaceBetween
             ) {
-                Column(
-                    modifier = Modifier.weight(0.5f),
-                    horizontalAlignment = Alignment.Start
+                // --- Círculo de Calorias (Esquerda) ---
+                Box(
+                    contentAlignment = Alignment.Center,
+                    modifier = Modifier.weight(0.45f)
                 ) {
-                    LeftTitleText("Calories", textSize = 25.sp)
-                    Spacer(modifier = Modifier.height(8.dp))
-                    Box(
-                        contentAlignment = Alignment.Center,
-                        modifier = Modifier.size(120.dp)
-                    ) {
-                        val strokeWidth = with(LocalDensity.current) { 8.dp.toPx() }
-                        val thickStroke = remember(strokeWidth) {
-                            Stroke(width = strokeWidth, cap = StrokeCap.Round)
-                        }
+                    val strokeWidth = 12.dp
 
-                        CircularWavyProgressIndicator(
-                            progress = { animatedProgress },
-                            modifier = Modifier.fillMaxSize(),
-                            stroke = thickStroke,
-                            trackStroke = thickStroke,
-                            wavelength = 40.dp,           // maior = menos ondas visíveis
-                            waveSpeed = 20.dp
+                    Canvas(modifier = Modifier.size(140.dp)) {
+                        // Círculo "Glow" atrás do anel (agora branco ou surface, ou levemente verde)
+                        // Como já temos o fundo decorativo verde, este círculo pode ser
+                        // a cor do container para "limpar" a área ou um brilho extra.
+                        // Vamos usar um brilho branco/surface com alpha para destacar o gráfico do fundo decorativo
+                        drawCircle(
+                            color = cardContainerColor.copy(alpha = 0.6f),
+                            radius = size.minDimension / 2.0f,
+                            center = center
                         )
-                        Column(horizontalAlignment = Alignment.CenterHorizontally) {
-                            HeadingTextComponent(value=("$remaining\nremaining"), textSize = 15.sp)
-                        }
+
+                        // Trilho
+                        drawArc(
+                            color = titleTextColor.copy(alpha = 0.2f),
+                            startAngle = 0f,
+                            sweepAngle = 360f,
+                            useCenter = false,
+                            style = Stroke(width = strokeWidth.toPx(), cap = StrokeCap.Round)
+                        )
+                        // Progresso
+                        drawArc(
+                            color = greenColor,
+                            startAngle = -90f,
+                            sweepAngle = 360 * animatedCalorieProgress,
+                            useCenter = false,
+                            style = Stroke(width = strokeWidth.toPx(), cap = StrokeCap.Round)
+                        )
+                    }
+
+                    Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                        Text(
+                            text = "$remainingCalories",
+                            fontSize = 28.sp,
+                            fontWeight = FontWeight.Bold,
+                            // Usa Primary no light mode (geralmente azul/roxo) ou OnSurface no dark
+                            color = MaterialTheme.colorScheme.primary
+                        )
+                        Text(
+                            text = "kcal remaining",
+                            fontSize = 12.sp,
+                            color = subtitleTextColor,
+                            fontWeight = FontWeight.Medium
+                        )
                     }
                 }
-                Column(
-                    modifier = Modifier.weight(0.5f)
-                ) {
-                    HeadingTextComponent("Daily Goal:", textSize = 20.sp)
-                    HeadingTextComponent("$dailyTarget")
-                }
-            }
-        }
 
-        // Botão + sobreposto no canto inferior direito
-        Surface(
-            shape = CircleShape,
-            shadowElevation = 8.dp,
-            color = colorScheme.primary,
-            modifier = Modifier
-                .align(Alignment.BottomEnd)
-                .offset(x = 0.dp, y = 20.dp)
-                .size(70.dp)
-        ) {
-            IconButton(onClick = onAddClick) {
-                Icon(
-                    imageVector = Icons.Default.Add,
-                    contentDescription = "Add meal",
-                    tint = colorScheme.onPrimary,
-                    modifier = Modifier.fillMaxSize(0.7f)
-                )
+                Spacer(modifier = Modifier.width(16.dp))
+
+                // --- Lista de Macros (Direita) ---
+                Column(
+                    modifier = Modifier
+                        .weight(0.55f)
+                        .fillMaxHeight(),
+                    verticalArrangement = Arrangement.SpaceEvenly,
+                    horizontalAlignment = Alignment.End
+                ) {
+                    MacroRow(
+                        label = "Protein",
+                        value = "${eatenProtein}g",
+                        max = dailyProtein,
+                        current = eatenProtein,
+                        color = greenColor,
+                        icon = Icons.Outlined.FitnessCenter,
+                        textColor = titleTextColor,
+                        valueColor = subtitleTextColor,
+                        trackColor = trackColor
+                    )
+
+                    Spacer(modifier = Modifier.height(12.dp))
+
+                    MacroRow(
+                        label = "Carbs",
+                        value = "${eatenCarbs}g",
+                        max = dailyCarbs,
+                        current = eatenCarbs,
+                        color = carbColor,
+                        icon = Icons.Outlined.BreakfastDining,
+                        textColor = titleTextColor,
+                        valueColor = subtitleTextColor,
+                        trackColor = trackColor
+                    )
+
+                    Spacer(modifier = Modifier.height(12.dp))
+
+                    MacroRow(
+                        label = "Fats",
+                        value = "${eatenFat}g",
+                        max = dailyFat,
+                        current = eatenFat,
+                        color = fatColor,
+                        icon = Icons.Outlined.WaterDrop,
+                        textColor = titleTextColor,
+                        valueColor = subtitleTextColor,
+                        trackColor = trackColor
+                    )
+                }
             }
         }
     }
 }
 
-
-@OptIn(ExperimentalMaterial3ExpressiveApi::class)
 @Composable
-fun NutrientCircle(
-    progress: Float,
-    labelTop: String,
-    valueText: String,
-    unitText: String,
-    showTextInside: Boolean = true,
-    modifier: Modifier = Modifier
+private fun MacroRow(
+    label: String,
+    value: String,
+    max: Int,
+    current: Int,
+    color: Color,
+    icon: ImageVector,
+    textColor: Color,
+    valueColor: Color,
+    trackColor: Color
 ) {
+    val progress = if (max > 0) current.toFloat() / max.toFloat() else 0f
     val animatedProgress by animateFloatAsState(
         targetValue = progress.coerceIn(0f, 1f),
-        animationSpec = ProgressIndicatorDefaults.ProgressAnimationSpec,
+        animationSpec = tween(1000),
+        label = "macroProgress"
+    )
+
+    Column(modifier = Modifier.fillMaxWidth(0.90f)) {
+        Row(
+            verticalAlignment = Alignment.CenterVertically,
+            modifier = Modifier.fillMaxWidth()
+        ) {
+            Icon(
+                imageVector = icon,
+                contentDescription = null,
+                tint = color, // Ícone colorido mantém identidade visual
+                modifier = Modifier.size(20.dp)
+            )
+            Spacer(modifier = Modifier.width(8.dp))
+
+            Text(
+                text = label,
+                fontSize = 14.sp,
+                fontWeight = FontWeight.Medium,
+                color = textColor // Cor dinâmica (Preto/Branco)
+            )
+
+            Spacer(modifier = Modifier.weight(1f))
+
+            Text(
+                text = value,
+                fontSize = 14.sp,
+                fontWeight = FontWeight.Bold,
+                color = valueColor // Cor dinâmica (Cinza/Cinza Claro)
+            )
+        }
+
+        Spacer(modifier = Modifier.height(6.dp))
+
+        LinearProgressIndicator(
+            progress = { animatedProgress },
+            modifier = Modifier
+                .fillMaxWidth()
+                .height(6.dp),
+            color = color,
+            trackColor = trackColor, // Track dinâmico
+            strokeCap = StrokeCap.Round,
+        )
+    }
+}
+
+@Composable
+fun NutrientCircle(
+    eaten: Int,
+    target: Int,
+    label: String,
+    color: Color, // Cor base para o cartão e o progresso
+    modifier: Modifier = Modifier
+) {
+    // Calcula o progresso (evita divisão por zero)
+    val progress = if (target > 0) eaten.toFloat() / target.toFloat() else 0f
+
+    val animatedProgress by animateFloatAsState(
+        targetValue = progress.coerceIn(0f, 1f),
+        animationSpec = tween(durationMillis = 1000),
         label = "nutrientProgress"
     )
 
     Column(
-        modifier = modifier,
-        horizontalAlignment = Alignment.CenterHorizontally
+        modifier = modifier
+            .width(100.dp) // Largura fixa para ficarem iguais
+            .clip(RoundedCornerShape(16.dp)) // Borda arredondada do cartão
+            .background(color.copy(alpha = 0.1f)) // Fundo suave baseado na cor
+            .padding(vertical = 18.dp, horizontal = 8.dp),
+        horizontalAlignment = Alignment.CenterHorizontally,
+        verticalArrangement = Arrangement.Center
     ) {
-        if (labelTop.isNotEmpty()) {
-            Text(
-                text = labelTop,
-                fontSize = 18.sp,
-                color = colorScheme.secondary,
-                fontFamily = FontFamily(Font(R.font.audiowide)),
-                textAlign = TextAlign.Center
-            )
-        }
-
+        // Círculo com Texto dentro
         Box(
             contentAlignment = Alignment.Center,
-            modifier = Modifier.size(94.dp)
+            modifier = Modifier
+                .size(70.dp)
+                .padding()
         ) {
-            val strokeWidthPx = with(LocalDensity.current) { 5.dp.toPx() }
-            val stroke = Stroke(width = strokeWidthPx, cap = StrokeCap.Round)
+            Canvas(modifier = Modifier.fillMaxSize()) {
+                // Configuração do traço
+                val strokeWidth = 6.dp.toPx()
+                val diameter = size.minDimension
+                val radius = diameter / 2 - strokeWidth / 2
 
-            CircularWavyProgressIndicator(
-                progress = { animatedProgress },
-                modifier = Modifier.size(74.dp),
-                stroke = stroke,
-                trackStroke = stroke,
-                wavelength = 24.dp,
-                waveSpeed = 18.dp,
-                color = colorScheme.primary,
-            )
+                // 1. Trilho de fundo (círculo completo mais claro)
+                drawCircle(
+                    color = color.copy(alpha = 0.2f),
+                    style = Stroke(width = strokeWidth),
+                    radius = radius
+                )
 
-            if (showTextInside) {
+                // 2. Arco de Progresso
+                drawArc(
+                    color = color,
+                    startAngle = -90f, // Começa do topo
+                    sweepAngle = 360 * animatedProgress,
+                    useCenter = false,
+                    style = Stroke(width = strokeWidth, cap = StrokeCap.Round)
+                )
+            }
+
+            // Textos centrais
+            Column(
+                horizontalAlignment = Alignment.CenterHorizontally,
+                verticalArrangement = Arrangement.Center
+            ) {
+                // Gramas Comidos (Grande)
                 Text(
-                    text = valueText,
-                    fontSize = 14.sp,
+                    text = "${eaten}g",
+                    fontSize = 16.sp,
+                    fontWeight = FontWeight.Bold,
                     color = colorScheme.onSurface,
                     textAlign = TextAlign.Center
-
+                )
+                // Total (Pequeno)
+                Text(
+                    text = "/${target}g",
+                    fontSize = 10.sp,
+                    fontWeight = FontWeight.Normal,
+                    color = colorScheme.onSurface.copy(alpha = 0.6f),
+                    textAlign = TextAlign.Center
                 )
             }
         }
 
-        if (unitText.isNotEmpty()) {
-            Text(
-                text = unitText,
-                fontSize = 12.sp,
-                color = colorScheme.primary,
-                textAlign = TextAlign.Center
+        Spacer(modifier = Modifier.height(8.dp))
 
-            )
-        }
+        // Rótulo (Protein, Carbs, Fat)
+        Text(
+            text = label,
+            fontSize = 14.sp,
+            fontWeight = FontWeight.SemiBold,
+            color = colorScheme.onSurface,
+            textAlign = TextAlign.Center
+        )
     }
 }
 
-@OptIn(ExperimentalMaterial3ExpressiveApi::class)
 @Composable
 fun DietCaloriesCard(
     remainingCalories: Int,
@@ -434,127 +636,202 @@ fun DietCaloriesCard(
     fatProgress: Float,
     onAddClick: () -> Unit
 ) {
+
+    val proteinEaten = (proteinTarget - proteinRemaining).coerceAtLeast(0)
+    val carbsEaten = (carbsTarget - carbsRemaining).coerceAtLeast(0)
+    val fatEaten = (fatTarget - fatRemaining).coerceAtLeast(0)
+
+    val contentColor = colorScheme.secondary
+
     val cardShape = RoundedCornerShape(32.dp)
 
+    // Animação suave do progresso
     val animatedCaloriesProgress by animateFloatAsState(
         targetValue = caloriesProgress.coerceIn(0f, 1f),
-        animationSpec = ProgressIndicatorDefaults.ProgressAnimationSpec,
+        animationSpec = tween(durationMillis = 1000, easing = FastOutSlowInEasing),
         label = "dietCaloriesProgress"
     )
-
-    val percentage = (animatedCaloriesProgress * 100).toInt().coerceIn(0, 100)
 
     Box(
         modifier = Modifier
             .fillMaxWidth(0.95f)
-            .height(450.dp) // ajusta a altura se precisares de mais espaço
+            .height(520.dp),
+        contentAlignment = Alignment.TopCenter
     ) {
         Surface(
             shape = cardShape,
-            tonalElevation = 2.dp,
-            shadowElevation = 0.dp,
+            tonalElevation = 8.dp,
+            shadowElevation = 10.dp,
             color = colorScheme.surface,
-            border = BorderStroke(
-                width = 2.dp,
-                brush = Brush.linearGradient(
-                    colors = listOf(
-                        colorScheme.primary,
-                        colorScheme.secondary
-                    )
-                )
-            ),
-            modifier = Modifier.matchParentSize()
-                .padding(vertical = 6.dp)
-                .shadow(
-                    elevation = 8.dp,
-                    shape = cardShape,
-                    ambientColor = MaterialTheme.colorScheme.primary,
-                    spotColor = MaterialTheme.colorScheme.primary
-                )
+            modifier = Modifier
+                .matchParentSize()
+                .padding(bottom = 35.dp) // Espaço para o botão flutuante não cortar
         ) {
             Column(
                 modifier = Modifier
-                    .padding(16.dp)
+                    .padding(24.dp)
                     .fillMaxWidth(),
                 horizontalAlignment = Alignment.CenterHorizontally,
             ) {
-                // Top: calories big number
-                Column(
-                    horizontalAlignment = Alignment.CenterHorizontally
-                ) {
-                    TitleText(
-                        remainingCalories.toString()
-                    )
-                    HeadingTextComponent(
-                        "Calories Remaining",
-                        textColor = colorScheme.primary,
-                        textSize = 20.sp
-                    )
-                }
+                HeadingTextComponent("Calories", textSize = 32.sp, textColor = colorScheme.primary)
 
-                Spacer(modifier = Modifier.height(10.dp))
 
-                // Big circle progress for calories
+                // --- INÍCIO DO GAUGE (ARCO) ---
                 Box(
                     contentAlignment = Alignment.Center,
-                    modifier = Modifier.size(130.dp)
+                    modifier = Modifier
+                        .size(260.dp) // Tamanho do arco geral
                 ) {
-                    val strokeWidthPx = with(LocalDensity.current) { 8.dp.toPx() }
-                    val thickStroke = Stroke(width = strokeWidthPx, cap = StrokeCap.Round)
+                    Canvas(modifier = Modifier.fillMaxSize()) {
+                        // Configurações do Arco
+                        val strokeWidth = 25.dp.toPx()
+                        val arcRadius = size.minDimension / 2 - strokeWidth
+                        val startAngle = 140f // Começa as 8h
+                        val sweepAngle = 260f // Percorre até as 4h
 
-                    CircularWavyProgressIndicator(
-                        progress = { animatedCaloriesProgress },
-                        modifier = Modifier.fillMaxSize(),
-                        stroke = thickStroke,
-                        trackStroke = thickStroke,
-                        wavelength = 40.dp,
-                        waveSpeed = 20.dp,
-                        color = colorScheme.primary,
-                    )
+                        // 1. Desenhar o fundo tracejado (Track)
+                        // Desenhamos várias linhas pequenas radialmente
+                        val dashCount = 60 // Quantidade de tracinhos
+                        val angleStep = sweepAngle / dashCount
+                        val dashLength = 15.dp.toPx()
 
-                    Text(
-                        text = "$percentage%",
-                        fontSize = 24.sp,
-                        color = colorScheme.primary,
-                        fontFamily = FontFamily(Font(R.font.audiowide)),
-                    )
+                        // Opcional: Se preferir arco contínuo tracejado, descomente abaixo e remova o loop
+                        /*
+                        drawArc(
+                            color = contentColor.copy(alpha = 0.3f),
+                            startAngle = startAngle,
+                            sweepAngle = sweepAngle,
+                            useCenter = false,
+                            style = Stroke(width = strokeWidth, cap = StrokeCap.Butt, pathEffect = PathEffect.dashPathEffect(floatArrayOf(10f, 20f), 0f))
+                        )
+                        */
+
+                        // Desenhando estilo "Réguas" como parece ser na imagem (fundo)
+                        for (i in 0..dashCount) {
+                            val currentAngle = startAngle + (i * angleStep)
+                            val angleRad = Math.toRadians(currentAngle.toDouble())
+
+                            val innerRadius = arcRadius - (strokeWidth / 2)
+                            val outerRadius = arcRadius + (strokeWidth / 2)
+
+                            val startX = center.x + innerRadius * kotlin.math.cos(angleRad)
+                            val startY = center.y + innerRadius * kotlin.math.sin(angleRad)
+                            val endX = center.x + outerRadius * kotlin.math.cos(angleRad)
+                            val endY = center.y + outerRadius * kotlin.math.sin(angleRad)
+
+                            drawLine(
+                                color = contentColor.copy(alpha = 0.2f),
+                                start = Offset(startX.toFloat(), startY.toFloat()),
+                                end = Offset(endX.toFloat(), endY.toFloat()),
+                                strokeWidth = 2.dp.toPx()
+                            )
+                        }
+
+                        // 2. Desenhar o Progresso Sólido (Branco)
+                        drawArc(
+                            color = contentColor,
+                            startAngle = startAngle,
+                            sweepAngle = sweepAngle * animatedCaloriesProgress,
+                            useCenter = false,
+                            style = Stroke(width = strokeWidth, cap = StrokeCap.Butt),
+                            topLeft = Offset(center.x - arcRadius, center.y - arcRadius),
+                            size = Size(arcRadius * 2, arcRadius * 2)
+                        )
+
+                        // 3. (Opcional) Desenhar a "tampinha" no final do progresso se quiser aquele traço perpendicular
+                        val progressAngleRad = Math.toRadians((startAngle + sweepAngle * animatedCaloriesProgress).toDouble())
+                        val endX = center.x + arcRadius * kotlin.math.cos(progressAngleRad).toFloat()
+                        val endY = center.y + arcRadius * kotlin.math.sin(progressAngleRad).toFloat()
+
+                        // Se quiser desenhar o marcador branco no final:
+                        drawLine(
+                            color = contentColor,
+                            start = Offset(
+                                x = endX + (strokeWidth/1.8f) * kotlin.math.cos(progressAngleRad).toFloat(),
+                                y = endY + (strokeWidth/1.8f) * kotlin.math.sin(progressAngleRad).toFloat()
+                            ),
+                            end = Offset(
+                                x = endX - (strokeWidth/1.8f) * kotlin.math.cos(progressAngleRad).toFloat(),
+                                y = endY - (strokeWidth/1.8f) * kotlin.math.sin(progressAngleRad).toFloat()
+                            ),
+                            strokeWidth = 4.dp.toPx(),
+                            cap = StrokeCap.Round
+                        )
+                    }
+
+                    // Conteúdo de Texto no Meio do Arco
+                    Column(
+                        horizontalAlignment = Alignment.CenterHorizontally
+                    ) {
+                        // Número Grande (Calorias Consumidas ou Restantes)
+                        // A imagem mostra "545", assumindo que é caloriesProgress ou similar
+                        Text(
+                            text = (dailyTargetCalories * animatedCaloriesProgress).toInt().toString(), // Ou use 'remainingCalories' se preferir o inverso
+                            fontSize = 64.sp,
+                            fontWeight = FontWeight.Bold,
+                            color = contentColor,
+                            // fontFamily = FontFamily(Font(R.font.audiowide)), // Se tiver a fonte
+                        )
+
+                        Spacer(modifier = Modifier.height(8.dp))
+
+                        // Linha de baixo: Ícone + Texto
+                        Row(verticalAlignment = Alignment.CenterVertically) {
+                            Icon(
+                                imageVector = Icons.Default.LocalFireDepartment, // Ícone de fogo
+                                contentDescription = null,
+                                tint = Color(0xFFFFC107), // Cor amarela/laranja do fogo
+                                modifier = Modifier.size(20.dp)
+                            )
+                            Spacer(modifier = Modifier.width(4.dp))
+                            Text(
+                                text = "$remainingCalories kcal left",
+                                fontSize = 16.sp,
+                                color = contentColor.copy(alpha = 0.9f),
+                                fontWeight = FontWeight.Medium
+                            )
+                        }
+                    }
                 }
-
-                Spacer(modifier = Modifier.height(10.dp))
+                // --- FIM DO GAUGE ---
 
                 // Row with 3 macro circles
                 Row(
-                    modifier = Modifier.fillMaxWidth(),
-                    horizontalArrangement = Arrangement.Center,
-                    verticalAlignment = Alignment.CenterVertically
+                    modifier = Modifier.fillMaxWidth()
+                        .wrapContentHeight(),
+                    horizontalArrangement = Arrangement.SpaceBetween, // Espalha os cards
+                    verticalAlignment = Alignment.Top
                 ) {
+                    // Proteína (Usando Primary)
                     NutrientCircle(
-                        progress = proteinProgress,
-                        labelTop = "Protein",
-                        valueText = "${proteinRemaining}g",
-                        unitText = "Remaining",
-                        modifier = Modifier.weight(1f)
+                        eaten = proteinEaten,
+                        target = proteinTarget,
+                        label = "Protein",
+                        color = colorScheme.primary,
+                        modifier = Modifier.weight(1f).padding(end = 4.dp)
                     )
+
+                    // Carboidratos (Usando Secondary)
                     NutrientCircle(
-                        progress = fatProgress,
-                        labelTop = "Fat",
-                        valueText = "${fatRemaining}g",
-                        unitText = "Remaining",
-                        modifier = Modifier.weight(1f)
+                        eaten = carbsEaten,
+                        target = carbsTarget,
+                        label = "Carbs",
+                        color = colorScheme.secondary,
+                        modifier = Modifier.weight(1f).padding(horizontal = 4.dp)
                     )
+
+                    // Gordura (Usando Tertiary ou uma variação se Tertiary não existir)
                     NutrientCircle(
-                        progress = carbsProgress,
-                        labelTop = "Carbs",
-                        valueText = "${carbsRemaining}g",
-                        unitText = "Remaining",
-                        modifier = Modifier.weight(1f)
+                        eaten = fatEaten,
+                        target = fatTarget,
+                        label = "Fat",
+                        color = colorScheme.tertiary, // Certifique-se que seu tema tem Tertiary, ou use colorScheme.error/outline
+                        modifier = Modifier.weight(1f).padding(start = 4.dp)
                     )
                 }
             }
-            Spacer(modifier = Modifier.height(18.dp))
-
         }
-
+            Spacer(modifier = Modifier.height(18.dp))
         // Botão + sobreposto no centro em baixo
         Surface(
             shape = CircleShape,
@@ -562,7 +839,7 @@ fun DietCaloriesCard(
             color = colorScheme.primary,
             modifier = Modifier
                 .align(Alignment.BottomCenter)
-                .offset(y = 35.dp)
+                .offset(y = 25.dp)
                 .size(90.dp)
         ) {
             IconButton(onClick = onAddClick) {
@@ -583,48 +860,103 @@ fun DietCaloriesCard(
 fun NextWorkoutCard(
     workoutName: String,
     exerciseCount: Int,
-    onStartClick: () -> Unit
+    onStartClick: () -> Unit,
+    modifier: Modifier = Modifier
 ) {
-    val cardShape = RoundedCornerShape(32.dp)
+    // Gradiente do botão (Azul para Verde)
+    val buttonGradient = Brush.horizontalGradient(
+        colors = listOf(
+            Color(0xFF0062BD), // Azul
+            Color(0xFF5BC895)  // Verde
+        )
+    )
 
-    Surface(
-        shape = cardShape,
-        tonalElevation = 2.dp,
-        shadowElevation = 0.dp,
-        border = BorderStroke(
-            width = 2.dp,
-            brush = Brush.linearGradient(
-                colors = listOf(
-                    colorScheme.primary,
-                    colorScheme.secondary
-                )
-            )
-        ),
-        modifier = Modifier
+    Card(
+        shape = RoundedCornerShape(24.dp),
+        elevation = CardDefaults.cardElevation(defaultElevation = 8.dp),
+        modifier = modifier
             .fillMaxWidth(0.95f)
-            .height(200.dp)
-            .shadow(
-                elevation = 8.dp,
-                shape = cardShape,
-                ambientColor = MaterialTheme.colorScheme.primary,
-                spotColor = MaterialTheme.colorScheme.primary
-            )
+            .height(220.dp)
     ) {
-        Column(
-            modifier = Modifier
-                .padding(16.dp)
-                .fillMaxSize(),
-            horizontalAlignment = Alignment.CenterHorizontally,
-        ) {
-            HeadingTextComponent("Next Workout: ", textColor = colorScheme.primary)
-            HeadingTextComponent(workoutName)
-            HeadingTextComponent("$exerciseCount exercices")
-
-            NFButton(
-                text = "Start!",
-                onButtonClicked = onStartClick,
-                modifier = Modifier.padding(4.dp)
+        Box(modifier = Modifier.fillMaxSize()) {
+            // 1. Imagem de Fundo com BLUR
+            Image(
+                painter = painterResource(id = R.drawable.gym),
+                contentDescription = null,
+                contentScale = ContentScale.Crop,
+                modifier = Modifier
+                    .fillMaxSize()
+                    .blur(radius = 4.dp) // Adiciona o efeito de desfoque
             )
+
+            // 2. Overlay Escuro (Scrim)
+            // Aumentei ligeiramente a opacidade (0.6f) para contrastar melhor com o blur
+            Box(
+                modifier = Modifier
+                    .fillMaxSize()
+                    .background(Color.Black.copy(alpha = 0.6f))
+            )
+
+            // 3. Conteúdo de Texto
+            Column(
+                modifier = Modifier
+                    .align(Alignment.TopStart)
+                    .padding(24.dp)
+            ) {
+                Text(
+                    text = "Next Workout:",
+                    color = Color.White,
+                    fontSize = 18.sp,
+                    fontWeight = FontWeight.SemiBold
+                )
+                Text(
+                    text = workoutName,
+                    color = Color.White,
+                    fontSize = 32.sp,
+                    fontWeight = FontWeight.Bold
+                )
+                Spacer(modifier = Modifier.height(4.dp))
+                Text(
+                    text = "$exerciseCount exercises",
+                    color = Color.White.copy(alpha = 0.8f),
+                    fontSize = 16.sp,
+                    fontWeight = FontWeight.Normal
+                )
+            }
+
+            // 4. Botão "Start Workout" com Ícone
+            Button(
+                onClick = onStartClick,
+                colors = ButtonDefaults.buttonColors(containerColor = Color.Transparent),
+                contentPadding = PaddingValues(0.dp),
+                modifier = Modifier
+                    .align(Alignment.BottomCenter)
+                    .padding(16.dp)
+                    .fillMaxWidth()
+                    .height(56.dp) // Um pouco mais alto para acomodar bem o ícone
+                    .background(brush = buttonGradient, shape = CircleShape)
+                    .clip(CircleShape)
+            ) {
+                // Row para alinhar Ícone + Texto no centro
+                Row(
+                    verticalAlignment = Alignment.CenterVertically,
+                    horizontalArrangement = Arrangement.Center
+                ) {
+                    Icon(
+                        imageVector = Icons.Outlined.PlayCircleOutline, // Ícone similar à imagem
+                        contentDescription = null,
+                        tint = Color.White,
+                        modifier = Modifier.size(28.dp)
+                    )
+                    Spacer(modifier = Modifier.width(8.dp))
+                    Text(
+                        text = "Start Workout",
+                        color = Color.White,
+                        fontWeight = FontWeight.Bold,
+                        fontSize = 18.sp
+                    )
+                }
+            }
         }
     }
 }
@@ -853,7 +1185,7 @@ fun WeightForecastCard(
         ) {
             HeadingTextComponent(
                 "Your Progress",
-                textSize = 16.sp,
+                textSize = 26.sp,
                 textColor = colorScheme.primary
             )
 
@@ -868,198 +1200,234 @@ fun WeightForecastCard(
 
             HeadingTextComponent(
                 mainText,
-                textSize = 14.sp
+                textSize = 16.sp
             )
         }
     }
 }
 
-@OptIn(ExperimentalMaterial3ExpressiveApi::class)
 @Composable
 fun BmiCard(
     bmi: Float,
-    category: String
+    category: String // Mantido para compatibilidade
 ) {
     val cardShape = RoundedCornerShape(32.dp)
 
     Surface(
         shape = cardShape,
         tonalElevation = 2.dp,
-        shadowElevation = 0.dp,
-        border = BorderStroke(
-            width = 4.dp,
-            brush = Brush.linearGradient(
-                colors = listOf(
-                    colorScheme.primary,
-                    colorScheme.secondary
-                )
-            )
-        ),
-        modifier = Modifier
-            .fillMaxWidth(0.95f)
-            .shadow(
-                elevation = 8.dp,
-                shape = cardShape,
-                ambientColor = MaterialTheme.colorScheme.primary,
-                spotColor = MaterialTheme.colorScheme.primary
-            )
+        shadowElevation = 8.dp,
+        color = MaterialTheme.colorScheme.surface,
+        modifier = Modifier.fillMaxWidth(0.95f)
     ) {
         Column(
             modifier = Modifier
                 .padding(16.dp)
-                .fillMaxWidth(),
-
+                .fillMaxWidth()
+                .wrapContentHeight(),
+            horizontalAlignment = Alignment.CenterHorizontally
         ) {
-            LeftTitleText("Your BMI", textSize = 18.sp)
-
-            Spacer(Modifier.height(8.dp))
-
-            Surface(
-                shape = MaterialTheme.shapes.extraExtraLarge,
-                border = BorderStroke(1.dp, colorScheme.outline),
-                modifier = Modifier.fillMaxWidth()
-            ) {
-                Text(
-                    text = "Your weight is: $category",
-                    modifier = Modifier.padding(8.dp),
-                    fontSize = 14.sp,
-                    color = colorScheme.onSurface
-                )
-            }
-
-            Spacer(Modifier.height(12.dp))
-
-            HeadingTextComponent(
-                if (bmi > 0f) String.format("%.1f", bmi) else "--",
-                textSize = 28.sp
+            Text(
+                text = "BMI Result",
+                style = MaterialTheme.typography.titleMedium,
+                color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.6f)
             )
 
-            Spacer(Modifier.height(12.dp))
+            Spacer(modifier = Modifier.height(46.dp))
 
-            BmiColorBar(bmi = bmi)
+            BmiGauge(
+                bmi = bmi,
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .height(250.dp)
+            )
         }
     }
 }
 
 @Composable
-fun BmiColorBar(
+fun BmiGauge(
     bmi: Float,
-    minBmi: Float = 15f,
-    maxBmi: Float = 35f
+    modifier: Modifier = Modifier
 ) {
-    val clampedBmi = bmi.coerceIn(minBmi, maxBmi)
-    val range = maxBmi - minBmi
+    val density = LocalDensity.current
+    val textColor = MaterialTheme.colorScheme.onSurface.toArgb()
+    val needleColor = colorScheme.onSurface
 
-    val underStart = 15f
-    val underEnd   = 18.5f
-    val normalEnd  = 25f
-    val overEnd    = 30f
-    val obeseEnd   = 35f
+    // Intervalos visuais fixos (45 graus cada)
+    val sliceSize = 45f
 
-    val underWidth  = (underEnd - underStart) / range
-    val normalWidth = (normalEnd - underEnd) / range
-    val overWidth   = (overEnd - normalEnd) / range
-    val obeseWidth  = (obeseEnd - overEnd) / range
+    // Limites reais do IMC
+    val minBmi = 10f
+    val limitUnder = 18.5f
+    val limitHealthy = 25f
+    val limitOver = 30f
+    val maxBmi = 40f
 
-    val underColor  = Color(0xFFFFF59D)
-    val normalColor = Color(0xFFA5D6A7)
-    val overColor   = Color(0xFFFFCC80)
-    val obeseColor  = Color(0xFFFF0000)
+    val animatedBmi by animateFloatAsState(
+        targetValue = bmi.coerceIn(minBmi, maxBmi),
+        animationSpec = tween(durationMillis = 1000, easing = FastOutSlowInEasing),
+        label = "bmiAnimation"
+    )
 
-    Box(
-        modifier = Modifier
-            .fillMaxWidth()
-            .height(72.dp)
+    Column(
+        horizontalAlignment = Alignment.CenterHorizontally,
+        modifier = modifier
     ) {
-        // barra de cores com larguras proporcionais
         Box(
             modifier = Modifier
                 .fillMaxWidth()
-                .height(14.dp)
-                .align(Alignment.Center)
-                .clip(RoundedCornerShape(7.dp))
-                .border(BorderStroke(1.dp, colorScheme.outline), RoundedCornerShape(7.dp))
+                .weight(1f),
+            contentAlignment = Alignment.BottomCenter
         ) {
-            Row(Modifier.matchParentSize()) {
-                Box(
-                    Modifier
-                        .weight(underWidth)
-                        .fillMaxHeight()
-                        .background(underColor)
-                )
-                Box(
-                    Modifier
-                        .weight(normalWidth)
-                        .fillMaxHeight()
-                        .background(normalColor)
-                )
-                Box(
-                    Modifier
-                        .weight(overWidth)
-                        .fillMaxHeight()
-                        .background(overColor)
-                )
-                Box(
-                    Modifier
-                        .weight(obeseWidth)
-                        .fillMaxHeight()
-                        .background(obeseColor)
-                )
-            }
-        }
+            Canvas(modifier = Modifier.fillMaxSize()) {
+                val width = size.width
+                val height = size.height
 
-        // indicador na posição correta
-        BoxWithConstraints(
-            modifier = Modifier
-                .fillMaxWidth()
-                .align(Alignment.Center)
-        ) {
-            val barWidthPx = constraints.maxWidth.toFloat()
-            val fraction = (clampedBmi - minBmi) / range
-            val xOffsetPx = fraction * barWidthPx
-            val xOffsetDp = with(LocalDensity.current) { xOffsetPx.toDp() }
+                // --- CONFIGURAÇÃO GEOMÉTRICA ---
+                val strokeWidth = 40.dp.toPx() // Um pouco mais grosso para destacar
+                val arcPadding = strokeWidth
+                val arcDiameter = width - (arcPadding * 2)
+                val radius = arcDiameter / 2
+                val centerOffset = Offset(width / 2, height - 10.dp.toPx())
 
-            Box(
-                modifier = Modifier
-                    .height(26.dp)
-                    .width(2.dp)
-                    .align(Alignment.CenterStart)
-                    .offset(x = xOffsetDp)
-                    .background(colorScheme.onSurface)
-            )
-        }
+                // --- NOVAS CORES (Mais contraste) ---
+                val colorUnder = Color(0xFFFDD835) // Amarelo Vibrante
+                val colorHealthy = Color(0xFF4CAF50) // Verde
+                val colorOver = Color(0xFFFF5722)    // "Deep Orange" (Bem diferente do amarelo)
+                val colorObese = Color(0xFFC62828)   // Vermelho Escuro
 
-        // marcas numéricas
-        Row(
-            modifier = Modifier
-                .fillMaxWidth()
-                .align(Alignment.BottomCenter)
-                .padding(bottom = 4.dp),
-            horizontalArrangement = Arrangement.SpaceBetween
-        ) {
-            val labels = listOf(15, 20, 25, 30, 35)
-            labels.forEach { value ->
-                Column(
-                    horizontalAlignment = Alignment.CenterHorizontally,
-                    verticalArrangement = Arrangement.spacedBy(2.dp)
-                ) {
-                    Box(
-                        modifier = Modifier
-                            .height(13.dp)
-                            .width(1.dp)
-                            .background(Color.Black)
+                val slices = listOf(
+                    Triple(colorUnder, "Underweight", 180f),
+                    Triple(colorHealthy, "Healthy", 225f),
+                    Triple(colorOver, "Overweight", 270f),
+                    Triple(colorObese, "Obese", 315f)
+                )
+
+                // --- LOOP DE DESENHO (ARCOS + TEXTO CENTRALIZADO) ---
+                slices.forEach { (color, label, startAngle) ->
+
+                    // 1. Desenhar o Arco Colorido
+                    drawArc(
+                        color = color,
+                        startAngle = startAngle,
+                        sweepAngle = sliceSize, // 45 graus
+                        useCenter = false,
+                        topLeft = Offset(width / 2 - radius, centerOffset.y - radius),
+                        size = Size(arcDiameter, arcDiameter),
+                        style = Stroke(width = strokeWidth, cap = StrokeCap.Butt)
                     )
-                    Text(
-                        text = value.toString(),
-                        fontSize = 13.sp,
-                        color = colorScheme.onBackground
-                    )
+
+                    // 2. Desenhar a Legenda (Matematicamente Centralizada)
+                    drawIntoCanvas { canvas ->
+                        val paint = Paint().apply {
+                            this.color = textColor
+                            this.textSize = with(density) { 13.sp.toPx() } // Tamanho legível
+                            this.textAlign = Paint.Align.LEFT // Importante: Desenhamos do inicio do offset calculado
+                            this.typeface = Typeface.DEFAULT_BOLD
+                            this.alpha = 200
+                        }
+
+                        // Criar um caminho específico APENAS para esta fatia
+                        val path = android.graphics.Path()
+                        // Raio do texto: logo abaixo da barra colorida
+                        val textRadius = radius - (strokeWidth / 2) - 12.dp.toPx()
+
+                        path.addArc(
+                            centerOffset.x - textRadius,
+                            centerOffset.y - textRadius,
+                            centerOffset.x + textRadius,
+                            centerOffset.y + textRadius,
+                            startAngle, // Começa no angulo da fatia
+                            sliceSize   // Tem o tamanho da fatia (45)
+                        )
+
+                        // Medir o texto para centralizar
+                        val textWidth = paint.measureText(label)
+                        // Calcular o comprimento do arco desta fatia específica
+                        val pathLength = (Math.PI * textRadius * sliceSize / 180).toFloat()
+                        // Offset horizontal: (Tamanho do Arco - Tamanho do Texto) / 2
+                        val hOffset = (pathLength - textWidth) / 2
+
+                        canvas.nativeCanvas.drawTextOnPath(label, path, hOffset, 0f, paint)
+                    }
                 }
+
+                // --- AGULHA (Mantida a lógica que funciona) ---
+                val needleAngleFrom180 = when {
+                    animatedBmi < limitUnder -> {
+                        val ratio = (animatedBmi - minBmi) / (limitUnder - minBmi)
+                        ratio * sliceSize
+                    }
+                    animatedBmi < limitHealthy -> {
+                        val ratio = (animatedBmi - limitUnder) / (limitHealthy - limitUnder)
+                        (ratio * sliceSize) + sliceSize
+                    }
+                    animatedBmi < limitOver -> {
+                        val ratio = (animatedBmi - limitHealthy) / (limitOver - limitHealthy)
+                        (ratio * sliceSize) + (sliceSize * 2)
+                    }
+                    else -> {
+                        val ratio = (animatedBmi - limitOver) / (maxBmi - limitOver)
+                        val finalRatio = ratio.coerceAtMost(1f)
+                        (finalRatio * sliceSize) + (sliceSize * 3)
+                    }
+                }
+
+                val finalNeedleAngle = 180f + needleAngleFrom180
+                val needleRad = Math.toRadians(finalNeedleAngle.toDouble())
+
+                val needleLength = radius - 10.dp.toPx()
+                val needleEnd = Offset(
+                    x = centerOffset.x + needleLength * cos(needleRad).toFloat(),
+                    y = centerOffset.y + needleLength * sin(needleRad).toFloat()
+                )
+
+                drawLine(
+                    color = needleColor,
+                    start = centerOffset,
+                    end = needleEnd,
+                    strokeWidth = 4.dp.toPx(),
+                    cap = StrokeCap.Round
+                )
+
+                drawCircle(color = needleColor, radius = 6.dp.toPx(), center = centerOffset)
             }
+        }
+
+        HorizontalDivider(Modifier.fillMaxWidth(0.95f), color =colorScheme.primary)
+        Spacer(modifier = Modifier.height(10.dp))
+
+        // --- TEXTO EM BAIXO ---
+        Column(horizontalAlignment = Alignment.CenterHorizontally,
+            modifier = Modifier
+                .background(colorScheme.primary.copy(0.4f), RoundedCornerShape(26.dp))
+                .fillMaxWidth()
+                .padding(6.dp)
+                ) {
+            Text(
+                text = String.format("%.1f", bmi),
+                fontSize = 54.sp,
+                fontWeight = FontWeight.ExtraBold,
+                color = MaterialTheme.colorScheme.onSurface
+            )
+
+            val (label, color) = when {
+                bmi < 18.5 -> "Underweight" to Color(0xFFFDD835)
+                bmi < 25.0 -> "Healthy" to Color(0xFF4CAF50)
+                bmi < 30.0 -> "Overweight" to Color(0xFFFF5722) // Laranja Forte
+                else -> "Obese" to Color(0xFFC62828)
+            }
+
+            Text(
+                text = label,
+                fontSize = 22.sp,
+                fontWeight = FontWeight.SemiBold,
+                color = color
+            )
         }
     }
 }
-
 @RequiresApi(Build.VERSION_CODES.O)
 @Composable
 fun WeightLineChart(
@@ -1089,25 +1457,29 @@ fun WeightLineChart(
     var selectedOffset by remember { mutableStateOf<Offset?>(null) }
 
     val density = LocalDensity.current
-    val baseRadiusPx = with(density) { 4.dp.toPx() }
-    val selectedRadiusPx = with(density) { 10.dp.toPx() }
+    val baseRadiusPx = with(density) { 5.dp.toPx() } // Ligeiramente maior
+    val glowRadiusPx = with(density) { 10.dp.toPx() } // Raio do brilho
+    val selectedRadiusPx = with(density) { 8.dp.toPx() }
 
-    // animações de seleção
+    // Animações de seleção
     val radiusAnim = remember { Animatable(baseRadiusPx) }
     val alphaAnim = remember { Animatable(0f) }
     val colorAnim = remember { Animatable(pointColor) }
 
-    // progresso da linha 0..1, começa em 1f para mostrar logo ao abrir
+    // Progresso da linha 0..1
     val drawProgress = remember(sorted) {
         Animatable(if (sorted.size == 1) 1f else 0f)
     }
 
-    // PathMeasure e Paths Android reutilizáveis
+    // Paths reutilizáveis
     val pathMeasure = remember { android.graphics.PathMeasure() }
     val fullAndroidPath = remember { android.graphics.Path() }
     val animatedAndroidPath = remember { android.graphics.Path() }
 
-    // 1) limpar seleção quando clearSelectionSignal muda
+    // Path para o gradiente de preenchimento
+    val fillPath = remember { android.graphics.Path() }
+
+    // 1) Limpar seleção
     LaunchedEffect(clearSelectionSignal) {
         selectedPoint = null
         selectedOffset = null
@@ -1116,20 +1488,15 @@ fun WeightLineChart(
         colorAnim.snapTo(pointColor)
     }
 
-    // 2) animar sempre que os pontos mudam (range novo carregado)
+    // 2) Animar ao carregar
     LaunchedEffect(sorted) {
-        // evita animar se só mudou a ordem ou algo mínimo
         if (sorted.size > 1) {
             drawProgress.snapTo(0f)
             drawProgress.animateTo(
                 targetValue = 1f,
-                animationSpec = tween(
-                    durationMillis = 500,
-                    easing = LinearEasing
-                )
+                animationSpec = tween(durationMillis = 800, easing = FastOutSlowInEasing)
             )
         } else {
-            // com 1 ponto só, mostra logo
             drawProgress.snapTo(1f)
         }
     }
@@ -1141,14 +1508,13 @@ fun WeightLineChart(
             detectTapGestures(
                 onTap = { tapOffset ->
                     scope.launch {
-                        val hitRadius = with(density) { 24.dp.toPx() }
-
+                        val hitRadius = with(density) { 30.dp.toPx() }
+                        // Recalcular offsets para hit-test (mesma lógica do draw)
                         val yLabelWidth = 32.dp.toPx()
                         val leftPaddingPx = yLabelWidth + 12.dp.toPx()
                         val rightPaddingPx = 16.dp.toPx()
                         val topPaddingPx = 24.dp.toPx()
                         val bottomPaddingPx = 40.dp.toPx()
-
 
                         val centers = buildCircleCentersRaw(
                             density = density,
@@ -1198,7 +1564,7 @@ fun WeightLineChart(
         val canvasWidth = size.width
         val canvasHeight = size.height
 
-        val yLabelWidth = 32.dp.toPx() // ajusta conforme precisares
+        val yLabelWidth = 32.dp.toPx()
         val leftPadding = yLabelWidth + 12.dp.toPx()
         val rightPadding = 16.dp.toPx()
         val topPadding = 24.dp.toPx()
@@ -1209,76 +1575,143 @@ fun WeightLineChart(
 
         val progress = drawProgress.value.coerceIn(0f, 1f)
 
-        // grid
+        // --- GRID ---
         repeat(4) { i ->
             val y = topPadding + usableHeight * (i / 3f)
             drawLine(
-                color = gridColor.copy(alpha = 0.4f),
+                color = gridColor.copy(alpha = 0.3f), // Grid mais sutil
                 start = Offset(leftPadding, y),
                 end = Offset(canvasWidth - rightPadding, y),
                 strokeWidth = 1.dp.toPx()
             )
         }
 
-        val stepX = if (sorted.size == 1) 0f
-        else usableWidth / (sorted.size - 1)
-
+        val stepX = if (sorted.size == 1) 0f else usableWidth / (sorted.size - 1)
         val circleCenters = mutableListOf<Pair<Offset, WeightHistoryPoint>>()
+        val pointsCoordinates = mutableListOf<Offset>()
 
-        // path completo
-        fullAndroidPath.reset()
+        // Calcular coordenadas
         sorted.forEachIndexed { index, point ->
             val x = leftPadding + stepX * index
             val normalizedY = (point.weight - minWeight) / weightRange
             val y = topPadding + usableHeight * (1f - normalizedY)
-
             val offset = Offset(x, y)
             circleCenters.add(offset to point)
+            pointsCoordinates.add(offset)
+        }
 
-            if (index == 0) {
-                fullAndroidPath.moveTo(x, y)
-            } else {
-                fullAndroidPath.lineTo(x, y)
+        // --- CONSTRUIR PATH SUAVE (CUBIC BÉZIER) ---
+        fullAndroidPath.reset()
+        if (pointsCoordinates.isNotEmpty()) {
+            fullAndroidPath.moveTo(pointsCoordinates.first().x, pointsCoordinates.first().y)
+
+            for (i in 0 until pointsCoordinates.size - 1) {
+                val p1 = pointsCoordinates[i]
+                val p2 = pointsCoordinates[i + 1]
+
+                // Lógica simples de suavização: Pontos de controle no meio do caminho horizontalmente
+                val controlPoint1X = (p1.x + p2.x) / 2f
+                val controlPoint1Y = p1.y
+                val controlPoint2X = (p1.x + p2.x) / 2f
+                val controlPoint2Y = p2.y
+
+                fullAndroidPath.cubicTo(
+                    controlPoint1X, controlPoint1Y,
+                    controlPoint2X, controlPoint2Y,
+                    p2.x, p2.y
+                )
             }
         }
 
-        // path parcial
+        // --- CALCULAR PATH PARCIAL (ANIMAÇÃO) ---
         animatedAndroidPath.reset()
         pathMeasure.setPath(fullAndroidPath, false)
         val length = pathMeasure.length
         val stop = length * progress
         pathMeasure.getSegment(0f, stop, animatedAndroidPath, true)
 
-        // desenhar linha animada
+        // Descobrir a posição X atual da animação para fechar o gradiente corretamente
+        val currentEndPos = FloatArray(2)
+        val currentTan = FloatArray(2)
+        pathMeasure.getPosTan(stop, currentEndPos, currentTan)
+        val currentX = if (progress < 1f) currentEndPos[0] else (leftPadding + usableWidth)
+
+        // --- DESENHAR PREENCHIMENTO (GRADIENTE) ---
+        // Criar um path fechado para o gradiente
+        fillPath.set(animatedAndroidPath)
+        fillPath.lineTo(currentX, canvasHeight - bottomPadding) // desce até o eixo X
+        fillPath.lineTo(leftPadding, canvasHeight - bottomPadding) // volta para o início
+        fillPath.close()
+
+        val fillBrush = Brush.verticalGradient(
+            colors = listOf(
+                lineColor.copy(alpha = 0.4f), // Cor forte no topo
+                lineColor.copy(alpha = 0.05f), // Quase transparente no meio
+                Color.Transparent            // Transparente em baixo
+            ),
+            startY = topPadding,
+            endY = canvasHeight - bottomPadding
+        )
+
+        drawPath(
+            path = fillPath.asComposePath(),
+            brush = fillBrush
+        )
+
+        // --- DESENHAR LINHA ---
         drawIntoCanvas { canvas ->
-            val paint = android.graphics.Paint().apply {
-                style = android.graphics.Paint.Style.STROKE
+            val paint = Paint().apply {
+                style = Paint.Style.STROKE
                 color = lineColor.toArgb()
-                strokeWidth = 2.dp.toPx()
-                strokeCap = android.graphics.Paint.Cap.ROUND
+                strokeWidth = 3.dp.toPx() // Linha um pouco mais grossa
+                strokeCap = Paint.Cap.ROUND
+                strokeJoin = Paint.Join.ROUND
                 isAntiAlias = true
+                // Sombra suave na linha para dar destaque
+                setShadowLayer(4.dp.toPx(), 0f, 2.dp.toPx(), lineColor.copy(alpha = 0.3f).toArgb())
             }
             canvas.nativeCanvas.drawPath(animatedAndroidPath, paint)
         }
 
-        // pontos (até à posição atual)
+        // --- DESENHAR PONTOS ---
+        // Só desenha pontos que já foram cobertos pela animação da linha
         val currentMaxX = leftPadding + usableWidth * progress
 
         circleCenters.forEach { (center, point) ->
-            if (center.x <= currentMaxX) {
+            if (center.x <= currentMaxX + 1f) { // +1f margem de erro float
                 val isSelected = point == selectedPoint
+
+                // Valores de animação ou padrão
                 val radius = if (isSelected) radiusAnim.value else baseRadiusPx
                 val color = if (isSelected) colorAnim.value else pointColor
 
+                // 1. "Glow" atrás do ponto (sempre desenha um brilho suave)
                 drawCircle(
-                    color = color,
+                    color = lineColor.copy(alpha = 0.3f), // Brilho da mesma cor da linha
+                    radius = if(isSelected) selectedRadiusPx * 2 else glowRadiusPx,
+                    center = center
+                )
+
+                // 2. O Ponto sólido central
+                drawCircle(
+                    color = if(isSelected) color else Color.White, // Centro branco (comum em gráficos clean) ou cor selecionada
                     radius = radius,
                     center = center
                 )
+
+                // 3. Borda do ponto (se o centro for branco)
+                if (!isSelected) {
+                    drawCircle(
+                        color = lineColor,
+                        radius = radius,
+                        center = center,
+                        style = Stroke(width = 2.dp.toPx())
+                    )
+                }
             }
         }
 
-        // eixo Y
+        // --- EIXO Y (Min/Max Labels) ---
         val minLabel = String.format("%.1f", minWeight)
         val maxLabel = String.format("%.1f", maxWeight)
         val minLayout = textMeasurer.measure(minLabel, labelTextStyle)
@@ -1302,7 +1735,7 @@ fun WeightLineChart(
             )
         )
 
-        // eixo X (labels com alpha animado)
+        // --- EIXO X (Datas: Início, Meio, Fim) ---
         if (sorted.isNotEmpty()) {
             val first = sorted.first()
             val last = sorted.last()
@@ -1311,6 +1744,8 @@ fun WeightLineChart(
             val lastLabel = formatDateShort(last.date)
 
             val centerX = leftPadding + usableWidth / 2f
+
+            // Lógica para encontrar a data do meio
             val centerLabel = run {
                 val tolerance = 1f
                 val exact = circleCenters.minByOrNull { (offset, _) ->
@@ -1322,6 +1757,7 @@ fun WeightLineChart(
                 if (exactOffset != null && kotlin.math.abs(exactOffset.x - centerX) <= tolerance) {
                     formatDateShort(exactPoint!!.date)
                 } else {
+                    // Encontra os pontos vizinhos ao meio geométrico
                     var before: WeightHistoryPoint? = null
                     var after: WeightHistoryPoint? = null
 
@@ -1334,9 +1770,8 @@ fun WeightLineChart(
                             break
                         }
                     }
-
                     if (before != null && after != null) {
-                        middleDate(before!!.date, after!!.date)
+                        middleDate(before.date, after.date)
                     } else {
                         middleDate(first.date, last.date)
                     }
@@ -1347,8 +1782,8 @@ fun WeightLineChart(
             val middleLayout = textMeasurer.measure(centerLabel, labelTextStyle)
             val lastLayout = textMeasurer.measure(lastLabel, labelTextStyle)
 
-            val yLabel = topPadding + usableHeight + 8.dp.toPx()
-            val xLabelColor = labelColor.copy(alpha = progress)
+            val yLabel = topPadding + usableHeight + 12.dp.toPx()
+            val xLabelColor = labelColor.copy(alpha = progress) // Labels aparecem com a linha
 
             drawText(
                 textLayoutResult = firstLayout,
@@ -1358,14 +1793,20 @@ fun WeightLineChart(
                     y = yLabel
                 )
             )
-            drawText(
-                textLayoutResult = middleLayout,
-                color = xLabelColor,
-                topLeft = Offset(
-                    x = centerX - middleLayout.size.width / 2f,
-                    y = yLabel
+
+            // Só desenha o meio se não sobrepor
+            if (centerX - middleLayout.size.width/2 > leftPadding + firstLayout.size.width &&
+                centerX + middleLayout.size.width/2 < canvasWidth - rightPadding - lastLayout.size.width) {
+                drawText(
+                    textLayoutResult = middleLayout,
+                    color = xLabelColor,
+                    topLeft = Offset(
+                        x = centerX - middleLayout.size.width / 2f,
+                        y = yLabel
+                    )
                 )
-            )
+            }
+
             drawText(
                 textLayoutResult = lastLayout,
                 color = xLabelColor,
@@ -1376,7 +1817,7 @@ fun WeightLineChart(
             )
         }
 
-        // tooltip
+        // --- TOOLTIP ---
         val selPoint = selectedPoint
         val selOffset = selectedOffset
         if (selPoint != null && selOffset != null && alphaAnim.value > 0f) {
@@ -1386,12 +1827,15 @@ fun WeightLineChart(
                 textMeasurer = textMeasurer,
                 labelTextStyle = labelTextStyle,
                 background = Color.White,
-                textAlpha = alphaAnim.value
+                textAlpha = alphaAnim.value,
+                // Passando o tamanho do canvas para o tooltip calcular limites
+                canvasSize = size
             )
         }
     }
 }
 
+// --- FUNÇÕES AUXILIARES MANTIDAS/ADAPTADAS ---
 
 @RequiresApi(Build.VERSION_CODES.O)
 private fun middleDate(start: String, end: String): String {
@@ -1404,10 +1848,23 @@ private fun middleDate(start: String, end: String): String {
         val outFormatter = DateTimeFormatter.ofPattern("dd/MM")
         midDate.format(outFormatter)
     } catch (e: Exception) {
-        "" // fallback se algo correr mal
+        ""
     }
 }
 
+private fun formatDateShort(date: String): String {
+    return try {
+        val parts = date.split("-")
+        val day = parts[2]
+        val month = parts[1]
+        "$day/$month"
+    } catch (e: Exception) {
+        date
+    }
+}
+
+// Nota: A função buildCircleCentersRaw original estava correta, mas certifique-se
+// de que os paddings passados correspondem aos usados dentro do Canvas.
 private fun buildCircleCentersRaw(
     density: Density,
     totalSize: IntSize,
@@ -1439,40 +1896,39 @@ private fun Offset.distanceTo(other: Offset): Float {
     return sqrt(dx * dx + dy * dy)
 }
 
+// Ligeira adaptação no Tooltip para receber o canvasSize
 private fun DrawScope.drawPointTooltip(
     point: WeightHistoryPoint,
     center: Offset,
     textMeasurer: TextMeasurer,
     labelTextStyle: TextStyle,
     background: Color,
-    textAlpha: Float
+    textAlpha: Float,
+    canvasSize: Size
 ) {
     val weightText = String.format("%.1f kg", point.weight)
     val dateText = formatDateShort(point.date)
 
-    val weightLayout = textMeasurer.measure(weightText, labelTextStyle)
-    val dateLayout = textMeasurer.measure(dateText, labelTextStyle)
+    val weightLayout = textMeasurer.measure(weightText, labelTextStyle.copy(fontWeight = FontWeight.Bold))
+    val dateLayout = textMeasurer.measure(dateText, labelTextStyle.copy(color = Color.Gray))
 
     val paddingH = 8.dp.toPx()
-    val paddingV = 4.dp.toPx()
-    val arrowWidth = 10.dp.toPx()
+    val paddingV = 6.dp.toPx()
+    val arrowWidth = 12.dp.toPx()
     val arrowHeight = 8.dp.toPx()
 
     val boxWidth = max(weightLayout.size.width, dateLayout.size.width) + paddingH * 2
-    val boxHeight = weightLayout.size.height + dateLayout.size.height + paddingV * 3
+    val boxHeight = weightLayout.size.height + dateLayout.size.height + paddingV * 2.5f
 
-    val margin = 4.dp.toPx()
-    val horizontalMargin = 4.dp.toPx()
+    val margin = 6.dp.toPx()
     val topSafeMargin = 8.dp.toPx()
-    val bottomSafeMargin = size.height - 8.dp.toPx()
+    val bottomSafeMargin = canvasSize.height - 8.dp.toPx()
 
-    // decide se desenha acima (true) ou abaixo (false)
     val drawAbove = center.y > (topSafeMargin + boxHeight + arrowHeight)
 
-    // centro na horizontal em relação ao ponto, mas sem sair do gráfico
     val boxLeft = (center.x - boxWidth / 2f)
-        .coerceAtLeast(horizontalMargin)
-        .coerceAtMost(size.width - boxWidth - horizontalMargin)
+        .coerceAtLeast(margin)
+        .coerceAtMost(canvasSize.width - boxWidth - margin)
 
     val boxTop = if (drawAbove) {
         (center.y - boxHeight - arrowHeight - margin).coerceAtLeast(topSafeMargin)
@@ -1482,27 +1938,19 @@ private fun DrawScope.drawPointTooltip(
 
     val boxRect = Rect(Offset(boxLeft, boxTop), Size(boxWidth, boxHeight))
 
-    // clamp da posição horizontal da seta para não sair da caixa
     val arrowX = center.x.coerceIn(
-        boxRect.left + arrowWidth / 2f,
-        boxRect.right - arrowWidth / 2f
+        boxRect.left + arrowWidth,
+        boxRect.right - arrowWidth
     )
 
-    // path da caixa + seta (com arrowX clamped)
     val path = Path().apply {
-        addRoundRect(
-            RoundRect(
-                rect = boxRect,
-                cornerRadius = CornerRadius(6.dp.toPx())
-            )
-        )
+        addRoundRect(RoundRect(rect = boxRect, cornerRadius = CornerRadius(8.dp.toPx())))
+
         if (drawAbove) {
-            // seta a apontar para baixo (ponta abaixo da caixa)
             moveTo(arrowX, boxRect.bottom + arrowHeight)
             lineTo(arrowX - arrowWidth / 2f, boxRect.bottom)
             lineTo(arrowX + arrowWidth / 2f, boxRect.bottom)
         } else {
-            // seta a apontar para cima (ponta acima da caixa)
             moveTo(arrowX, boxRect.top - arrowHeight)
             lineTo(arrowX - arrowWidth / 2f, boxRect.top)
             lineTo(arrowX + arrowWidth / 2f, boxRect.top)
@@ -1510,51 +1958,34 @@ private fun DrawScope.drawPointTooltip(
         close()
     }
 
-    // sombra suave (deslocada) — versão correta
-    val shadowOffset = Offset(1.5.dp.toPx(), 1.5.dp.toPx())
-    val shadowPath = Path().apply {
-        // adiciona o path original já deslocado
-        addPath(path, shadowOffset)
-    }
-    drawPath(
-        path = shadowPath,
-        color = Color.Black.copy(alpha = 0.18f * textAlpha)
-    )
-
-    // fundo da tooltip
+    // Sombra do Tooltip
     drawPath(
         path = path,
-        color = background
+        color = Color.Black.copy(alpha = 0.2f * textAlpha),
+        style = Fill,
+        colorFilter = null,
+        blendMode = BlendMode.SrcOver
     )
+    // Pequeno offset para "levantar" a tooltip visualmente não é fácil sem blur,
+    // então desenhamos a sombra levemente deslocada se desejado, ou apenas confiamos na cor.
 
-    // texto (alinhado à esquerda dentro da caixa)
+    drawPath(path = path, color = background.copy(alpha = textAlpha))
+    drawPath(path = path, color = Color.LightGray.copy(alpha = 0.5f * textAlpha), style = Stroke(width = 1f))
+
     val textX = boxRect.left + paddingH
     var textY = boxRect.top + paddingV
 
-    val textColor = Color.Black.copy(alpha = textAlpha)
-
     drawText(
         textLayoutResult = weightLayout,
-        color = textColor,
+        color = Color.Black.copy(alpha = textAlpha),
         topLeft = Offset(textX, textY)
     )
     textY += weightLayout.size.height + paddingV / 2f
     drawText(
         textLayoutResult = dateLayout,
-        color = textColor,
+        color = Color.Black.copy(alpha = textAlpha),
         topLeft = Offset(textX, textY)
     )
-}
-
-private fun formatDateShort(date: String): String {
-    return try {
-        val parts = date.split("-")
-        val day = parts[2]
-        val month = parts[1]
-        "$day/$month"
-    } catch (e: Exception) {
-        date
-    }
 }
 
 
@@ -1598,7 +2029,6 @@ fun WeightProgressCard(
                 .padding(16.dp)
                 .fillMaxWidth()
         ) {
-            HeadingTextComponent("Your Weight Progress", textSize = 16.sp)
 
             Spacer(Modifier.height(8.dp))
 

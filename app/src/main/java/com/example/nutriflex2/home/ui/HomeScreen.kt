@@ -12,37 +12,27 @@ import androidx.compose.animation.core.rememberInfiniteTransition
 import androidx.compose.animation.core.tween
 import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.background
-import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.Row
-import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.size
-import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.pager.HorizontalPager
 import androidx.compose.foundation.pager.rememberPagerState
 import androidx.compose.foundation.rememberScrollState
-import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.AccountCircle
-import androidx.compose.material.icons.filled.Menu
 import androidx.compose.material.icons.filled.Settings
 import androidx.compose.material3.DrawerValue
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
-import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme.colorScheme
 import androidx.compose.material3.ModalDrawerSheet
 import androidx.compose.material3.ModalNavigationDrawer
-import androidx.compose.material3.NavigationBarDefaults
 import androidx.compose.material3.NavigationDrawerItem
 import androidx.compose.material3.NavigationDrawerItemDefaults
 import androidx.compose.material3.Scaffold
-import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.material3.rememberDrawerState
 import androidx.compose.runtime.Composable
@@ -55,12 +45,10 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
-import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.TileMode
-import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.res.stringResource
@@ -70,7 +58,6 @@ import com.example.nutriflex2.home.ui.tabs.diet.DietTabScreen
 import com.example.nutriflex2.home.ui.tabs.diet.DietTabViewModel
 import com.example.nutriflex2.home.ui.tabs.training.TrainingTabScreen
 import components.NFBottomBar
-import components.TitleText
 import components.WeightRange
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
@@ -266,7 +253,7 @@ fun HomeScreen(
             ) { innerPadding ->
                 Box(
                     modifier = Modifier
-                        .padding(innerPadding)
+                        .padding(bottom = innerPadding.calculateBottomPadding())
                         .fillMaxSize()
                         .background(brush = animatedBrush)
                 ) {
@@ -319,70 +306,72 @@ fun HomeScreen(
                             }
                         }
                     }
-                    Column(
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .align(Alignment.TopCenter)
-                            .graphicsLayer {
-                                translationY = animatedTopBarOffset
-                                val progress =
-                                    1f - (-animatedTopBarOffset / topBarHeightPx).coerceIn(0f, 1f)
-                                alpha = progress
-                            }
-                            .background(NavigationBarDefaults.containerColor)
-                    ) {
-                        Row(
-                            modifier = Modifier
-                                .fillMaxWidth()
-                                .padding(horizontal = 16.dp, vertical = 12.dp),
-                            horizontalArrangement = Arrangement.SpaceBetween,
-                            verticalAlignment = Alignment.CenterVertically
-                        ) {
-                            Surface(
-                                shadowElevation = 8.dp,
-                                shape = CircleShape,
-                                color = colorScheme.outlineVariant,
-                                modifier = Modifier.size(42.dp)
-                            ) {
-                                IconButton(
-                                    onClick = {
-                                        scope.launch {
-                                            if (drawerState.isClosed) {
-                                                drawerState.open()
-                                            } else {
-                                                drawerState.close()
-                                            }
-                                        }
-                                    }
-                                ) {
-                                    Icon(
-                                        imageVector = Icons.Filled.Menu,
-                                        contentDescription = "Menu",
-                                        tint = colorScheme.onSurfaceVariant
-                                    )
-                                }
-                            }
 
-                            Box(modifier = Modifier.weight(0.4f)) {
-                                TitleText(
-                                    value = stringResource(
-                                        id = com.example.nutriflex2.R.string.app_name
-                                    )
-                                )
-                            }
 
-                            Spacer(modifier = Modifier.width(42.dp))
-                        }
-
-                        HorizontalDivider(
-                            modifier = Modifier
-                                .align(Alignment.CenterHorizontally)
-                                .width(200.dp)
-                                .padding(vertical = 4.dp),
-                            color = colorScheme.onSurface,
-                            thickness = 1.dp
-                        )
-                    }
+//                    Column(
+//                        modifier = Modifier
+//                            .fillMaxWidth()
+//                            .align(Alignment.TopCenter)
+//                            .graphicsLayer {
+//                                translationY = animatedTopBarOffset
+//                                val progress =
+//                                    1f - (-animatedTopBarOffset / topBarHeightPx).coerceIn(0f, 1f)
+//                                alpha = progress
+//                            }
+//                            .background(NavigationBarDefaults.containerColor)
+//                    ) {
+//                        Row(
+//                            modifier = Modifier
+//                                .fillMaxWidth()
+//                                .padding(horizontal = 16.dp, vertical = 12.dp),
+//                            horizontalArrangement = Arrangement.SpaceBetween,
+//                            verticalAlignment = Alignment.CenterVertically
+//                        ) {
+//                            Surface(
+//                                shadowElevation = 8.dp,
+//                                shape = CircleShape,
+//                                color = colorScheme.outlineVariant,
+//                                modifier = Modifier.size(42.dp)
+//                            ) {
+//                                IconButton(
+//                                    onClick = {
+//                                        scope.launch {
+//                                            if (drawerState.isClosed) {
+//                                                drawerState.open()
+//                                            } else {
+//                                                drawerState.close()
+//                                            }
+//                                        }
+//                                    }
+//                                ) {
+//                                    Icon(
+//                                        imageVector = Icons.Filled.Menu,
+//                                        contentDescription = "Menu",
+//                                        tint = colorScheme.onSurfaceVariant
+//                                    )
+//                                }
+//                            }
+//
+//                            Box(modifier = Modifier.weight(0.4f)) {
+//                                TitleText(
+//                                    value = stringResource(
+//                                        id = com.example.nutriflex2.R.string.app_name
+//                                    )
+//                                )
+//                            }
+//
+//                            Spacer(modifier = Modifier.width(42.dp))
+//                        }
+//
+//                        HorizontalDivider(
+//                            modifier = Modifier
+//                                .align(Alignment.CenterHorizontally)
+//                                .width(200.dp)
+//                                .padding(vertical = 4.dp),
+//                            color = colorScheme.onSurface,
+//                            thickness = 1.dp
+//                        )
+//                    }
                 }
             }
         }

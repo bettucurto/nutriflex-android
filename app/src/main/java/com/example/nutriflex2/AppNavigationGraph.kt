@@ -20,6 +20,7 @@ import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.scale
@@ -33,7 +34,7 @@ import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.navigation
 import androidx.navigation.navArgument
-import com.example.nutriflex2.diet.detail.FoodDetailScreen
+import com.example.nutriflex2.home.ui.tabs.diet.info.MealInfoScreen
 import com.example.nutriflex2.diet.search.SearchMealsScreen
 import com.example.nutriflex2.home.account.AccountScreen
 import com.example.nutriflex2.home.ui.HomeScreen
@@ -41,6 +42,7 @@ import com.example.nutriflex2.home.ui.HomeViewModel
 import com.example.nutriflex2.home.ui.tabs.diet.DietTabViewModel
 import com.example.nutriflex2.home.ui.tabs.diet.search.recipes.SearchRecipeScreen
 import kotlinx.coroutines.delay
+import kotlinx.coroutines.launch
 import ui.WelcomeScreen
 import ui.login.LoginScreen
 import ui.registration.RegisterViewModel
@@ -117,15 +119,18 @@ fun AppNavGraph(navController: NavHostController) {
 
             val homeViewModel: HomeViewModel = hiltViewModel(homeEntry)
             val dietVm: DietTabViewModel = hiltViewModel(homeEntry)
+            val scope = rememberCoroutineScope()
 
-            FoodDetailScreen(
+            MealInfoScreen(
                 foodId = foodId,
                 onBack = { navController.popBackStack() },
                 onAddToMeal = {
-                    homeViewModel.onMealLogged()
-                    dietVm.refreshFromLocal()
-                    navController.navigate("homeScreen") {
-                        popUpTo("homeScreen") { inclusive = true }
+                    scope.launch {
+                        dietVm.refreshFromLocal()
+                        homeViewModel.onMealLogged()
+                        navController.navigate("homeScreen") {
+                            popUpTo("homeScreen") { inclusive = true }
+                        }
                     }
                 }
             )

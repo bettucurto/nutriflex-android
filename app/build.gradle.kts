@@ -67,6 +67,7 @@ dependencies {
     implementation(project(":core"))
     implementation(project(":dieta"))
     implementation(libs.androidx.compose.ui.ui)
+    implementation(libs.androidx.foundation.layout)
 
     val room_version = "2.8.4"
     implementation("androidx.room:room-runtime:$room_version")

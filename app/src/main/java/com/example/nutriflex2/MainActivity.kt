@@ -17,6 +17,7 @@ import theme.AppTheme
 class MainActivity : ComponentActivity() {
 
     override fun onCreate(savedInstanceState: Bundle?) {
+        enableEdgeToEdge()
         val splash = installSplashScreen()
 
 
@@ -30,7 +31,6 @@ class MainActivity : ComponentActivity() {
         }
         splash.setKeepOnScreenCondition { false }
 
-        enableEdgeToEdge()
         setContent {
             AppTheme {
                 val navController = rememberNavController()

@@ -16,6 +16,7 @@ import androidx.compose.material.icons.filled.RiceBowl
 import androidx.compose.material.icons.filled.Search
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme.colorScheme
 import androidx.compose.material3.MaterialTheme.typography
@@ -35,11 +36,17 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
+import androidx.compose.ui.text.font.Font
+import androidx.compose.ui.text.font.FontFamily
+import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
 import androidx.hilt.navigation.compose.hiltViewModel
+import com.example.components.R
 import components.DietCaloriesCard
-import components.LeftTitleText
 import kotlinx.coroutines.launch
+
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -58,6 +65,7 @@ fun DietTabScreen(
         modifier = Modifier.fillMaxSize(),
         color = Color.Transparent
     ) {
+
         Column(
             modifier = Modifier
                 .fillMaxSize()
@@ -65,8 +73,23 @@ fun DietTabScreen(
             horizontalAlignment = Alignment.CenterHorizontally,
             verticalArrangement = Arrangement.Top
         ) {
-            Spacer(modifier = Modifier.height(65.dp))
-            LeftTitleText("Diet")
+            Text(text = "DIET",
+                fontWeight = FontWeight.Bold,
+                fontFamily = FontFamily(Font(R.font.formulacondensedbold)),
+                fontSize = 115.sp,
+                modifier = Modifier.fillMaxWidth()
+                    .padding(top = 85.dp),
+                color = colorScheme.surface,
+                textAlign = TextAlign.Start
+            )
+
+            HorizontalDivider(
+                modifier = Modifier
+                    .fillMaxWidth(0.95f)
+                    .padding(vertical = 4.dp),
+                color = colorScheme.surface,
+                thickness = 1.dp
+            )
 
             DietCaloriesCard(
                 remainingCalories = state.remainingCalories,

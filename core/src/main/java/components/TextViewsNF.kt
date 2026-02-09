@@ -61,7 +61,7 @@ fun HeadingTextComponent(value: String, modifier: Modifier = Modifier, textSize:
         style = TextStyle(
             fontSize = textSize,
             fontWeight = FontWeight.Normal,
-            fontFamily = FontFamily(Font(R.font.audiowide)),
+            fontFamily = FontFamily(Font(R.font.gtwalsheimcondensedmedium)),
             textAlign = TextAlign.Center,
             color = textColor
         )

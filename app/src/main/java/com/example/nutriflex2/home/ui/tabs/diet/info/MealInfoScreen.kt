@@ -1,4 +1,4 @@
-package com.example.nutriflex2.diet.detail
+package com.example.nutriflex2.home.ui.tabs.diet.info
 
 import android.os.Build
 import android.widget.Toast
@@ -74,8 +74,8 @@ import coil.compose.AsyncImage
 import com.example.dieta.domain.FatSecretFoodDetails
 import com.example.dieta.domain.FatSecretServing
 import com.example.nutriflex2.R
-import com.example.nutriflex2.home.ui.tabs.diet.info.FoodDetailUiState
-import com.example.nutriflex2.home.ui.tabs.diet.info.FoodDetailViewModel
+import com.example.nutriflex2.home.ui.tabs.diet.info.MealInfoUiState
+import com.example.nutriflex2.home.ui.tabs.diet.info.MealInfoViewModel
 import components.HeadingTextComponent
 import components.LeftTitleText
 import components.TitleText
@@ -83,11 +83,11 @@ import components.TitleText
 @RequiresApi(Build.VERSION_CODES.O)
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun FoodDetailScreen(
+fun MealInfoScreen(
     foodId: String,
     onBack: () -> Unit,
     onAddToMeal: () -> Unit,
-    viewModel: FoodDetailViewModel = hiltViewModel()
+    viewModel: MealInfoViewModel = hiltViewModel()
 ) {
     val uiState by viewModel.uiState.collectAsState()
     val density = LocalDensity.current
@@ -262,7 +262,7 @@ fun FoodDetailScreen(
 }
 
 @Composable
-private fun NutritionClaimsSection(uiState: FoodDetailUiState) {
+private fun NutritionClaimsSection(uiState: MealInfoUiState) {
     val food = uiState.food ?: return
     val colors = MaterialTheme.colorScheme
 
@@ -510,7 +510,7 @@ private fun ServingSelector(
 }
 
 @Composable
-private fun NutritionCircle(uiState: FoodDetailUiState) {
+private fun NutritionCircle(uiState: MealInfoUiState) {
     val totalCals = uiState.caloriesTotal.coerceAtLeast(0.0)
 
     val kcalCarb = uiState.carbsTotal * 4
@@ -622,7 +622,7 @@ private fun NutritionCircle(uiState: FoodDetailUiState) {
 
 
 @Composable
-private fun FullNutritionFacts(uiState: FoodDetailUiState) {
+private fun FullNutritionFacts(uiState: MealInfoUiState) {
     val serving = uiState.servings.getOrNull(uiState.selectedServingIndex)
 
     Column(modifier = Modifier.fillMaxWidth()) {
