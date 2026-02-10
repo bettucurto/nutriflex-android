@@ -182,6 +182,10 @@ class MealInfoViewModel @Inject constructor(
         carbs: Double,
         fat: Double
     ) {
+        val user = userLocalRepository.getUserLocal() ?: return
+
+        userLocalRepository.checkAndResetDailyCaloriesAndMacros() // Moved here from addCaloriesEaten and addDailyMacrosEaten
+
         // Soma calorias do dia
         userLocalRepository.addCaloriesEaten(calories.toInt())
 

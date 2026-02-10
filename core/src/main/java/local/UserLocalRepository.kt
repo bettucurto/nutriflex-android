@@ -138,7 +138,6 @@ class UserLocalRepository @Inject constructor(
 
     @RequiresApi(Build.VERSION_CODES.O)
     suspend fun addCaloriesEaten(calories: Int) {
-        checkAndResetDailyCaloriesAndMacros()
         val user = userLocalDao.getUser() ?: return
         val today = LocalDate.now().toString()
 
@@ -147,7 +146,6 @@ class UserLocalRepository @Inject constructor(
 
     @RequiresApi(Build.VERSION_CODES.O)
     suspend fun addDailyMacrosEaten(protein: Double, carbs: Double, fat: Double) {
-        checkAndResetDailyCaloriesAndMacros()
         val user = userLocalDao.getUser() ?: return
         val today = LocalDate.now().toString()
 

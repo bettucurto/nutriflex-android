@@ -65,6 +65,7 @@ fun HomeMainTab(
             .verticalScroll(scrollState),
         horizontalAlignment = Alignment.CenterHorizontally
     ) {
+
         Text(text = "WELCOME",
             fontWeight = FontWeight.Bold,
             fontFamily = FontFamily(Font(R.font.formulacondensedbold)),

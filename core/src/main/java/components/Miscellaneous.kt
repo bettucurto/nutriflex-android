@@ -5,21 +5,17 @@ import android.graphics.Typeface
 import android.os.Build
 import androidx.annotation.RequiresApi
 import androidx.compose.animation.Animatable
-import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.core.Animatable
 import androidx.compose.animation.core.FastOutSlowInEasing
 import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.animation.core.tween
-import androidx.compose.animation.fadeIn
-import androidx.compose.animation.fadeOut
-import androidx.compose.animation.scaleIn
-import androidx.compose.animation.scaleOut
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.gestures.detectDragGestures
 import androidx.compose.foundation.gestures.detectTapGestures
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -71,6 +67,7 @@ import androidx.compose.material3.rememberDatePickerState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableFloatStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
@@ -115,6 +112,7 @@ import androidx.compose.ui.unit.Density
 import androidx.compose.ui.unit.IntSize
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.compose.ui.window.Dialog
 import com.example.components.R
 import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.launch
@@ -125,6 +123,7 @@ import java.time.format.DateTimeFormatter
 import java.time.temporal.ChronoUnit
 import kotlin.math.cos
 import kotlin.math.max
+import kotlin.math.roundToInt
 import kotlin.math.sin
 import kotlin.math.sqrt
 
@@ -972,18 +971,12 @@ fun WeightsCardRow(
     var showCurrentDialog by remember { mutableStateOf(false) }
     var showGoalDialog by remember { mutableStateOf(false) }
 
-    var currentText by remember(currentWeight) {
-        mutableStateOf(currentWeight.toString())
-    }
-    var goalText by remember(goalWeight) {
-        mutableStateOf(goalWeight.toString())
-    }
-
+    // Row contendo os dois cartões
     Row(
         horizontalArrangement = Arrangement.spacedBy(8.dp),
-        modifier = Modifier
-            .fillMaxWidth(0.95f)
+        modifier = Modifier.fillMaxWidth(0.95f)
     ) {
+        // Coluna 1: Peso Atual
         Column(
             modifier = Modifier.weight(1f),
             horizontalAlignment = Alignment.CenterHorizontally
@@ -991,25 +984,11 @@ fun WeightsCardRow(
             SingleWeightCard(
                 title = "Current Weight:",
                 text = "${currentWeight}kg",
-                onClick = {
-                    showCurrentDialog = true      // 1) abre diálogo
-                    onRequestScroll()             // 2) pede scroll (Home trata)
-                }
-            )
-
-            EditWeightDialog(
-                visible = showCurrentDialog,
-                title = "New Weight",
-                text = currentText,
-                onTextChange = { currentText = it },
-                onDismiss = { showCurrentDialog = false },
-                onConfirm = {
-                    onChangeCurrent(it)
-                    showCurrentDialog = false
-                }
+                onClick = { showCurrentDialog = true }
             )
         }
 
+        // Coluna 2: Peso Meta
         Column(
             modifier = Modifier.weight(1f),
             horizontalAlignment = Alignment.CenterHorizontally,
@@ -1017,28 +996,226 @@ fun WeightsCardRow(
             SingleWeightCard(
                 title = "Goal Weight:",
                 text = "${goalWeight}kg",
-                onClick = {
-                    showGoalDialog = true
-                    onRequestScroll()
-                }
+                onClick = { showGoalDialog = true }
             )
+        }
+    }
 
-            EditWeightDialog(
-                visible = showGoalDialog,
-                title = "New Goal Weight",
-                text = goalText,
-                onTextChange = { goalText = it },
-                onDismiss = { showGoalDialog = false },
-                onConfirm = {
-                    onChangeGoal(it)
-                    showGoalDialog = false
+    // Dialog para Peso Atual
+    if (showCurrentDialog) {
+        WeightPickerDialog(
+            initialWeight = currentWeight,
+            title = "Your Current Weight",
+            onDismiss = { showCurrentDialog = false },
+            onConfirm = { newWeight ->
+                onChangeCurrent(newWeight)
+                showCurrentDialog = false
+            }
+        )
+    }
+
+    // Dialog para Peso Meta
+    if (showGoalDialog) {
+        WeightPickerDialog(
+            initialWeight = goalWeight,
+            title = "Your Goal Weight",
+            onDismiss = { showGoalDialog = false },
+            onConfirm = { newWeight ->
+                onChangeGoal(newWeight)
+                showGoalDialog = false
+            }
+        )
+    }
+}
+
+@Composable
+fun WeightPickerDialog(
+    initialWeight: Float,
+    title: String,
+    onDismiss: () -> Unit,
+    onConfirm: (Float) -> Unit
+) {
+    var currentWeight by remember { mutableFloatStateOf(initialWeight) }
+
+    Dialog(onDismissRequest = onDismiss) {
+        Surface(
+            shape = RoundedCornerShape(16.dp),
+            color = Color.White,
+            modifier = Modifier
+                .fillMaxWidth()
+                .wrapContentHeight()
+        ) {
+            Column(
+                modifier = Modifier.padding(24.dp),
+                horizontalAlignment = Alignment.CenterHorizontally
+            ) {
+                // Título
+                Text(
+                    text = title,
+                    fontSize = 20.sp,
+                    fontWeight = FontWeight.Bold,
+                    color = Color.Black,
+                    modifier = Modifier.padding(bottom = 24.dp)
+                )
+
+                // Régua/Escala
+                WeightScalePicker(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .height(100.dp),
+                    initialValue = initialWeight,
+                    onValueChange = { currentWeight = it }
+                )
+
+                // Texto do valor selecionado (opcional, já que a régua mostra, mas ajuda na precisão)
+                Text(
+                    text = String.format("%.1f kg", currentWeight),
+                    fontSize = 18.sp,
+                    fontWeight = FontWeight.SemiBold,
+                    color = colorScheme.primary,
+                    modifier = Modifier.padding(vertical = 16.dp)
+                )
+
+                Spacer(modifier = Modifier.height(8.dp))
+
+                // Botões de Ação
+                Column(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalAlignment = Alignment.CenterHorizontally
+                ) {
+                    // Botão OK (Preto)
+                    Button(
+                        onClick = {
+                            currentWeight = (currentWeight * 10).roundToInt() / 10f
+                            onConfirm(currentWeight)
+                                  },
+                        colors = ButtonDefaults.buttonColors(
+                            containerColor = Color.Black,
+                            contentColor = Color.White
+                        ),
+                        shape = RoundedCornerShape(8.dp),
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .height(50.dp)
+                    ) {
+                        Text(text = "OK", fontWeight = FontWeight.Bold)
+                    }
+
+                    Spacer(modifier = Modifier.height(8.dp))
+
+                    // Botão Cancel (Texto preto)
+                    TextButton(
+                        onClick = onDismiss,
+                        modifier = Modifier.height(48.dp)
+                    ) {
+                        Text(
+                            text = "Cancel",
+                            color = Color.Black,
+                            fontWeight = FontWeight.Bold
+                        )
+                    }
                 }
-            )
+            }
         }
     }
 }
 
+@Composable
+fun WeightScalePicker(
+    modifier: Modifier = Modifier,
+    initialValue: Float,
+    range: ClosedFloatingPointRange<Float> = 30f..200f,
+    onValueChange: (Float) -> Unit
+) {
+    // Configurações visuais
+    val density = LocalDensity.current
+    val spacingPx = with(density) { 15.dp.toPx() } // Espaço entre traços (100g)
+    val majorTickHeight = with(density) { 40.dp.toPx() }
+    val minorTickHeight = with(density) { 25.dp.toPx() }
 
+    // Estado do valor atual
+    var value by remember { mutableFloatStateOf(initialValue) }
+
+    // TextPaint para desenhar os números
+    val textPaint = remember {
+        android.graphics.Paint().apply {
+            color = android.graphics.Color.BLACK
+            textAlign = android.graphics.Paint.Align.CENTER
+            textSize = with(density) { 16.sp.toPx() }
+            isAntiAlias = true
+        }
+    }
+
+    BoxWithConstraints(
+        modifier = modifier
+            .pointerInput(Unit) {
+                detectDragGestures { change, dragAmount ->
+                    change.consume()
+                    // Drag para a esquerda aumenta o valor (visual move para direita), e vice-versa
+                    // Quanto maior o spacingPx, mais lento muda o valor
+                    val delta = (-dragAmount.x / spacingPx) * 0.1f
+                    val newValue = (value + delta).coerceIn(range)
+                    value = newValue
+                    onValueChange(newValue)
+                }
+            }
+    ) {
+        val width = constraints.maxWidth.toFloat()
+        val height = constraints.maxHeight.toFloat()
+        val centerX = width / 2f
+
+        Canvas(modifier = Modifier.fillMaxSize()) {
+            // Desenhar linha central de indicação (Vermelha ou cor de destaque)
+            drawLine(
+                color = Color(0xFFFF5252), // Vermelho suave para indicar o centro
+                start = Offset(centerX, 0f),
+                end = Offset(centerX, height * 0.6f),
+                strokeWidth = 4.dp.toPx()
+            )
+
+            // Calcular intervalo de valores visíveis para otimizar desenho
+            // Quantos ticks cabem em metade da tela?
+            val visibleTicks = (width / 2f / spacingPx).toInt() + 2
+
+            // Arredondar valor central para o décimo mais próximo para alinhar o grid
+            val currentTenth = (value * 10).roundToInt()
+
+            // Desenhar os traços
+            for (i in -visibleTicks..visibleTicks) {
+                val tickValueInt = currentTenth + i
+                val tickValue = tickValueInt / 10f
+
+                // Posição X deste traço
+                val x = centerX + (i * spacingPx) - ((value * 10 - currentTenth) * spacingPx / 10f)
+
+                // Verifica se é um número inteiro (ex: 75.0, 76.0)
+                val isMajor = tickValueInt % 10 == 0
+
+                val tickHeight = if (isMajor) majorTickHeight else minorTickHeight
+                val strokeW = if (isMajor) 2.dp.toPx() else 1.dp.toPx()
+                val color = if (isMajor) Color.Black else Color.Gray
+
+                // Desenha a linha
+                drawLine(
+                    color = color,
+                    start = Offset(x, height / 2f - tickHeight / 2f),
+                    end = Offset(x, height / 2f + tickHeight / 2f),
+                    strokeWidth = strokeW
+                )
+
+                // Desenha o texto se for Major (Inteiro)
+                if (isMajor) {
+                    drawContext.canvas.nativeCanvas.drawText(
+                        tickValue.toInt().toString(),
+                        x,
+                        height / 2f + tickHeight / 2f + 25.dp.toPx(), // Posição Y do texto
+                        textPaint
+                    )
+                }
+            }
+        }
+    }
+}
 
 @Composable
 private fun SingleWeightCard(
@@ -1053,16 +1230,17 @@ private fun SingleWeightCard(
         shape = cardShape,
         tonalElevation = 2.dp,
         shadowElevation = 8.dp,
-        border = BorderStroke(
+        border = androidx.compose.foundation.BorderStroke(
             width = 2.dp,
-            brush = Brush.linearGradient(
+            brush = androidx.compose.ui.graphics.Brush.linearGradient(
                 colors = listOf(
-                    colorScheme.primary,
-                    colorScheme.secondary
+                    MaterialTheme.colorScheme.primary,
+                    MaterialTheme.colorScheme.secondary
                 )
             )
         ),
-        modifier = modifier.height(140.dp)
+        modifier = modifier
+            .height(140.dp)
             .shadow(
                 elevation = 8.dp,
                 shape = cardShape,
@@ -1077,7 +1255,7 @@ private fun SingleWeightCard(
             horizontalAlignment = Alignment.CenterHorizontally,
             verticalArrangement = Arrangement.SpaceBetween
         ) {
-            HeadingTextComponent(title, textSize = 14.sp, textColor = colorScheme.primary)
+            HeadingTextComponent(title, textSize = 14.sp, textColor = MaterialTheme.colorScheme.primary)
             HeadingTextComponent(text, textSize = 14.sp)
 
             NFButton(
@@ -1085,64 +1263,6 @@ private fun SingleWeightCard(
                 onButtonClicked = onClick,
                 modifier = Modifier.fillMaxWidth(0.9f).fillMaxHeight(0.9f)
             )
-        }
-    }
-}
-
-@Composable
-fun EditWeightDialog(
-    visible: Boolean,
-    title: String,
-    text: String,
-    onTextChange: (String) -> Unit,
-    onDismiss: () -> Unit,
-    onConfirm: (Float) -> Unit
-) {
-
-    AnimatedVisibility(
-        visible = visible,
-        enter = fadeIn() + scaleIn(initialScale = 0.9f),
-        exit = fadeOut() + scaleOut(targetScale = 0.9f)
-    ) {
-        Surface(
-            shape = RoundedCornerShape(16.dp),
-            tonalElevation = 8.dp,
-            modifier = Modifier
-                .padding(top = 12.dp)
-                .fillMaxWidth()
-                .height(215.dp)
-
-        ) {
-            Column(
-                modifier = Modifier.padding(16.dp),
-                horizontalAlignment = Alignment.CenterHorizontally
-            ) {
-                HeadingTextComponent(title,textSize = 18.sp, textColor = colorScheme.primary)
-
-                OutlinedTextField(
-                    value = text,
-                    onValueChange = onTextChange,
-                    singleLine = true,
-                    label = { Text("Weight (kg)") },
-                    modifier = Modifier
-                        .padding(top = 12.dp)
-                        .fillMaxWidth(0.7f)
-                )
-
-                Row(
-                    horizontalArrangement = Arrangement.SpaceBetween,
-                    modifier = Modifier.padding(top = 16.dp)
-                ) {
-                    TextButton(onClick = onDismiss) {
-                        Text("Cancel", fontSize = 12.sp)
-                    }
-                    TextButton(onClick = {
-                        text.toFloatOrNull()?.let(onConfirm)
-                    }) {
-                        Text("Save", fontSize = 12.sp)
-                    }
-                }
-            }
         }
     }
 }

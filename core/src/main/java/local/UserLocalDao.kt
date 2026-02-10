@@ -4,19 +4,23 @@ import androidx.room.Dao
 import androidx.room.Insert
 import androidx.room.OnConflictStrategy
 import androidx.room.Query
+import kotlinx.coroutines.flow.Flow
 import local.tables.UserLocal
 
 @Dao
 interface UserLocalDao {
 
     @Query("SELECT * FROM user_local LIMIT 1")
-    suspend fun getUser(): UserLocal?
+    fun getUser(): Flow<UserLocal?>
 
     @Insert(onConflict = OnConflictStrategy.REPLACE)
     suspend fun upsert(user: UserLocal)
 
-    @Query("UPDATE user_local SET eatenCaloriesToday = :calories, lastCaloriesResetDate = :date")
-    suspend fun updateDailyCalories(calories: Int, date: String)
+    @Query("UPDATE user_local SET eatenCaloriesToday = eatenCaloriesToday + :calories, lastCaloriesResetDate = :date")
+    suspend fun addCaloriesEaten(calories: Int, date: String)
+
+    @Query("UPDATE user_local SET eatenCaloriesToday = 0, eatenProteinToday = 0, eatenCarbsToday = 0, eatenFatToday = 0, lastCaloriesResetDate = :date")
+    suspend fun resetDailyTotals(date: String)
 
     @Query("DELETE FROM user_local")
     suspend fun clear()
@@ -47,7 +51,13 @@ interface UserLocalDao {
         fat: Int
     )
 
-    @Query("UPDATE user_local SET eatenProteinToday = :protein, eatenCarbsToday = :carbs, eatenFatToday = :fat, lastCaloriesResetDate = :date WHERE lastCaloriesResetDate = :date OR 1=1")
-    suspend fun updateDailyMacros(protein: Int, carbs: Int, fat: Int, date: String)
+    @Query("""
+        UPDATE user_local 
+        SET eatenProteinToday = eatenProteinToday + :protein, 
+            eatenCarbsToday = eatenCarbsToday + :carbs, 
+            eatenFatToday = eatenFatToday + :fat,
+            lastCaloriesResetDate = :date
+    """)
+    suspend fun addDailyMacrosEaten(protein: Int, carbs: Int, fat: Int, date: String)
 
 }

@@ -4,11 +4,13 @@ import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.expandVertically
 import androidx.compose.animation.shrinkVertically
 import androidx.compose.foundation.BorderStroke
+import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
@@ -19,6 +21,7 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.ArrowBack
@@ -32,6 +35,7 @@ import androidx.compose.material3.ElevatedButton
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
+import androidx.compose.material3.LinearProgressIndicator
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.MaterialTheme.colorScheme
 import androidx.compose.material3.OutlinedTextField
@@ -49,9 +53,12 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.focus.FocusRequester
 import androidx.compose.ui.focus.focusRequester
+import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.StrokeCap
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.hilt.navigation.compose.hiltViewModel
@@ -97,6 +104,7 @@ fun SearchRecipeScreen(
                 .padding(16.dp)
                 .fillMaxSize()
         ) {
+            // --- Search Bar ---
             OutlinedTextField(
                 value = state.query,
                 onValueChange = { newValue -> viewModel.onQueryChange(newValue) },
@@ -107,34 +115,39 @@ fun SearchRecipeScreen(
                 placeholder = { Text("Search recipes") },
                 singleLine = true,
                 interactionSource = interactionSource,
+                shape = RoundedCornerShape(12.dp)
             )
 
             Spacer(modifier = Modifier.height(12.dp))
 
+            // --- Photo + Favorites Buttons ---
             Row(
                 modifier = Modifier.fillMaxWidth(),
                 horizontalArrangement = Arrangement.spacedBy(12.dp)
             ) {
                 ElevatedButton(
                     onClick = onOpenPhoto,
-                    modifier = Modifier.weight(1f)
+                    modifier = Modifier.weight(1f),
+                    shape = RoundedCornerShape(12.dp)
                 ) {
-                    Icon(Icons.Default.PhotoCamera, contentDescription = null)
-                    Spacer(Modifier.width(6.dp))
-                    Text("Photo")
+                    Icon(Icons.Default.PhotoCamera, contentDescription = null, tint = colorScheme.primary)
+                    Spacer(Modifier.width(8.dp))
+                    Text("Photo", color = colorScheme.onSurface)
                 }
                 ElevatedButton(
                     onClick = onOpenFavorites,
-                    modifier = Modifier.weight(1f)
+                    modifier = Modifier.weight(1f),
+                    shape = RoundedCornerShape(12.dp)
                 ) {
-                    Icon(Icons.Default.Favorite, contentDescription = null)
-                    Spacer(Modifier.width(6.dp))
-                    Text("Favorites")
+                    Icon(Icons.Default.Favorite, contentDescription = null, tint = Color.Red)
+                    Spacer(Modifier.width(8.dp))
+                    Text("Favorites", color = colorScheme.onSurface)
                 }
             }
 
             Spacer(modifier = Modifier.height(12.dp))
 
+            // --- Filters Toggle ---
             Row(
                 modifier = Modifier
                     .fillMaxWidth()
@@ -150,86 +163,53 @@ fun SearchRecipeScreen(
                 )
                 Icon(
                     imageVector = if (filtersExpanded.value) Icons.Default.ExpandLess else Icons.Default.ExpandMore,
-                    contentDescription = null
+                    contentDescription = null,
+                    tint = colorScheme.primary
                 )
             }
 
+            // --- Filters Section ---
             AnimatedVisibility(
                 visible = filtersExpanded.value,
                 enter = expandVertically(),
                 exit = shrinkVertically()
             ) {
                 Surface(
-                    shape = MaterialTheme.shapes.medium,
-                    border = BorderStroke(1.dp, colorScheme.outline),
-                    modifier = Modifier.fillMaxWidth()
+                    shape = RoundedCornerShape(16.dp),
+                    border = BorderStroke(1.dp, colorScheme.outlineVariant),
+                    modifier = Modifier.fillMaxWidth(),
+                    color = colorScheme.surfaceVariant.copy(alpha = 0.3f)
                 ) {
                     Column(
                         modifier = Modifier
-                            .padding(12.dp)
+                            .padding(16.dp)
                             .fillMaxWidth()
                     ) {
                         Text(
                             "Calorie Range",
                             style = MaterialTheme.typography.titleSmall,
-                            color = colorScheme.secondary
+                            color = colorScheme.onSurfaceVariant
                         )
                         Spacer(modifier = Modifier.height(8.dp))
 
-                        Row(
-                            modifier = Modifier.fillMaxWidth(),
-                            horizontalArrangement = Arrangement.spacedBy(8.dp)
-                        ) {
-                            CalorieChip(
-                                text = "Under 100",
-                                selected = state.calorieRange == CalorieRangeFilter.UNDER_100,
-                                onClick = {
-                                    viewModel.onCalorieRangeSelected(
-                                        if (state.calorieRange == CalorieRangeFilter.UNDER_100)
-                                            CalorieRangeFilter.NONE else CalorieRangeFilter.UNDER_100
-                                    )
-                                },
-                                modifier = Modifier.weight(1f)
-                            )
-                            CalorieChip(
-                                text = "100 to 250",
-                                selected = state.calorieRange == CalorieRangeFilter.FROM_100_TO_250,
-                                onClick = {
-                                    viewModel.onCalorieRangeSelected(
-                                        if (state.calorieRange == CalorieRangeFilter.FROM_100_TO_250)
-                                            CalorieRangeFilter.NONE else CalorieRangeFilter.FROM_100_TO_250
-                                    )
-                                },
-                                modifier = Modifier.weight(1f)
-                            )
-                        }
-                        Spacer(Modifier.height(8.dp))
-                        Row(
-                            modifier = Modifier.fillMaxWidth(),
-                            horizontalArrangement = Arrangement.spacedBy(8.dp)
-                        ) {
-                            CalorieChip(
-                                text = "250 to 500",
-                                selected = state.calorieRange == CalorieRangeFilter.FROM_250_TO_500,
-                                onClick = {
-                                    viewModel.onCalorieRangeSelected(
-                                        if (state.calorieRange == CalorieRangeFilter.FROM_250_TO_500)
-                                            CalorieRangeFilter.NONE else CalorieRangeFilter.FROM_250_TO_500
-                                    )
-                                },
-                                modifier = Modifier.weight(1f)
-                            )
-                            CalorieChip(
-                                text = "Over 500",
-                                selected = state.calorieRange == CalorieRangeFilter.OVER_500,
-                                onClick = {
-                                    viewModel.onCalorieRangeSelected(
-                                        if (state.calorieRange == CalorieRangeFilter.OVER_500)
-                                            CalorieRangeFilter.NONE else CalorieRangeFilter.OVER_500
-                                    )
-                                },
-                                modifier = Modifier.weight(1f)
-                            )
+                        // Chips de Calorias
+                        Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                            Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                                CalorieChip("Under 100", state.calorieRange == CalorieRangeFilter.UNDER_100, Modifier.weight(1f)) {
+                                    viewModel.onCalorieRangeSelected(if (state.calorieRange == CalorieRangeFilter.UNDER_100) CalorieRangeFilter.NONE else CalorieRangeFilter.UNDER_100)
+                                }
+                                CalorieChip("100 - 250", state.calorieRange == CalorieRangeFilter.FROM_100_TO_250, Modifier.weight(1f)) {
+                                    viewModel.onCalorieRangeSelected(if (state.calorieRange == CalorieRangeFilter.FROM_100_TO_250) CalorieRangeFilter.NONE else CalorieRangeFilter.FROM_100_TO_250)
+                                }
+                            }
+                            Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                                CalorieChip("250 - 500", state.calorieRange == CalorieRangeFilter.FROM_250_TO_500, Modifier.weight(1f)) {
+                                    viewModel.onCalorieRangeSelected(if (state.calorieRange == CalorieRangeFilter.FROM_250_TO_500) CalorieRangeFilter.NONE else CalorieRangeFilter.FROM_250_TO_500)
+                                }
+                                CalorieChip("Over 500", state.calorieRange == CalorieRangeFilter.OVER_500, Modifier.weight(1f)) {
+                                    viewModel.onCalorieRangeSelected(if (state.calorieRange == CalorieRangeFilter.OVER_500) CalorieRangeFilter.NONE else CalorieRangeFilter.OVER_500)
+                                }
+                            }
                         }
                     }
                 }
@@ -237,11 +217,10 @@ fun SearchRecipeScreen(
 
             Spacer(modifier = Modifier.height(16.dp))
 
+            // --- Recipe List ---
             if (state.isLoading) {
                 Box(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .padding(16.dp),
+                    modifier = Modifier.fillMaxSize(),
                     contentAlignment = Alignment.Center
                 ) {
                     CircularProgressIndicator()
@@ -249,13 +228,14 @@ fun SearchRecipeScreen(
             } else {
                 LazyColumn(
                     modifier = Modifier.fillMaxSize(),
-                    verticalArrangement = Arrangement.spacedBy(8.dp)
+                    verticalArrangement = Arrangement.spacedBy(16.dp),
+                    contentPadding = PaddingValues(bottom = 16.dp)
                 ) {
                     items(state.suggestions) { recipe ->
                         RecipeRow(
                             recipe = recipe,
-                            onAddClick = {},
-                            navController = navController
+                            onAddClick = { /* Lógica de adicionar */ },
+                            onClick = { navController.navigate("recipeDetail/${recipe.id}") }
                         )
                     }
                 }
@@ -267,57 +247,146 @@ fun SearchRecipeScreen(
 @Composable
 fun RecipeRow(
     recipe: FatSecretRecipeSummary,
-    navController: NavController,
+    onClick: () -> Unit,
     onAddClick: () -> Unit,
 ) {
     val context = LocalContext.current
 
+    // Cores das barras de Macros
+    val carbColor = Color(0xFF42A5F5)
+    val proteinColor = Color(0xFF66BB6A)
+    val fatColor = Color(0xFFFFCA28)
+    val backgroundColor = Color(0xFFE0E0E0)
+
+    // Parsing das macros para mostrar nas barras
+    // Assumindo que o objeto 'nutrition' tem campos ou string "Carbs: 20g | Protein: 10g..."
+    // Vamos usar os valores pré-calculados que adicionaremos ao objeto ou ViewModel,
+    // mas aqui vou extrair diretamente para visualização.
+    val carbsVal = recipe.nutrition.carbohydrate?.toFloatOrNull() ?: 0f
+    val proteinVal = recipe.nutrition.protein?.toFloatOrNull() ?: 0f
+    val fatVal = recipe.nutrition.fat?.toFloatOrNull() ?: 0f
+    val totalMacros = carbsVal + proteinVal + fatVal
+
+    // Convertendo para percentagem para as barras (aprox)
+    val carbsPct = if (totalMacros > 0) ((carbsVal / totalMacros) * 100).toInt() else 0
+    val proteinPct = if (totalMacros > 0) ((proteinVal / totalMacros) * 100).toInt() else 0
+    val fatPct = if (totalMacros > 0) ((fatVal / totalMacros) * 100).toInt() else 0
+
+
     Surface(
-        shape = MaterialTheme.shapes.medium,
-        color = colorScheme.surface,
-        tonalElevation = 2.dp,
-        shadowElevation = 4.dp,
-        border = BorderStroke(2.dp, colorScheme.primary),
+        shape = RoundedCornerShape(20.dp),
+        color = Color.White,
+        tonalElevation = 0.dp,
+        shadowElevation = 6.dp,
         modifier = Modifier
             .fillMaxWidth()
-            .clickable { navController.navigate("recipeDetail/${recipe.id}") }
+            .clickable(onClick = onClick)
     ) {
-        Row(
-            modifier = Modifier.padding(12.dp),
-            verticalAlignment = Alignment.CenterVertically
+        Column(
+            modifier = Modifier.padding(16.dp)
         ) {
-            AsyncImage(
-                model = ImageRequest.Builder(context)
-                    .data(recipe.image)
-                    .crossfade(true)
-                    .build(),
-                contentDescription = recipe.nomeEn,
-                modifier = Modifier
-                    .size(48.dp)
-                    .clip(RoundedCornerShape(8.dp)),
-                contentScale = ContentScale.Crop,
-                placeholder = painterResource(R.drawable.nutrilogo),
-                error = painterResource(R.drawable.nutrilogo)
-            )
-
-            Spacer(Modifier.width(12.dp))
-
-            Column(modifier = Modifier.weight(1f)) {
-                Text(
-                    recipe.nomeEn,
-                    style = MaterialTheme.typography.bodyLarge,
-                    color = colorScheme.secondary
+            // Linha Superior: Imagem + Info
+            Row(
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                AsyncImage(
+                    model = ImageRequest.Builder(context)
+                        .data(recipe.image)
+                        .crossfade(true)
+                        .build(),
+                    contentDescription = recipe.nomeEn,
+                    modifier = Modifier
+                        .size(60.dp)
+                        .clip(CircleShape)
+                        .background(Color.LightGray),
+                    contentScale = ContentScale.Crop,
+                    placeholder = painterResource(R.drawable.nutrilogo),
+                    error = painterResource(R.drawable.nutrilogo)
                 )
-                Text(
-                    recipe.descricaoEn,
-                    style = MaterialTheme.typography.bodySmall,
-                    color = colorScheme.onSurface
-                )
+
+                Spacer(Modifier.width(16.dp))
+
+                Column(modifier = Modifier.weight(1f)) {
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        horizontalArrangement = Arrangement.SpaceBetween,
+                        verticalAlignment = Alignment.Top
+                    ) {
+                        Text(
+                            text = recipe.nomeEn,
+                            style = MaterialTheme.typography.titleMedium.copy(
+                                fontWeight = FontWeight.Bold,
+                                fontSize = 18.sp
+                            ),
+                            color = Color.Black,
+                            maxLines = 1,
+                            modifier = Modifier.weight(1f)
+                        )
+
+                        Row(verticalAlignment = Alignment.CenterVertically) {
+                            Text(
+                                text = "${recipe.nutrition.calories} kcal",
+                                style = MaterialTheme.typography.bodyMedium.copy(
+                                    fontWeight = FontWeight.Bold
+                                ),
+                                color = Color.Gray
+                            )
+                        }
+                    }
+
+                    Text(
+                        text = recipe.descricaoEn,
+                        style = MaterialTheme.typography.bodyMedium,
+                        color = Color.Gray,
+                        maxLines = 2
+                    )
+                }
             }
 
-            IconButton(onClick = onAddClick) {
-                Text("+", fontSize = 20.sp, color = colorScheme.primary)
+            Spacer(modifier = Modifier.height(16.dp))
+
+            // Barras de Macros (Usando o componente reutilizável do ecrã anterior se disponível, ou redefinindo aqui)
+            // Vou redefinir caso não tenha acesso ao SearchMealsScreen.kt neste ficheiro
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.spacedBy(16.dp)
+            ) {
+                RecipeMacroItem("Carbs", carbsPct, carbColor, backgroundColor, Modifier.weight(1f))
+                RecipeMacroItem("Protein", proteinPct, proteinColor, backgroundColor, Modifier.weight(1f))
+                RecipeMacroItem("Fat", fatPct, fatColor, backgroundColor, Modifier.weight(1f))
             }
         }
+    }
+}
+
+@Composable
+fun RecipeMacroItem(
+    label: String,
+    percentage: Int,
+    color: Color,
+    trackColor: Color,
+    modifier: Modifier = Modifier
+) {
+    Column(modifier = modifier) {
+        Row(
+            modifier = Modifier.fillMaxWidth(),
+            horizontalArrangement = Arrangement.SpaceBetween,
+            verticalAlignment = Alignment.Bottom
+        ) {
+            Text(text = label, style = MaterialTheme.typography.bodySmall, color = Color.Black)
+            Text(text = "$percentage%", style = MaterialTheme.typography.bodySmall.copy(fontWeight = FontWeight.Bold), color = Color.Black)
+        }
+        Spacer(modifier = Modifier.height(6.dp))
+        LinearProgressIndicator(
+            progress = { percentage / 100f },
+            modifier = Modifier
+                .fillMaxWidth()
+                .height(6.dp)
+                .clip(RoundedCornerShape(3.dp)),
+            color = color,
+            trackColor = trackColor,
+            strokeCap = StrokeCap.Round,
+            gapSize = 0.dp
+        )
     }
 }

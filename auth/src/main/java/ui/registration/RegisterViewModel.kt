@@ -83,9 +83,14 @@ class RegisterViewModel @Inject constructor(
             }
             is RegisterUIEvent.ToggleAutoWeightGoal -> {
                 registerUIState = if (event.enabled) {
+                    val calculatedGoal = calculateAutoGoalWeight(
+                        currentWeight = registerUIState.weight,
+                        heightCm = registerUIState.height,
+                        goal = registerUIState.goal
+                    )
                     registerUIState.copy(
                         autoWeightGoal = true,
-                        weightGoal = 0f,
+                        weightGoal = calculatedGoal, // Use calculated goal weight
                         weightGoalError = null
                     )
                 } else {
@@ -187,6 +192,46 @@ class RegisterViewModel @Inject constructor(
             java.time.Period.between(dob, today).years
         } catch (e: Exception) {
             30
+        }
+    }
+
+    private fun calculateAutoGoalWeight(currentWeight: Float?, heightCm: Int?, goal: Int?): Float? {
+        if (currentWeight == null || heightCm == null || goal == null) return null
+        val heightM = heightCm / 100f
+        if (heightM == 0f) return currentWeight
+
+        val currentBmi = currentWeight / (heightM * heightM)
+
+        val HEALTHY_BMI_MIN = 18.5f
+        val HEALTHY_BMI_MAX = 24.9f
+        val TARGET_BMI_LOSE = 22.0f
+        val TARGET_BMI_GAIN = 23.0f
+
+        return when (goal) {
+            // Goal: Maintain Weight
+            0 -> currentWeight
+
+            // Goal: Lose Weight
+            1 -> {
+                if (currentBmi <= HEALTHY_BMI_MAX) { // Already healthy or underweight, or near target
+                    currentWeight
+                } else { // Overweight or obese, aim for a healthy BMI
+                    val targetWeight = TARGET_BMI_LOSE * (heightM * heightM)
+                    targetWeight.coerceAtMost(currentWeight - 0.5f) // Ensure some weight loss if overweight, but don't overshoot current
+                }
+            }
+
+            // Goal: Gain Weight
+            2 -> {
+                if (currentBmi >= HEALTHY_BMI_MIN) { // Already healthy or overweight, or near target
+                    currentWeight
+                } else { // Underweight, aim for a healthy BMI
+                    val targetWeight = TARGET_BMI_GAIN * (heightM * heightM)
+                    targetWeight.coerceAtLeast(currentWeight + 0.5f) // Ensure some weight gain if underweight, but don't undershoot current
+                }
+            }
+            // Default or unknown goal, maintain current weight
+            else -> currentWeight
         }
     }
 

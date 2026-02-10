@@ -22,13 +22,6 @@ data class SearchRecipeUiState(
     val rawResults: List<FatSecretRecipeSummary> = emptyList(),
     val errorMessage: String? = null,
     val calorieRange: CalorieRangeFilter = CalorieRangeFilter.NONE,
-
-    val carbsMin: Int = 0,
-    val carbsMax: Int = 100,
-    val proteinMin: Int = 0,
-    val proteinMax: Int = 100,
-    val fatMin: Int = 0,
-    val fatMax: Int = 100,
 )
 
 @HiltViewModel
@@ -110,9 +103,14 @@ class SearchRecipeViewModel @Inject constructor(
     }
 
     private fun parseCalories(recipe: FatSecretRecipeSummary): Int {
-        val nutrition = recipe.nutrition
+        // Tenta usar o campo direto se disponível, senão faz regex na string
+        val calString = recipe.nutrition.calories ?: return 0
         return try {
-            val matcher = Pattern.compile("(\\d+)").matcher(nutrition.calories)
+            // Se for apenas número "250"
+            if (calString.all { it.isDigit() }) return calString.toInt()
+
+            // Se for "250 kcal"
+            val matcher = Pattern.compile("(\\d+)").matcher(calString)
             if (matcher.find()) {
                 matcher.group(1)?.toInt() ?: 0
             } else {
