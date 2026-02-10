@@ -6,6 +6,8 @@ import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.collect
+import kotlinx.coroutines.flow.onEach
 import kotlinx.coroutines.launch
 import local.UserLocalRepository
 import javax.inject.Inject
@@ -60,22 +62,19 @@ class DietTabViewModel @Inject constructor(
     val uiState: StateFlow<DietUiState> = _uiState.asStateFlow()
 
     init {
-        refreshFromLocal()
-    }
-
-    fun refreshFromLocal() {
         viewModelScope.launch {
-            val user = userLocalRepository.getUserLocal()
-            _uiState.value = DietUiState(
-                dailyCalories = user?.dailyCalories ?: 0,
-                eatenCaloriesToday = user?.eatenCaloriesToday ?: 0,
-                dailyCarbsGrams = user?.dailyCarbsGrams ?: 0,
-                dailyProteinGrams = user?.dailyProteinGrams ?: 0,
-                dailyFatGrams = user?.dailyFatGrams ?: 0,
-                eatenProteinGrams = user?.eatenProteinToday ?: 0,
-                eatenCarbsGrams = user?.eatenCarbsToday ?: 0,
-                eatenFatGrams = user?.eatenFatToday ?: 0,
-            )
+            userLocalRepository.getUserLocal().onEach { user ->
+                _uiState.value = DietUiState(
+                    dailyCalories = user?.dailyCalories ?: 0,
+                    eatenCaloriesToday = user?.eatenCaloriesToday ?: 0,
+                    dailyCarbsGrams = user?.dailyCarbsGrams ?: 0,
+                    dailyProteinGrams = user?.dailyProteinGrams ?: 0,
+                    dailyFatGrams = user?.dailyFatGrams ?: 0,
+                    eatenProteinGrams = user?.eatenProteinToday ?: 0,
+                    eatenCarbsGrams = user?.eatenCarbsToday ?: 0,
+                    eatenFatGrams = user?.eatenFatToday ?: 0,
+                )
+            }.collect()
         }
     }
 }

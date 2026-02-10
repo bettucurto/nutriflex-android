@@ -88,9 +88,10 @@ class LoginViewModel @Inject constructor(
                             val dailyCalories = progress?.calorias_diarias ?: 0
                             val goalWeight = progress?.peso_meta ?: progress?.peso_atual ?: 0f
                             val currentWeight = progress?.peso_atual ?: 0f
+                            val initialWeight = progress?.peso_inicial ?: currentWeight // Fallback to currentWeight
                             Log.d(
                                 "LoginViewModel",
-                                "saveUserLocal: dc=$dailyCalories cw=$currentWeight gw=$goalWeight"
+                                "saveUserLocal: dc=$dailyCalories cw=$currentWeight gw=$goalWeight iw=$initialWeight"
                             )
 
                             userLocalRepository.saveUserLocal(
@@ -98,6 +99,7 @@ class LoginViewModel @Inject constructor(
                                 token = loginResponse.token,
                                 bmi = bmi,
                                 currentWeight = currentWeight,
+                                initialWeight = initialWeight,
                                 goalWeight = goalWeight,
                                 heightCm = userDto.altura,
                                 dailyCalories = dailyCalories,

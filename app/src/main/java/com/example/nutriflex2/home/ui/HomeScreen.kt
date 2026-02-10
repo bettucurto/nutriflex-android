@@ -269,7 +269,6 @@ fun HomeScreen(
                             1 -> {
                                 val homeViewModel: HomeViewModel =
                                     hiltViewModel()
-                                LaunchedEffect(Unit) { homeViewModel.onMealLogged() }
                                 HomeMainTab(
                                     state = state,
                                     topBarHeightDp = topBarHeightDp,
@@ -297,7 +296,6 @@ fun HomeScreen(
 
                             2 -> {
                                 val dietVm: DietTabViewModel = hiltViewModel()
-                                LaunchedEffect(Unit) { dietVm.refreshFromLocal() }
                                 DietTabScreen(
                                     onNavigateToSearchMeals = onNavigateToSearchMeals,
                                     onNavigateToSearchRecipes = onNavigateToSearchRecipes,

@@ -126,8 +126,6 @@ fun AppNavGraph(navController: NavHostController) {
                 onBack = { navController.popBackStack() },
                 onAddToMeal = {
                     scope.launch {
-                        dietVm.refreshFromLocal()
-                        homeViewModel.onMealLogged()
                         navController.navigate("homeScreen") {
                             popUpTo("homeScreen") { inclusive = true }
                         }

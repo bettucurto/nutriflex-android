@@ -4,6 +4,7 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import dagger.hilt.android.lifecycle.HiltViewModel
+import kotlinx.coroutines.flow.firstOrNull
 import kotlinx.coroutines.launch
 import local.UserLocalRepository
 import remote.UserRepository
@@ -41,7 +42,7 @@ class AccountViewModel @Inject constructor(
         viewModelScope.launch {
             uiState.value = uiState.value.copy(isLoading = true, error = null)
 
-            val local = userLocalRepository.getUserLocal()
+            val local = userLocalRepository.getUserLocal().firstOrNull()
             if (local == null) {
                 uiState.value = uiState.value.copy(
                     isLoading = false,
@@ -137,13 +138,14 @@ class AccountViewModel @Inject constructor(
                 )
 
                 result.onSuccess {
-                    val local = userLocalRepository.getUserLocal()
+                    val local = userLocalRepository.getUserLocal().firstOrNull()
                     if (local != null) {
                         userLocalRepository.saveUserLocal(
                             userId = local.userId,
                             token = local.token,
                             bmi = local.bmi,
                             currentWeight = local.currentWeight,
+                            initialWeight = local.initialWeight,
                             goalWeight = local.goalWeight,
                             heightCm = uiState.value.height.toIntOrNull() ?: local.heightCm,
                             dailyCalories = local.dailyCalories,

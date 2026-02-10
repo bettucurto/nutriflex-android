@@ -14,6 +14,7 @@ data class UserWithProgressDto(
 data class UserProgressDto(
     val data: String,
     val peso_atual: Float,
+    val peso_inicial: Float?,
     val peso_meta: Float?,
     val calorias_diarias: Int?,
     val dificuldades_anteriores: Int?,

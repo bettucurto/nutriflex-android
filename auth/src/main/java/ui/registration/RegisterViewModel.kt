@@ -333,6 +333,7 @@ class RegisterViewModel @Inject constructor(
                                 token = registerResponse.token,
                                 bmi = bmi,
                                 currentWeight = weightKg,
+                                initialWeight = weightKg, // Add initialWeight
                                 goalWeight = goalWeight,
                                 heightCm = heightCm,
                                 dailyCalories = dailyCalories,

@@ -9,6 +9,7 @@ data class UserLocal(
     val token: String,
     val bmi: Float,
     val currentWeight: Float,
+    val initialWeight: Float,
     val goalWeight: Float,
     val dailyCalories: Int,
     val eatenCaloriesToday: Int,

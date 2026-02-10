@@ -3,6 +3,8 @@ package local
 
 import android.os.Build
 import androidx.annotation.RequiresApi
+import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.firstOrNull
 import local.tables.UserLocal
 import local.tables.WeightHistory
 import utils.calculateDailyMacros
@@ -19,6 +21,7 @@ class UserLocalRepository @Inject constructor(
         token: String,
         bmi: Float,
         currentWeight: Float,
+        initialWeight: Float,
         goalWeight: Float,
         heightCm: Int,
         dailyCalories: Int,
@@ -39,6 +42,7 @@ class UserLocalRepository @Inject constructor(
             token = token,
             bmi = bmi,
             currentWeight = currentWeight,
+            initialWeight = initialWeight,
             goalWeight = goalWeight,
             dailyCalories = dailyCalories,
             eatenCaloriesToday = 0,
@@ -49,12 +53,15 @@ class UserLocalRepository @Inject constructor(
             dailyCarbsGrams = macros.carbsGrams,
             dailyProteinGrams = macros.proteinGrams,
             dailyFatGrams = macros.fatGrams,
-            activityLevel = activityLevel
+            activityLevel = activityLevel,
+            eatenCarbsToday = 0,
+            eatenFatToday = 0,
+            eatenProteinToday = 0
         )
         userLocalDao.upsert(user)
     }
 
-    suspend fun getUserLocal(): UserLocal? = userLocalDao.getUser()
+    fun getUserLocal(): Flow<UserLocal?> = userLocalDao.getUser()
 
     suspend fun updateCurrentWeight(weight: Float) {
         userLocalDao.updateCurrentWeight(weight)
@@ -129,32 +136,23 @@ class UserLocalRepository @Inject constructor(
     @RequiresApi(Build.VERSION_CODES.O)
     suspend fun checkAndResetDailyCaloriesAndMacros() {
         val today = LocalDate.now().toString()
-        val user = userLocalDao.getUser() ?: return
+        // Use firstOrNull() to get a single snapshot from the flow for this check
+        val user = userLocalDao.getUser().firstOrNull() ?: return
         if (user.lastCaloriesResetDate != today) {
-            userLocalDao.updateDailyCalories(0, today)
-            userLocalDao.updateDailyMacros(0, 0, 0, today)
+            userLocalDao.resetDailyTotals(today)
         }
     }
 
     @RequiresApi(Build.VERSION_CODES.O)
     suspend fun addCaloriesEaten(calories: Int) {
-        val user = userLocalDao.getUser() ?: return
         val today = LocalDate.now().toString()
-
-        userLocalDao.updateDailyCalories(user.eatenCaloriesToday + calories, today)
+        userLocalDao.addCaloriesEaten(calories, today)
     }
 
     @RequiresApi(Build.VERSION_CODES.O)
     suspend fun addDailyMacrosEaten(protein: Double, carbs: Double, fat: Double) {
-        val user = userLocalDao.getUser() ?: return
         val today = LocalDate.now().toString()
-
-        val newProtein =  protein.toInt() + user.eatenProteinToday
-        val newCarbs =  carbs.toInt() + user.eatenCarbsToday
-        val newFat =  fat.toInt() + user.eatenFatToday
-
-
-        userLocalDao.updateDailyMacros(newProtein, newCarbs, newFat, today)
+        userLocalDao.addDailyMacrosEaten(protein.toInt(), carbs.toInt(), fat.toInt(), today)
     }
 
 
