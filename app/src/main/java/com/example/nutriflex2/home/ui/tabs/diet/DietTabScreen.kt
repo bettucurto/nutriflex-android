@@ -16,7 +16,6 @@ import androidx.compose.material.icons.filled.RiceBowl
 import androidx.compose.material.icons.filled.Search
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.ExperimentalMaterial3Api
-import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme.colorScheme
 import androidx.compose.material3.MaterialTheme.typography
@@ -78,18 +77,11 @@ fun DietTabScreen(
                 fontFamily = FontFamily(Font(R.font.formulacondensedbold)),
                 fontSize = 115.sp,
                 modifier = Modifier.fillMaxWidth()
-                    .padding(top = 85.dp),
-                color = colorScheme.surface,
+                    .padding(top = 40.dp),
+                color = Color.White,
                 textAlign = TextAlign.Start
             )
 
-            HorizontalDivider(
-                modifier = Modifier
-                    .fillMaxWidth(0.95f)
-                    .padding(vertical = 4.dp),
-                color = colorScheme.surface,
-                thickness = 1.dp
-            )
 
             DietCaloriesCard(
                 remainingCalories = state.remainingCalories,

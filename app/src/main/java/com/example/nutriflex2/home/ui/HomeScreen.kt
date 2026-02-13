@@ -267,8 +267,7 @@ fun HomeScreen(
                             )
 
                             1 -> {
-                                val homeViewModel: HomeViewModel =
-                                    hiltViewModel()
+                                val homeViewModel: HomeViewModel = hiltViewModel()
                                 HomeMainTab(
                                     state = state,
                                     topBarHeightDp = topBarHeightDp,
@@ -289,8 +288,10 @@ fun HomeScreen(
                                         viewModel.onChangeGoalWeight(new)
                                     },
                                     onRequestScrollToBottom = { pendingScroll = true },
-                                    onNavigateToSearchRecipes = onNavigateToSearchRecipes
+                                    onNavigateToSearchRecipes = onNavigateToSearchRecipes,
 
+                                    // ---> ADICIONA ESTA LINHA AQUI <---
+                                    onOpenDrawer = { scope.launch { drawerState.open() } }
                                 )
                             }
 

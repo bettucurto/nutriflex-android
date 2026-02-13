@@ -39,6 +39,7 @@ import androidx.compose.material3.LinearProgressIndicator
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.MaterialTheme.colorScheme
 import androidx.compose.material3.OutlinedTextField
+import androidx.compose.material3.OutlinedTextFieldDefaults
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
@@ -51,6 +52,7 @@ import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.draw.shadow
 import androidx.compose.ui.focus.FocusRequester
 import androidx.compose.ui.focus.focusRequester
 import androidx.compose.ui.graphics.Color
@@ -110,12 +112,27 @@ fun SearchRecipeScreen(
                 onValueChange = { newValue -> viewModel.onQueryChange(newValue) },
                 modifier = Modifier
                     .fillMaxWidth()
-                    .focusRequester(focusRequester),
+                    .focusRequester(focusRequester)
+                    // 1. Adiciona a sombra com a elevação e formato desejados
+                    .shadow(
+                        elevation = 6.dp,
+                        shape = RoundedCornerShape(12.dp)
+                    )
+                    // 2. Adiciona um fundo sólido para a sombra não "vazar" para dentro
+                    .background(
+                        color = MaterialTheme.colorScheme.surface,
+                        shape = RoundedCornerShape(12.dp)
+                    ),
                 leadingIcon = { Icon(Icons.Default.Search, null) },
-                placeholder = { Text("Search recipes") },
+                placeholder = { Text("Search food") },
                 singleLine = true,
                 interactionSource = interactionSource,
-                shape = RoundedCornerShape(12.dp)
+                shape = RoundedCornerShape(12.dp),
+                // 3. Garante que o fundo nativo do TextField fica transparente para mostrar o background acima
+                colors = OutlinedTextFieldDefaults.colors(
+                    focusedContainerColor = Color.Transparent,
+                    unfocusedContainerColor = Color.Transparent
+                )
             )
 
             Spacer(modifier = Modifier.height(12.dp))

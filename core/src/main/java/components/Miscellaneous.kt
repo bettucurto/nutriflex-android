@@ -29,7 +29,6 @@ import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
-import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
@@ -1255,8 +1254,8 @@ private fun SingleWeightCard(
             horizontalAlignment = Alignment.CenterHorizontally,
             verticalArrangement = Arrangement.SpaceBetween
         ) {
-            HeadingTextComponent(title, textSize = 14.sp, textColor = MaterialTheme.colorScheme.primary)
-            HeadingTextComponent(text, textSize = 14.sp)
+            HeadingTextComponent(title, textSize = 24.sp, textColor = MaterialTheme.colorScheme.primary)
+            HeadingTextComponent(text, textSize = 20.sp)
 
             NFButton(
                 text = "Change",
@@ -1540,10 +1539,13 @@ fun BmiGauge(
             }
 
             Text(
+                modifier=  Modifier
+                    .background(color, RoundedCornerShape(26.dp))
+                    .padding(6.dp),
                 text = label,
                 fontSize = 22.sp,
                 fontWeight = FontWeight.SemiBold,
-                color = color
+                color = Color.White
             )
         }
     }
@@ -2139,8 +2141,8 @@ fun WeightProgressCard(
             .shadow(
                 elevation = 8.dp,
                 shape = cardShape,
-                ambientColor = MaterialTheme.colorScheme.primary,
-                spotColor = MaterialTheme.colorScheme.primary
+                ambientColor = colorScheme.primary,
+                spotColor = colorScheme.primary
             )
 
     ) {
@@ -2181,54 +2183,53 @@ fun WeightProgressCard(
                 }
             }
 
-            Spacer(Modifier.height(12.dp))
+            Spacer(Modifier.height(16.dp)) // Espaço um pouco maior entre o gráfico e os botões
 
+            // ROW DOS BOTÕES COM ESPAÇAMENTO UNIFORME
             Row(
                 modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.SpaceBetween
+                horizontalArrangement = Arrangement.spacedBy(8.dp) // Cria o espaço exato entre eles
             ) {
                 WeightRangeButton(
-                    text = "2 weeks",
+                    text = "2W", // Abreviações como na imagem (1W, 1M, 3M, All)
                     selected = selectedRange == WeightRange.TWO_WEEKS,
                     onClick = {
                         clearSelectionSignal++
                         onRangeChange(WeightRange.TWO_WEEKS)
                     },
-                    modifier = Modifier.weight(1f, fill = false)
+                    modifier = Modifier.weight(1f)
                 )
                 WeightRangeButton(
-                    text = "1 month",
+                    text = "1M",
                     selected = selectedRange == WeightRange.ONE_MONTH,
                     onClick = {
                         clearSelectionSignal++
                         onRangeChange(WeightRange.ONE_MONTH)
                     },
-                     modifier = Modifier.weight(1f, fill = false)
+                    modifier = Modifier.weight(1f)
                 )
                 WeightRangeButton(
-                    text = "3 months",
+                    text = "3M",
                     selected = selectedRange == WeightRange.THREE_MONTHS,
                     onClick = {
                         clearSelectionSignal++
                         onRangeChange(WeightRange.THREE_MONTHS)
                     },
-                     modifier = Modifier.weight(1f, fill = false)
+                    modifier = Modifier.weight(1f)
                 )
                 WeightRangeButton(
-                    text = "All Time",
+                    text = "All",
                     selected = selectedRange == WeightRange.ALL_TIME,
                     onClick = {
                         clearSelectionSignal++
                         onRangeChange(WeightRange.ALL_TIME)
                     },
-                     modifier = Modifier.weight(1f, fill = false)
+                    modifier = Modifier.weight(1f)
                 )
             }
         }
     }
 }
-
-
 
 @Composable
 private fun WeightRangeButton(
@@ -2237,41 +2238,37 @@ private fun WeightRangeButton(
     onClick: () -> Unit,
     modifier: Modifier = Modifier
 ) {
-    Surface(
-        shape = RoundedCornerShape(50),
-        color = if (selected) colorScheme.primary.copy(alpha = 0.15f) else Color.Transparent,
-        border = BorderStroke(
-            2.dp,
-            if (selected) colorScheme.primary else colorScheme.outline
-        ),
+    // Cores baseadas no tema: Primária para selecionado, Cinza suave para não selecionado
+    val primaryColor = colorScheme.primary
+    val unselectedBgColor = colorScheme.onSurface.copy(alpha = 0.08f)
+
+    Box(
         modifier = modifier
             .height(36.dp)
-            .padding(horizontal = 2.dp)
-            .clickable(onClick = onClick)   // garante click aqui
-    ) {
-        BoxWithConstraints(
-            modifier = modifier
-                .heightIn(min = 36.dp)
-                .padding(horizontal = 2.dp)
-                .clickable(onClick = onClick),
-            contentAlignment = Alignment.Center
-        ) {
-            val dynamicFontSize = when {
-                maxWidth < 60.dp -> 9.sp
-                maxWidth < 80.dp -> 10.sp
-                else -> 12.sp
-            }
-
-            Text(
-                modifier = Modifier
-                    .padding(horizontal = 5.dp),
-                text = text,
-                fontSize = dynamicFontSize,
-                maxLines = 2,
-                overflow = TextOverflow.Ellipsis,
-                color = if (selected) colorScheme.primary else colorScheme.onSurface
+            .then(
+                if (selected) {
+                    // Efeito de "Glow" (Sombra verde ao redor)
+                    Modifier.shadow(
+                        elevation = 12.dp,
+                        shape = CircleShape,
+                        ambientColor = primaryColor,
+                        spotColor = primaryColor
+                    )
+                } else Modifier
             )
-        }
+            .clip(CircleShape)
+            .background(if (selected) primaryColor else unselectedBgColor)
+            .clickable(onClick = onClick),
+        contentAlignment = Alignment.Center
+    ) {
+        Text(
+            text = text,
+            fontSize = 14.sp,
+            fontWeight = if (selected) FontWeight.Bold else FontWeight.Normal,
+            color = if (selected) colorScheme.onPrimary else colorScheme.onSurface,
+            maxLines = 1,
+            overflow = TextOverflow.Ellipsis
+        )
     }
 }
 
