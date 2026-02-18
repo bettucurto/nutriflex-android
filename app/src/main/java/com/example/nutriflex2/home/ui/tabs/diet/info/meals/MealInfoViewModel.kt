@@ -1,4 +1,4 @@
-package com.example.nutriflex2.home.ui.tabs.diet.info
+package com.example.nutriflex2.home.ui.tabs.diet.info.meals
 
 import android.os.Build
 import androidx.annotation.RequiresApi

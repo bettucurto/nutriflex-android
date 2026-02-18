@@ -1,6 +1,7 @@
 package com.example.nutriflex2.home.ui.tabs.diet
 
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
@@ -11,12 +12,14 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Favorite
+import androidx.compose.material.icons.filled.Menu
 import androidx.compose.material.icons.filled.PhotoCamera
 import androidx.compose.material.icons.filled.RiceBowl
 import androidx.compose.material.icons.filled.Search
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme.colorScheme
 import androidx.compose.material3.MaterialTheme.typography
 import androidx.compose.material3.ModalBottomSheet
@@ -53,6 +56,7 @@ fun DietTabScreen(
     onNavigateToSearchMeals: () -> Unit,
     onNavigateToSearchRecipes: () -> Unit,
     viewModel: DietTabViewModel = hiltViewModel(),
+    onOpenDrawer: () -> Unit
 ) {
     val state by viewModel.uiState.collectAsState()
 
@@ -65,19 +69,39 @@ fun DietTabScreen(
         color = Color.Transparent
     ) {
 
+
         Column(
             modifier = Modifier
-                .fillMaxSize()
-                .padding(horizontal = 16.dp, vertical = 16.dp),
+                .fillMaxSize(),
             horizontalAlignment = Alignment.CenterHorizontally,
             verticalArrangement = Arrangement.Top
         ) {
+
+
+            Box(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(top = 40.dp, start = 16.dp, end = 16.dp) // Reduzi ligeiramente o top para equilibrar
+            ) {
+                IconButton(
+                    onClick = onOpenDrawer,
+                    modifier = Modifier.align(Alignment.CenterStart)
+                ) {
+                    Icon(
+                        imageVector = Icons.Filled.Menu,
+                        contentDescription = "Menu",
+                        tint = Color.White,
+                        modifier = Modifier.size(32.dp)
+                    )
+                }
+            }
+
             Text(text = "DIET",
                 fontWeight = FontWeight.Bold,
                 fontFamily = FontFamily(Font(R.font.formulacondensedbold)),
                 fontSize = 115.sp,
                 modifier = Modifier.fillMaxWidth()
-                    .padding(top = 40.dp),
+                    .padding(top = 8.dp, start = 16.dp),
                 color = Color.White,
                 textAlign = TextAlign.Start
             )

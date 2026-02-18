@@ -34,12 +34,13 @@ import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.navigation
 import androidx.navigation.navArgument
-import com.example.nutriflex2.home.ui.tabs.diet.info.MealInfoScreen
 import com.example.nutriflex2.diet.search.SearchMealsScreen
 import com.example.nutriflex2.home.account.AccountScreen
 import com.example.nutriflex2.home.ui.HomeScreen
 import com.example.nutriflex2.home.ui.HomeViewModel
 import com.example.nutriflex2.home.ui.tabs.diet.DietTabViewModel
+import com.example.nutriflex2.home.ui.tabs.diet.info.meals.MealInfoScreen
+import com.example.nutriflex2.home.ui.tabs.diet.info.recipes.RecipeInfoScreen
 import com.example.nutriflex2.home.ui.tabs.diet.search.recipes.SearchRecipeScreen
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
@@ -65,6 +66,7 @@ private fun screenOrder(route: String?): Int = when (route) {
 
     else -> -1   // splash ou desconhecido
 }
+
 @RequiresApi(Build.VERSION_CODES.O)
 @Composable
 fun AppNavGraph(navController: NavHostController) {
@@ -104,6 +106,7 @@ fun AppNavGraph(navController: NavHostController) {
             )
         }
 
+        // Rota para o MealInfoScreen
         composable(
             route = "foodDetail/{foodId}",
             arguments = listOf(
@@ -130,6 +133,34 @@ fun AppNavGraph(navController: NavHostController) {
                             popUpTo("homeScreen") { inclusive = true }
                         }
                     }
+                }
+            )
+        }
+
+        // NOVA ROTA: RecipeInfoScreen
+        // NOVA ROTA: RecipeInfoScreen
+        composable(
+            route = "recipeDetail/{recipeId}",
+            arguments = listOf(
+                navArgument("recipeId") { type = NavType.StringType }
+            )
+        ) { backStackEntry ->
+            val recipeId = backStackEntry.arguments?.getString("recipeId") ?: ""
+            val scope = rememberCoroutineScope()
+
+            RecipeInfoScreen(
+                recipeId = recipeId,
+                onBack = { navController.popBackStack() },
+                onAddToMeal = {
+                    scope.launch {
+                        navController.navigate("homeScreen") {
+                            popUpTo("homeScreen") { inclusive = true }
+                        }
+                    }
+                },
+                // NOVO: Navega para a página do alimento!
+                onIngredientClick = { foodId ->
+                    navController.navigate("foodDetail/$foodId")
                 }
             )
         }

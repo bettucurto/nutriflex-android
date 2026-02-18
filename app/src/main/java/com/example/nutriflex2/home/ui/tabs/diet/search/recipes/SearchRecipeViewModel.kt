@@ -22,6 +22,12 @@ data class SearchRecipeUiState(
     val rawResults: List<FatSecretRecipeSummary> = emptyList(),
     val errorMessage: String? = null,
     val calorieRange: CalorieRangeFilter = CalorieRangeFilter.NONE,
+    val carbsMin: Int = 0,
+    val carbsMax: Int = 100,
+    val proteinMin: Int = 0,
+    val proteinMax: Int = 100,
+    val fatMin: Int = 0,
+    val fatMax: Int = 100,
 )
 
 @HiltViewModel
@@ -93,33 +99,70 @@ class SearchRecipeViewModel @Inject constructor(
         applyFilters()
     }
 
+    fun onCarbsRangeChanged(min: Int, max: Int) {
+        _uiState.value = _uiState.value.copy(
+            carbsMin = min.coerceIn(0, 100),
+            carbsMax = max.coerceIn(0, 100)
+        )
+        applyFilters()
+    }
+
+    fun onProteinRangeChanged(min: Int, max: Int) {
+        _uiState.value = _uiState.value.copy(
+            proteinMin = min.coerceIn(0, 100),
+            proteinMax = max.coerceIn(0, 100)
+        )
+        applyFilters()
+    }
+
+    fun onFatRangeChanged(min: Int, max: Int) {
+        _uiState.value = _uiState.value.copy(
+            fatMin = min.coerceIn(0, 100),
+            fatMax = max.coerceIn(0, 100)
+        )
+        applyFilters()
+    }
+
     private fun applyFilters() {
         val state = _uiState.value
         val filtered = state.rawResults.filter { recipe ->
             val calories = parseCalories(recipe)
-            matchesCalorieRange(calories, state.calorieRange)
+            val carbsPct = parseMacroPct(recipe, "carbohydrate")
+            val proteinPct = parseMacroPct(recipe, "protein")
+            val fatPct = parseMacroPct(recipe, "fat")
+
+            matchesCalorieRange(calories, state.calorieRange) &&
+                    carbsPct in state.carbsMin..state.carbsMax &&
+                    proteinPct in state.proteinMin..state.proteinMax &&
+                    fatPct in state.fatMin..state.fatMax
         }
         _uiState.value = state.copy(suggestions = filtered)
     }
 
     private fun parseCalories(recipe: FatSecretRecipeSummary): Int {
-        // Tenta usar o campo direto se disponível, senão faz regex na string
         val calString = recipe.nutrition.calories ?: return 0
-        return try {
-            // Se for apenas número "250"
-            if (calString.all { it.isDigit() }) return calString.toInt()
-
-            // Se for "250 kcal"
-            val matcher = Pattern.compile("(\\d+)").matcher(calString)
-            if (matcher.find()) {
-                matcher.group(1)?.toInt() ?: 0
-            } else {
-                0
-            }
-        } catch (e: Exception) {
-            0
-        }
+        return calString.filter { it.isDigit() }.toIntOrNull() ?: 0
     }
+
+    private fun parseMacroPct(recipe: FatSecretRecipeSummary, macro: String): Int {
+        val nutrition = recipe.nutrition
+        val macroValueStr = when (macro) {
+            "carbohydrate" -> nutrition.carbohydrate
+            "protein" -> nutrition.protein
+            "fat" -> nutrition.fat
+            else -> null
+        } ?: return 0
+
+        val totalMacros = (nutrition.carbohydrate?.filter { it.isDigit() }?.toIntOrNull() ?: 0) +
+                (nutrition.protein?.filter { it.isDigit() }?.toIntOrNull() ?: 0) +
+                (nutrition.fat?.filter { it.isDigit() }?.toIntOrNull() ?: 0)
+
+        if (totalMacros == 0) return 0
+
+        val macroValue = macroValueStr.filter { it.isDigit() }.toIntOrNull() ?: 0
+        return ((macroValue.toDouble() / totalMacros) * 100).toInt()
+    }
+
 
     private fun matchesCalorieRange(calories: Int, range: CalorieRangeFilter): Boolean = when (range) {
         CalorieRangeFilter.NONE -> true

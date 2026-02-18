@@ -556,28 +556,38 @@ fun NutrientCircle(
             contentAlignment = Alignment.Center,
             modifier = Modifier
                 .size(70.dp)
-                .padding()
         ) {
+            // AQUI ESTÁ A CORREÇÃO:
             Canvas(modifier = Modifier.fillMaxSize()) {
-                // Configuração do traço
-                val strokeWidth = 6.dp.toPx()
-                val diameter = size.minDimension
-                val radius = diameter / 2 - strokeWidth / 2
+                val strokeWidthPx = 6.dp.toPx()
 
-                // 1. Trilho de fundo (círculo completo mais claro)
-                drawCircle(
+                // 1. Definimos o estilo EXATAMENTE igual para ambos
+                val strokeStyle = Stroke(width = strokeWidthPx, cap = StrokeCap.Round)
+
+                // 2. Definimos a posição e o tamanho para que as pontas redondas não sejam cortadas
+                val arcOffset = Offset(strokeWidthPx / 2, strokeWidthPx / 2)
+                val arcSize = Size(size.width - strokeWidthPx, size.height - strokeWidthPx)
+
+                // Trilho de fundo
+                drawArc(
                     color = color.copy(alpha = 0.2f),
-                    style = Stroke(width = strokeWidth),
-                    radius = radius
+                    startAngle = 0f,
+                    sweepAngle = 360f,
+                    useCenter = false,
+                    topLeft = arcOffset,
+                    size = arcSize,
+                    style = strokeStyle
                 )
 
-                // 2. Arco de Progresso
+                // Arco de Progresso
                 drawArc(
                     color = color,
                     startAngle = -90f, // Começa do topo
-                    sweepAngle = 360 * animatedProgress,
+                    sweepAngle = 360f * animatedProgress,
                     useCenter = false,
-                    style = Stroke(width = strokeWidth, cap = StrokeCap.Round)
+                    topLeft = arcOffset,
+                    size = arcSize,
+                    style = strokeStyle
                 )
             }
 
@@ -617,7 +627,6 @@ fun NutrientCircle(
         )
     }
 }
-
 @Composable
 fun DietCaloriesCard(
     remainingCalories: Int,

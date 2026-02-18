@@ -35,12 +35,13 @@ import androidx.compose.material3.ElevatedButton
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
-import androidx.compose.material3.LinearProgressIndicator
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.MaterialTheme.colorScheme
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.OutlinedTextFieldDefaults
+import androidx.compose.material3.RangeSlider
 import androidx.compose.material3.Scaffold
+import androidx.compose.material3.SliderDefaults
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBar
@@ -56,11 +57,11 @@ import androidx.compose.ui.draw.shadow
 import androidx.compose.ui.focus.FocusRequester
 import androidx.compose.ui.focus.focusRequester
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.graphics.StrokeCap
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.hilt.navigation.compose.hiltViewModel
@@ -70,6 +71,7 @@ import coil.request.ImageRequest
 import com.example.dieta.domain.FatSecretRecipeSummary
 import com.example.nutriflex2.R
 import com.example.nutriflex2.diet.search.CalorieChip
+import com.example.nutriflex2.diet.search.MacroItem
 import components.CalorieRangeFilter
 import components.LeftTitleText
 
@@ -103,9 +105,11 @@ fun SearchRecipeScreen(
         Column(
             modifier = Modifier
                 .padding(padding)
-                .padding(16.dp)
+                .padding(horizontal = 16.dp)
                 .fillMaxSize()
         ) {
+            Spacer(modifier = Modifier.height(8.dp))
+
             // --- Search Bar ---
             OutlinedTextField(
                 value = state.query,
@@ -113,29 +117,26 @@ fun SearchRecipeScreen(
                 modifier = Modifier
                     .fillMaxWidth()
                     .focusRequester(focusRequester)
-                    // 1. Adiciona a sombra com a elevação e formato desejados
                     .shadow(
                         elevation = 6.dp,
                         shape = RoundedCornerShape(12.dp)
                     )
-                    // 2. Adiciona um fundo sólido para a sombra não "vazar" para dentro
                     .background(
-                        color = MaterialTheme.colorScheme.surface,
+                        color = colorScheme.surface,
                         shape = RoundedCornerShape(12.dp)
                     ),
                 leadingIcon = { Icon(Icons.Default.Search, null) },
-                placeholder = { Text("Search food") },
+                placeholder = { Text("Search recipes") },
                 singleLine = true,
                 interactionSource = interactionSource,
                 shape = RoundedCornerShape(12.dp),
-                // 3. Garante que o fundo nativo do TextField fica transparente para mostrar o background acima
                 colors = OutlinedTextFieldDefaults.colors(
                     focusedContainerColor = Color.Transparent,
                     unfocusedContainerColor = Color.Transparent
                 )
             )
 
-            Spacer(modifier = Modifier.height(12.dp))
+            Spacer(modifier = Modifier.height(16.dp))
 
             // --- Photo + Favorites Buttons ---
             Row(
@@ -156,18 +157,19 @@ fun SearchRecipeScreen(
                     modifier = Modifier.weight(1f),
                     shape = RoundedCornerShape(12.dp)
                 ) {
-                    Icon(Icons.Default.Favorite, contentDescription = null, tint = Color.Red)
+                    Icon(Icons.Default.Favorite, contentDescription = null, tint = colorScheme.error)
                     Spacer(Modifier.width(8.dp))
                     Text("Favorites", color = colorScheme.onSurface)
                 }
             }
 
-            Spacer(modifier = Modifier.height(12.dp))
+            Spacer(modifier = Modifier.height(8.dp))
 
             // --- Filters Toggle ---
             Row(
                 modifier = Modifier
                     .fillMaxWidth()
+                    .clip(RoundedCornerShape(8.dp))
                     .clickable { filtersExpanded.value = !filtersExpanded.value }
                     .padding(vertical = 8.dp),
                 verticalAlignment = Alignment.CenterVertically,
@@ -194,8 +196,8 @@ fun SearchRecipeScreen(
                 Surface(
                     shape = RoundedCornerShape(16.dp),
                     border = BorderStroke(1.dp, colorScheme.outlineVariant),
-                    modifier = Modifier.fillMaxWidth(),
-                    color = colorScheme.surfaceVariant.copy(alpha = 0.3f)
+                    modifier = Modifier.fillMaxWidth().padding(bottom = 16.dp),
+                    color = colorScheme.surfaceVariant.copy(alpha = 0.5f)
                 ) {
                     Column(
                         modifier = Modifier
@@ -228,11 +230,18 @@ fun SearchRecipeScreen(
                                 }
                             }
                         }
+
+                        Spacer(modifier = Modifier.height(16.dp))
+
+                        // Macros Sliders
+                        MacroRangeSection("Carbs %", state.carbsMin, state.carbsMax) { min, max -> viewModel.onCarbsRangeChanged(min, max) }
+                        Spacer(modifier = Modifier.height(8.dp))
+                        MacroRangeSection("Protein %", state.proteinMin, state.proteinMax) { min, max -> viewModel.onProteinRangeChanged(min, max) }
+                        Spacer(modifier = Modifier.height(8.dp))
+                        MacroRangeSection("Fat %", state.fatMin, state.fatMax) { min, max -> viewModel.onFatRangeChanged(min, max) }
                     }
                 }
             }
-
-            Spacer(modifier = Modifier.height(16.dp))
 
             // --- Recipe List ---
             if (state.isLoading) {
@@ -240,7 +249,7 @@ fun SearchRecipeScreen(
                     modifier = Modifier.fillMaxSize(),
                     contentAlignment = Alignment.Center
                 ) {
-                    CircularProgressIndicator()
+                    CircularProgressIndicator(color = colorScheme.primary)
                 }
             } else {
                 LazyColumn(
@@ -251,7 +260,6 @@ fun SearchRecipeScreen(
                     items(state.suggestions) { recipe ->
                         RecipeRow(
                             recipe = recipe,
-                            onAddClick = { /* Lógica de adicionar */ },
                             onClick = { navController.navigate("recipeDetail/${recipe.id}") }
                         )
                     }
@@ -262,38 +270,64 @@ fun SearchRecipeScreen(
 }
 
 @Composable
+fun MacroRangeSection(
+    title: String,
+    min: Int,
+    max: Int,
+    onRangeChange: (Int, Int) -> Unit,
+) {
+    Column {
+        Row(
+            modifier = Modifier.fillMaxWidth(),
+            horizontalArrangement = Arrangement.SpaceBetween
+        ) {
+            Text(title, style = MaterialTheme.typography.labelMedium, color = colorScheme.secondary)
+            Text("$min% - $max%", style = MaterialTheme.typography.labelMedium, color = colorScheme.onSurfaceVariant)
+        }
+        RangeSlider(
+            value = min.toFloat()..max.toFloat(),
+            onValueChange = { range ->
+                val newMin = range.start.toInt().coerceIn(0, 100)
+                val newMax = range.endInclusive.toInt().coerceIn(newMin, 100)
+                onRangeChange(newMin, newMax)
+            },
+            valueRange = 0f..100f,
+            colors = SliderDefaults.colors(
+                thumbColor = colorScheme.primary,
+                activeTrackColor = colorScheme.primary,
+                inactiveTrackColor = colorScheme.outlineVariant
+            )
+        )
+    }
+}
+
+@Composable
 fun RecipeRow(
     recipe: FatSecretRecipeSummary,
     onClick: () -> Unit,
-    onAddClick: () -> Unit,
 ) {
     val context = LocalContext.current
 
-    // Cores das barras de Macros
-    val carbColor = Color(0xFF42A5F5)
-    val proteinColor = Color(0xFF66BB6A)
-    val fatColor = Color(0xFFFFCA28)
-    val backgroundColor = Color(0xFFE0E0E0)
+    // Cores adaptadas ao tema (Evitar fixar cores que não contrastam no Dark Mode)
+    val carbColor = Color(0xFF4FC3F7)
+    val proteinColor = Color(0xFF81C784)
+    val fatColor = Color(0xFFFFB74D)
+    val trackBackgroundColor = colorScheme.surfaceVariant
 
-    // Parsing das macros para mostrar nas barras
-    // Assumindo que o objeto 'nutrition' tem campos ou string "Carbs: 20g | Protein: 10g..."
-    // Vamos usar os valores pré-calculados que adicionaremos ao objeto ou ViewModel,
-    // mas aqui vou extrair diretamente para visualização.
-    val carbsVal = recipe.nutrition.carbohydrate?.toFloatOrNull() ?: 0f
-    val proteinVal = recipe.nutrition.protein?.toFloatOrNull() ?: 0f
-    val fatVal = recipe.nutrition.fat?.toFloatOrNull() ?: 0f
+    // Parsing das macros
+    val carbsVal = recipe.nutrition.carbohydrate?.filter { it.isDigit() }?.toFloatOrNull() ?: 0f
+    val proteinVal = recipe.nutrition.protein?.filter { it.isDigit() }?.toFloatOrNull() ?: 0f
+    val fatVal = recipe.nutrition.fat?.filter { it.isDigit() }?.toFloatOrNull() ?: 0f
     val totalMacros = carbsVal + proteinVal + fatVal
 
-    // Convertendo para percentagem para as barras (aprox)
     val carbsPct = if (totalMacros > 0) ((carbsVal / totalMacros) * 100).toInt() else 0
     val proteinPct = if (totalMacros > 0) ((proteinVal / totalMacros) * 100).toInt() else 0
     val fatPct = if (totalMacros > 0) ((fatVal / totalMacros) * 100).toInt() else 0
 
-
     Surface(
         shape = RoundedCornerShape(20.dp),
-        color = Color.White,
-        tonalElevation = 0.dp,
+        color = colorScheme.surface, // Adapta-se automaticamente (branco no Light, escuro no Dark)
+        tonalElevation = 2.dp,
         shadowElevation = 6.dp,
         modifier = Modifier
             .fillMaxWidth()
@@ -315,7 +349,7 @@ fun RecipeRow(
                     modifier = Modifier
                         .size(60.dp)
                         .clip(CircleShape)
-                        .background(Color.LightGray),
+                        .background(colorScheme.surfaceVariant), // Adapta-se ao tema
                     contentScale = ContentScale.Crop,
                     placeholder = painterResource(R.drawable.nutrilogo),
                     error = painterResource(R.drawable.nutrilogo)
@@ -335,18 +369,20 @@ fun RecipeRow(
                                 fontWeight = FontWeight.Bold,
                                 fontSize = 18.sp
                             ),
-                            color = Color.Black,
+                            color = colorScheme.onSurface, // Adapta-se ao tema
                             maxLines = 1,
+                            overflow = TextOverflow.Ellipsis,
                             modifier = Modifier.weight(1f)
                         )
 
                         Row(verticalAlignment = Alignment.CenterVertically) {
+                            val calories = recipe.nutrition.calories?.filter { it.isDigit() }?.toIntOrNull() ?: 0
                             Text(
-                                text = "${recipe.nutrition.calories} kcal",
+                                text = "$calories kcal",
                                 style = MaterialTheme.typography.bodyMedium.copy(
                                     fontWeight = FontWeight.Bold
                                 ),
-                                color = Color.Gray
+                                color = colorScheme.primary // Destaque na cor primária da app
                             )
                         }
                     }
@@ -354,56 +390,42 @@ fun RecipeRow(
                     Text(
                         text = recipe.descricaoEn,
                         style = MaterialTheme.typography.bodyMedium,
-                        color = Color.Gray,
-                        maxLines = 2
+                        color = colorScheme.onSurfaceVariant, // Texto secundário (cinza claro/escuro)
+                        maxLines = 2,
+                        overflow = TextOverflow.Ellipsis
                     )
                 }
             }
 
             Spacer(modifier = Modifier.height(16.dp))
 
-            // Barras de Macros (Usando o componente reutilizável do ecrã anterior se disponível, ou redefinindo aqui)
-            // Vou redefinir caso não tenha acesso ao SearchMealsScreen.kt neste ficheiro
+            // Barras de Macros (Usando o MacroItem importado do SearchMealsScreen)
             Row(
                 modifier = Modifier.fillMaxWidth(),
                 horizontalArrangement = Arrangement.spacedBy(16.dp)
             ) {
-                RecipeMacroItem("Carbs", carbsPct, carbColor, backgroundColor, Modifier.weight(1f))
-                RecipeMacroItem("Protein", proteinPct, proteinColor, backgroundColor, Modifier.weight(1f))
-                RecipeMacroItem("Fat", fatPct, fatColor, backgroundColor, Modifier.weight(1f))
+                MacroItem(
+                    label = "Carbs",
+                    percentage = carbsPct,
+                    color = carbColor,
+                    trackColor = trackBackgroundColor,
+                    modifier = Modifier.weight(1f)
+                )
+                MacroItem(
+                    label = "Protein",
+                    percentage = proteinPct,
+                    color = proteinColor,
+                    trackColor = trackBackgroundColor,
+                    modifier = Modifier.weight(1f)
+                )
+                MacroItem(
+                    label = "Fat",
+                    percentage = fatPct,
+                    color = fatColor,
+                    trackColor = trackBackgroundColor,
+                    modifier = Modifier.weight(1f)
+                )
             }
         }
-    }
-}
-
-@Composable
-fun RecipeMacroItem(
-    label: String,
-    percentage: Int,
-    color: Color,
-    trackColor: Color,
-    modifier: Modifier = Modifier
-) {
-    Column(modifier = modifier) {
-        Row(
-            modifier = Modifier.fillMaxWidth(),
-            horizontalArrangement = Arrangement.SpaceBetween,
-            verticalAlignment = Alignment.Bottom
-        ) {
-            Text(text = label, style = MaterialTheme.typography.bodySmall, color = Color.Black)
-            Text(text = "$percentage%", style = MaterialTheme.typography.bodySmall.copy(fontWeight = FontWeight.Bold), color = Color.Black)
-        }
-        Spacer(modifier = Modifier.height(6.dp))
-        LinearProgressIndicator(
-            progress = { percentage / 100f },
-            modifier = Modifier
-                .fillMaxWidth()
-                .height(6.dp)
-                .clip(RoundedCornerShape(3.dp)),
-            color = color,
-            trackColor = trackColor,
-            strokeCap = StrokeCap.Round,
-            gapSize = 0.dp
-        )
     }
 }

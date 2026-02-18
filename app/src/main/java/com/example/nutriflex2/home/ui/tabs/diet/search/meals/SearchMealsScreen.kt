@@ -31,17 +31,16 @@ import androidx.compose.material.icons.filled.ExpandMore
 import androidx.compose.material.icons.filled.Favorite
 import androidx.compose.material.icons.filled.PhotoCamera
 import androidx.compose.material.icons.filled.Search
+import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.DropdownMenu
 import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.ElevatedButton
 import androidx.compose.material3.ExperimentalMaterial3Api
-import androidx.compose.material3.ExperimentalMaterial3ExpressiveApi
 import androidx.compose.material3.FilterChip
 import androidx.compose.material3.FilterChipDefaults
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.LinearProgressIndicator
-import androidx.compose.material3.LoadingIndicator
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.MaterialTheme.colorScheme
 import androidx.compose.material3.OutlinedTextField
@@ -70,6 +69,7 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalFocusManager
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.compose.ui.window.PopupProperties
@@ -82,7 +82,7 @@ import com.example.nutriflex2.R
 import components.CalorieRangeFilter
 import components.LeftTitleText
 
-@OptIn(ExperimentalMaterial3Api::class, ExperimentalMaterial3ExpressiveApi::class)
+@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun SearchMealsScreen(
     navController: NavController,
@@ -94,7 +94,6 @@ fun SearchMealsScreen(
     val state by viewModel.uiState.collectAsState()
     val filtersExpanded = remember { mutableStateOf(false) }
 
-    // Foco correto para Material3
     val interactionSource = remember { MutableInteractionSource() }
     val isFocused by interactionSource.collectIsFocusedAsState()
     val focusManager = LocalFocusManager.current
@@ -118,9 +117,11 @@ fun SearchMealsScreen(
         Column(
             modifier = Modifier
                 .padding(padding)
-                .padding(16.dp)
+                .padding(horizontal = 16.dp)
                 .fillMaxSize()
         ) {
+            Spacer(modifier = Modifier.height(8.dp))
+
             // --- Search Bar ---
             Box {
                 Column(horizontalAlignment = Alignment.CenterHorizontally) {
@@ -130,14 +131,12 @@ fun SearchMealsScreen(
                         modifier = Modifier
                             .fillMaxWidth()
                             .focusRequester(focusRequester)
-                            // 1. Adiciona a sombra com a elevação e formato desejados
                             .shadow(
                                 elevation = 6.dp,
                                 shape = RoundedCornerShape(12.dp)
                             )
-                            // 2. Adiciona um fundo sólido para a sombra não "vazar" para dentro
                             .background(
-                                color = MaterialTheme.colorScheme.surface,
+                                color = colorScheme.surface,
                                 shape = RoundedCornerShape(12.dp)
                             ),
                         leadingIcon = { Icon(Icons.Default.Search, null) },
@@ -145,14 +144,12 @@ fun SearchMealsScreen(
                         singleLine = true,
                         interactionSource = interactionSource,
                         shape = RoundedCornerShape(12.dp),
-                        // 3. Garante que o fundo nativo do TextField fica transparente para mostrar o background acima
                         colors = OutlinedTextFieldDefaults.colors(
                             focusedContainerColor = Color.Transparent,
                             unfocusedContainerColor = Color.Transparent
                         )
                     )
 
-                    // Autocomplete Dropdown
                     DropdownMenu(
                         expanded = isFocused &&
                                 state.autocompleteSuggestions.isNotEmpty() &&
@@ -174,7 +171,7 @@ fun SearchMealsScreen(
                     }
                 }
             }
-            Spacer(modifier = Modifier.height(12.dp))
+            Spacer(modifier = Modifier.height(16.dp))
 
             // --- Photo + Favorites Buttons ---
             Row(
@@ -195,18 +192,19 @@ fun SearchMealsScreen(
                     modifier = Modifier.weight(1f),
                     shape = RoundedCornerShape(12.dp)
                 ) {
-                    Icon(Icons.Default.Favorite, contentDescription = null, tint = Color.Red)
+                    Icon(Icons.Default.Favorite, contentDescription = null, tint = colorScheme.error)
                     Spacer(Modifier.width(8.dp))
                     Text("Favorites", color = colorScheme.onSurface)
                 }
             }
 
-            Spacer(modifier = Modifier.height(12.dp))
+            Spacer(modifier = Modifier.height(8.dp))
 
             // --- Filters Toggle ---
             Row(
                 modifier = Modifier
                     .fillMaxWidth()
+                    .clip(RoundedCornerShape(8.dp))
                     .clickable { filtersExpanded.value = !filtersExpanded.value }
                     .padding(vertical = 8.dp),
                 verticalAlignment = Alignment.CenterVertically,
@@ -233,8 +231,8 @@ fun SearchMealsScreen(
                 Surface(
                     shape = RoundedCornerShape(16.dp),
                     border = BorderStroke(1.dp, colorScheme.outlineVariant),
-                    modifier = Modifier.fillMaxWidth(),
-                    color = colorScheme.surfaceVariant.copy(alpha = 0.3f)
+                    modifier = Modifier.fillMaxWidth().padding(bottom = 16.dp),
+                    color = colorScheme.surfaceVariant.copy(alpha = 0.5f)
                 ) {
                     Column(
                         modifier = Modifier
@@ -248,7 +246,6 @@ fun SearchMealsScreen(
                         )
                         Spacer(modifier = Modifier.height(8.dp))
 
-                        // Chips de Calorias
                         Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
                             Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                                 CalorieChip("Under 100", state.calorieRange == CalorieRangeFilter.UNDER_100, Modifier.weight(1f)) {
@@ -270,7 +267,6 @@ fun SearchMealsScreen(
 
                         Spacer(modifier = Modifier.height(16.dp))
 
-                        // Macros Sliders
                         MacroRangeSection("Carbs %", state.carbsMin, state.carbsMax) { min, max -> viewModel.onCarbsRangeChanged(min, max) }
                         Spacer(modifier = Modifier.height(8.dp))
                         MacroRangeSection("Protein %", state.proteinMin, state.proteinMax) { min, max -> viewModel.onProteinRangeChanged(min, max) }
@@ -280,27 +276,24 @@ fun SearchMealsScreen(
                 }
             }
 
-            Spacer(modifier = Modifier.height(16.dp))
-
             // --- Meal List ---
             if (state.isLoading) {
                 Box(
                     modifier = Modifier.fillMaxSize(),
                     contentAlignment = Alignment.Center
                 ) {
-                    LoadingIndicator()
+                    CircularProgressIndicator(color = colorScheme.primary)
                 }
             } else {
                 LazyColumn(
                     modifier = Modifier.fillMaxSize(),
-                    verticalArrangement = Arrangement.spacedBy(16.dp), // Mais espaço entre cards
+                    verticalArrangement = Arrangement.spacedBy(16.dp),
                     contentPadding = PaddingValues(bottom = 16.dp)
                 ) {
                     items(state.suggestions) { food ->
                         FoodRow(
                             food = food,
-                            onAddClick = { /* Adicionar lógica de clique */ },
-                            onClick = { navController.navigate("foodDetail/${food.id}") } // Navegação ao clicar no card
+                            onClick = { navController.navigate("foodDetail/${food.id}") }
                         )
                     }
                 }
@@ -325,7 +318,9 @@ fun CalorieChip(
         modifier = modifier,
         colors = FilterChipDefaults.filterChipColors(
             selectedContainerColor = colorScheme.primaryContainer,
-            selectedLabelColor = colorScheme.onPrimaryContainer
+            selectedLabelColor = colorScheme.onPrimaryContainer,
+            containerColor = colorScheme.surface,
+            labelColor = colorScheme.onSurfaceVariant
         ),
         border = FilterChipDefaults.filterChipBorder(
             enabled = true,
@@ -361,7 +356,7 @@ fun MacroRangeSection(
             colors = SliderDefaults.colors(
                 thumbColor = colorScheme.primary,
                 activeTrackColor = colorScheme.primary,
-                inactiveTrackColor = colorScheme.surfaceVariant
+                inactiveTrackColor = colorScheme.outlineVariant
             )
         )
     }
@@ -371,21 +366,20 @@ fun MacroRangeSection(
 fun FoodRow(
     food: FatSecretFood,
     onClick: () -> Unit,
-    onAddClick: () -> Unit,
 ) {
     val context = LocalContext.current
 
-    // Cores das barras baseadas na imagem (Azul=Carbs, Verde=Protein, Amarelo=Fat)
-    val carbColor = Color(0xFF42A5F5)
-    val proteinColor = Color(0xFF66BB6A)
-    val fatColor = Color(0xFFFFCA28)
-    val backgroundColor = Color(0xFFE0E0E0) // Cor do fundo das barras
+    // Cores adaptadas ao tema (Evitar fixar cores que não contrastam no Dark Mode)
+    val carbColor = Color(0xFF4FC3F7)
+    val proteinColor = Color(0xFF81C784)
+    val fatColor = Color(0xFFFFB74D)
+    val trackBackgroundColor = colorScheme.surfaceVariant
 
     Surface(
-        shape = RoundedCornerShape(20.dp), // Bordas bem arredondadas
-        color = Color.White, // Fundo branco como na imagem
-        tonalElevation = 0.dp,
-        shadowElevation = 6.dp, // Sombra suave
+        shape = RoundedCornerShape(20.dp),
+        color = colorScheme.surface, // Adapta-se automaticamente (branco no Light, escuro no Dark)
+        tonalElevation = 2.dp,
+        shadowElevation = 6.dp,
         modifier = Modifier
             .fillMaxWidth()
             .clickable(onClick = onClick)
@@ -393,11 +387,9 @@ fun FoodRow(
         Column(
             modifier = Modifier.padding(16.dp)
         ) {
-            // Linha Superior: Imagem + Textos + Calorias
             Row(
                 verticalAlignment = Alignment.CenterVertically
             ) {
-                // Imagem Redonda
                 AsyncImage(
                     model = ImageRequest.Builder(context)
                         .data(food.image)
@@ -405,93 +397,82 @@ fun FoodRow(
                         .build(),
                     contentDescription = food.nomeEn,
                     modifier = Modifier
-                        .size(60.dp) // Tamanho maior
-                        .clip(CircleShape) // Redonda
-                        .background(Color.LightGray), // Placeholder background
+                        .size(60.dp)
+                        .clip(CircleShape)
+                        .background(colorScheme.surfaceVariant), // Adapta-se ao tema
                     contentScale = ContentScale.Crop,
-                    placeholder = painterResource(R.drawable.nutrilogo), // Garanta que este recurso existe
+                    placeholder = painterResource(R.drawable.nutrilogo),
                     error = painterResource(R.drawable.nutrilogo)
                 )
 
                 Spacer(Modifier.width(16.dp))
 
-                // Títulos e Descrição
                 Column(modifier = Modifier.weight(1f)) {
                     Row(
                         modifier = Modifier.fillMaxWidth(),
                         horizontalArrangement = Arrangement.SpaceBetween,
                         verticalAlignment = Alignment.Top
                     ) {
-                        // Título (Nome da comida)
                         Text(
                             text = food.nomeEn,
                             style = MaterialTheme.typography.titleMedium.copy(
                                 fontWeight = FontWeight.Bold,
                                 fontSize = 18.sp
                             ),
-                            color = Color.Black,
+                            color = colorScheme.onSurface, // Adapta-se ao tema
                             maxLines = 1,
+                            overflow = TextOverflow.Ellipsis,
                             modifier = Modifier.weight(1f)
                         )
 
-                        // Calorias (canto superior direito)
                         Row(verticalAlignment = Alignment.CenterVertically) {
                             Text(
                                 text = "${food.calories ?: 0} kcal",
                                 style = MaterialTheme.typography.bodyMedium.copy(
                                     fontWeight = FontWeight.Bold
                                 ),
-                                color = Color.Gray
+                                color = colorScheme.primary // Destaque na cor primária da app
                             )
-                            Spacer(modifier = Modifier.width(8.dp))
-                            // Opcional: Icon de expandir se fosse uma lista expansível,
-                            // mas a imagem não mostra explicitamente.
-                            // Icon(Icons.Default.KeyboardArrowDown, contentDescription = null, tint = Color.LightGray)
                         }
                     }
 
-                    // Descrição (Marca ou detalhe)
                     Text(
                         text = food.descricaoEn,
                         style = MaterialTheme.typography.bodyMedium,
-                        color = Color.Gray,
+                        color = colorScheme.onSurfaceVariant, // Texto secundário (cinza claro/escuro consoante o tema)
                         maxLines = 2,
+                        overflow = TextOverflow.Ellipsis
                     )
                 }
             }
 
             Spacer(modifier = Modifier.height(16.dp))
 
-            // Linha Inferior: Barras de Macros
-            // Layout: Label + Valor à direita, Barra em baixo
             Row(
                 modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.spacedBy(16.dp) // Espaço entre colunas de macros
+                horizontalArrangement = Arrangement.spacedBy(16.dp)
             ) {
-                // Carbs
                 MacroItem(
                     label = "Carbs",
                     percentage = (food.carbsPct ?: 0),
                     color = carbColor,
-                    trackColor = backgroundColor,
+                    trackColor = trackBackgroundColor,
                     modifier = Modifier.weight(1f)
                 )
 
-                // Protein
                 MacroItem(
                     label = "Protein",
                     percentage = (food.proteinPct ?: 0),
                     color = proteinColor,
-                    trackColor = backgroundColor,
+                    trackColor = trackBackgroundColor,
                     modifier = Modifier.weight(1f)
                 )
 
-                // Fat
                 MacroItem(
                     label = "Fat",
                     percentage = (food.fatPct ?: 0),
                     color = fatColor,
-                    trackColor = backgroundColor,
+                    trackColor = trackBackgroundColor,
                     modifier = Modifier.weight(1f)
                 )
             }
@@ -502,13 +483,12 @@ fun FoodRow(
 @Composable
 fun MacroItem(
     label: String,
-    percentage: Int, // 0 a 100
+    percentage: Int,
     color: Color,
     trackColor: Color,
     modifier: Modifier = Modifier
 ) {
     Column(modifier = modifier) {
-        // Texto: "Carbs 24%"
         Row(
             modifier = Modifier.fillMaxWidth(),
             horizontalArrangement = Arrangement.SpaceBetween,
@@ -517,24 +497,23 @@ fun MacroItem(
             Text(
                 text = label,
                 style = MaterialTheme.typography.bodySmall,
-                color = Color.Black
+                color = colorScheme.onSurfaceVariant // Adapta-se ao tema
             )
             Text(
                 text = "$percentage%",
                 style = MaterialTheme.typography.bodySmall.copy(fontWeight = FontWeight.Bold),
-                color = Color.Black
+                color = colorScheme.onSurface // Adapta-se ao tema
             )
         }
 
         Spacer(modifier = Modifier.height(6.dp))
 
-        // Barra de Progresso
         LinearProgressIndicator(
             progress = { percentage / 100f },
             modifier = Modifier
                 .fillMaxWidth()
                 .height(6.dp)
-                .clip(RoundedCornerShape(3.dp)), // Bordas arredondadas na barra
+                .clip(RoundedCornerShape(3.dp)),
             color = color,
             trackColor = trackColor,
             strokeCap = StrokeCap.Round,

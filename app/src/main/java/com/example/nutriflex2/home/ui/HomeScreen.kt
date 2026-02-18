@@ -300,7 +300,8 @@ fun HomeScreen(
                                 DietTabScreen(
                                     onNavigateToSearchMeals = onNavigateToSearchMeals,
                                     onNavigateToSearchRecipes = onNavigateToSearchRecipes,
-                                    viewModel = dietVm
+                                    viewModel = dietVm,
+                                    onOpenDrawer = { scope.launch { drawerState.open() } }
                                 )
                             }
                         }
