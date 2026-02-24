@@ -37,8 +37,8 @@ import androidx.navigation.navArgument
 import com.example.nutriflex2.diet.search.SearchMealsScreen
 import com.example.nutriflex2.home.account.AccountScreen
 import com.example.nutriflex2.home.ui.HomeScreen
-import com.example.nutriflex2.home.ui.HomeViewModel
-import com.example.nutriflex2.home.ui.tabs.diet.DietTabViewModel
+import com.example.nutriflex2.home.ui.tabs.diet.favorites.FavoriteMealEditorScreen
+import com.example.nutriflex2.home.ui.tabs.diet.favorites.FavoriteMealEditorViewModel
 import com.example.nutriflex2.home.ui.tabs.diet.info.meals.MealInfoScreen
 import com.example.nutriflex2.home.ui.tabs.diet.info.recipes.RecipeInfoScreen
 import com.example.nutriflex2.home.ui.tabs.diet.search.recipes.SearchRecipeScreen
@@ -63,8 +63,7 @@ private fun screenOrder(route: String?): Int = when (route) {
     "registrationScreen3" -> 5
     "registrationScreen4" -> 6
     "registrationScreen5" -> 7
-
-    else -> -1   // splash ou desconhecido
+    else -> -1
 }
 
 @RequiresApi(Build.VERSION_CODES.O)
@@ -79,6 +78,7 @@ fun AppNavGraph(navController: NavHostController) {
         composable("splashScreen") { SplashScreen(navController) }
         composable("welcomeScreen") { WelcomeScreen(navController) }
         composable("loginScreen") { LoginScreen(navController) }
+
         composable("homeScreen") {
             HomeScreen(
                 onNavigateToTreino = { /* ... */ },
@@ -88,62 +88,57 @@ fun AppNavGraph(navController: NavHostController) {
             )
         }
 
+        // --- Fluxo de Pesquisa Diária (Log normal) ---
         composable("searchMealsScreen") {
             SearchMealsScreen(
-                onBack = { navController.popBackStack() },
-                onOpenFavorites = { /* TODO: navegar para ecrã de favoritos */ },
-                onOpenPhoto = { /* TODO: navegar para captura de foto */ },
                 navController = navController,
+                onBack = { navController.popBackStack() },
+                onOpenFavorites = { /* TODO */ },
+
+                // MUDANÇA 1: Ao clicar em Create Meal, iniciamos o FLUXO ANINHADO
+                onOpenCreateMeal = { navController.navigate("create_meal_flow") },
+
+                // Comportamento normal: vai para detalhes para logar no dia
+                onFoodClick = { foodId ->
+                    navController.navigate("foodDetail/$foodId")
+                }
             )
         }
 
         composable("searchRecipeScreen") {
             SearchRecipeScreen(
                 onBack = { navController.popBackStack() },
-                onOpenFavorites = { /* TODO: navegar para ecrã de favoritos */ },
-                onOpenPhoto = { /* TODO: navegar para captura de foto */ },
+                onOpenFavorites = { /* TODO */ },
+                onOpenPhoto = { /* TODO */ },
                 navController = navController,
             )
         }
 
-        // Rota para o MealInfoScreen
+        // --- Detalhes do Alimento (Modo: Log Diário) ---
         composable(
             route = "foodDetail/{foodId}",
-            arguments = listOf(
-                navArgument("foodId") { type = NavType.StringType }
-            )
+            arguments = listOf(navArgument("foodId") { type = NavType.StringType })
         ) { backStackEntry ->
             val foodId = backStackEntry.arguments?.getString("foodId") ?: ""
 
-            // Memoiza o backStackEntry do homeScreen para cumprir a regra do lint
-            val homeEntry = remember(backStackEntry) {
-                navController.getBackStackEntry("homeScreen")
-            }
-
-            val homeViewModel: HomeViewModel = hiltViewModel(homeEntry)
-            val dietVm: DietTabViewModel = hiltViewModel(homeEntry)
-            val scope = rememberCoroutineScope()
-
+            // Aqui mantemos a lógica original para logar no diário
             MealInfoScreen(
                 foodId = foodId,
                 onBack = { navController.popBackStack() },
-                onAddToMeal = {
-                    scope.launch {
-                        navController.navigate("homeScreen") {
-                            popUpTo("homeScreen") { inclusive = true }
-                        }
+                onReturnIngredient = null, // NULL = Modo Log Diário
+                onAddToMealCompleted = {
+                    // Volta para a home
+                    navController.navigate("homeScreen") {
+                        popUpTo("homeScreen") { inclusive = true }
                     }
                 }
             )
         }
 
-        // NOVA ROTA: RecipeInfoScreen
-        // NOVA ROTA: RecipeInfoScreen
+        // --- Detalhes da Receita ---
         composable(
             route = "recipeDetail/{recipeId}",
-            arguments = listOf(
-                navArgument("recipeId") { type = NavType.StringType }
-            )
+            arguments = listOf(navArgument("recipeId") { type = NavType.StringType })
         ) { backStackEntry ->
             val recipeId = backStackEntry.arguments?.getString("recipeId") ?: ""
             val scope = rememberCoroutineScope()
@@ -158,19 +153,95 @@ fun AppNavGraph(navController: NavHostController) {
                         }
                     }
                 },
-                // NOVO: Navega para a página do alimento!
                 onIngredientClick = { foodId ->
                     navController.navigate("foodDetail/$foodId")
                 }
             )
         }
 
+        // === NOVO FLUXO ANINHADO: CRIAR REFEIÇÃO FAVORITA ===
+        // Todos os ecrãs aqui dentro partilham o mesmo FavoriteMealViewModel
+        navigation(
+            startDestination = "favoriteMealEditor",
+            route = "create_meal_flow"
+        ) {
+
+            // 1. O Editor (Lista de ingredientes, Nome, Botão Salvar)
+            composable("favoriteMealEditor") { backStackEntry ->
+                // Obtém o ViewModel associado ao GRAFO, não ao ecrã
+                val parentEntry = remember(backStackEntry) {
+                    navController.getBackStackEntry("create_meal_flow")
+                }
+                val sharedViewModel: FavoriteMealEditorViewModel = hiltViewModel(parentEntry)
+
+                FavoriteMealEditorScreen(
+                    viewModel = sharedViewModel,
+                    onBack = { navController.popBackStack() }, // Sai do fluxo
+                    onAddFoodClick = {
+                        // Navega para a pesquisa DENTRO deste fluxo
+                        navController.navigate("meal_creation_search")
+                    },
+                    onMealSaved = {
+                        // Sucesso: volta para a Home
+                        navController.navigate("homeScreen") {
+                            popUpTo("homeScreen") { inclusive = true }
+                        }
+                    }
+                )
+            }
+
+            // 2. A Pesquisa (para adicionar ao rascunho)
+            composable("meal_creation_search") {
+                SearchMealsScreen(
+                    navController = navController,
+                    onBack = { navController.popBackStack() },
+                    onOpenFavorites = { }, // Desativado neste modo
+                    onOpenCreateMeal = { }, // Desativado neste modo
+
+                    // IMPORTANTE: Navega para a versão "creation" do detalhe
+                    onFoodClick = { foodId ->
+                        navController.navigate("meal_creation_detail/$foodId")
+                    }
+                )
+            }
+
+            // 3. O Detalhe (Modo: Retornar Ingrediente)
+            composable(
+                route = "meal_creation_detail/{foodId}",
+                arguments = listOf(navArgument("foodId") { type = NavType.StringType })
+            ) { backStackEntry ->
+                val foodId = backStackEntry.arguments?.getString("foodId") ?: ""
+
+                // Precisamos do SharedViewModel para chamar o método addIngredient
+                val parentEntry = remember(backStackEntry) {
+                    navController.getBackStackEntry("create_meal_flow")
+                }
+                val sharedViewModel: FavoriteMealEditorViewModel = hiltViewModel(parentEntry)
+
+                MealInfoScreen(
+                    foodId = foodId,
+                    onBack = { navController.popBackStack() },
+
+                    // MODO RASCUNHO ATIVADO: Passamos a lambda
+                    onReturnIngredient = { food, serving, qty ->
+                        sharedViewModel.addIngredient(food, serving, qty)
+                    },
+
+                    onAddToMealCompleted = {
+                        // Volta direto para o Editor, removendo a pesquisa e o detalhe da stack
+                        navController.navigate("favoriteMealEditor") {
+                            popUpTo("favoriteMealEditor") { inclusive = true }
+                        }
+                    }
+                )
+            }
+        }
+        // === FIM DO FLUXO ANINHADO ===
 
         composable("accountScreen") {
             AccountScreen(
                 onBack = { navController.navigate("homeScreen")},
                 onLogout = {
-                    // por exemplo: limpar token e voltar ao login/welcome
                     navController.navigate("welcomeScreen") {
                         popUpTo("homeScreen") { inclusive = true }
                     }
@@ -182,7 +253,7 @@ fun AppNavGraph(navController: NavHostController) {
             startDestination = "registrationScreen1",
             route = "registrationFlow"
         ) {
-
+            // ... (Telas de registo mantêm-se iguais) ...
             composable("registrationScreen1") { backStackEntry ->
                 val parentEntry = remember(backStackEntry) {
                     navController.getBackStackEntry("registrationFlow")
@@ -225,7 +296,6 @@ fun AppNavGraph(navController: NavHostController) {
                 val viewModel: RegisterViewModel = hiltViewModel(parentEntry)
                 RegistrationScreen5(navController, viewModel)
             }
-
         }
     }
 }
@@ -238,7 +308,6 @@ private fun AnimatedContentTransitionScope<NavBackStackEntry>.defaultEnterTransi
     val initialOrder = screenOrder(initial.destination.route)
     val targetOrder = screenOrder(target.destination.route)
 
-    // splash → welcome: podes pôr um fade se quiseres
     if (initial.destination.route == "splashScreen" && target.destination.route == "welcomeScreen") {
         return fadeIn(tween(300)) + scaleIn(tween(300), initialScale = 0.9f)
     }
@@ -246,13 +315,11 @@ private fun AnimatedContentTransitionScope<NavBackStackEntry>.defaultEnterTransi
     val forward = targetOrder > initialOrder
 
     return if (forward) {
-        // Navegação para a frente: entra da direita
         slideIntoContainer(
             AnimatedContentTransitionScope.SlideDirection.Left,
             animationSpec = tween(500)
         )
     } else {
-        // Navegação para trás: entra da esquerda
         slideIntoContainer(
             AnimatedContentTransitionScope.SlideDirection.Right,
             animationSpec = tween(500)
@@ -269,13 +336,11 @@ private fun AnimatedContentTransitionScope<NavBackStackEntry>.defaultExitTransit
     val forward = targetOrder > initialOrder
 
     return if (forward) {
-        // Navegação para a frente: sai para a esquerda
         slideOutOfContainer(
             AnimatedContentTransitionScope.SlideDirection.Left,
             animationSpec = tween(500)
         )
     } else {
-        // Navegação para trás: sai para a direita
         slideOutOfContainer(
             AnimatedContentTransitionScope.SlideDirection.Right,
             animationSpec = tween(500)
@@ -299,7 +364,6 @@ fun SplashScreen(navController: NavController, viewModel: SplashViewModel = hilt
         )
     }
 
-    // Quando o destino ficar pronto, espera um pouco e navega
     LaunchedEffect(destination) {
         val dest = destination ?: return@LaunchedEffect
         delay(300L)

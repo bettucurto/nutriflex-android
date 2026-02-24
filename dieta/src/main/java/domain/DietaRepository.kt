@@ -25,8 +25,8 @@ class DietaRepository @Inject constructor(
         // e deixamos a gravação local para mais tarde, se quiseres.
     }
 
-    suspend fun addMeal(name: String, userId: Int) {
-        remote.addRefeicao(name, userId)
+    suspend fun addMeal(name: String, userId: Int): Int {
+        return remote.addRefeicao(name, userId)
         // opcional: re-sync depois de criar
     }
 

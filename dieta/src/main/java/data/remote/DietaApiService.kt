@@ -1,6 +1,7 @@
 // dieta/src/main/java/com/example/dieta/remote/DietaApiService.kt
 package com.example.dieta.remote
 
+import com.google.gson.annotations.SerializedName
 import retrofit2.http.Body
 import retrofit2.http.DELETE
 import retrofit2.http.GET
@@ -17,7 +18,13 @@ data class RefeicaoDto(
 
 data class CreateRefeicaoRequest(
     val nome: String,
-    val iduser: Int,
+    @SerializedName("id_user")
+    val idUser: Int,
+)
+
+data class CreateRefeicaoResponse(
+    val message: String,
+    val id: Int
 )
 
 data class UpdateRefeicaoRequest(
@@ -33,20 +40,35 @@ data class IngredienteDto(
 )
 
 data class CreateIngredienteRequest(
+    @SerializedName("alimento_api_id")
     val alimentoapiid: String,
+
+    @SerializedName("tipo_porcao")
     val tipoporcao: String,
+
+    @SerializedName("quantidade_porcoes")
     val quantidadeporcoes: Double,
+
+    @SerializedName("id_refeicao")
+    val idrefeicao: Int,
+)
+
+data class UpdateIngredienteRequest(
+    @SerializedName("alimento_api_id")
+    val alimentoapiid: String,
+
+    @SerializedName("tipo_porcao")
+    val tipoporcao: String,
+
+    @SerializedName("quantidade_porcoes")
+    val quantidadeporcoes: Double,
+
+    @SerializedName("id_refeicao")
     val idrefeicao: Int,
 )
 
 data class StringDto(val nome: String)
 
-data class UpdateIngredienteRequest(
-    val alimentoapiid: String,
-    val tipoporcao: String,
-    val quantidadeporcoes: Double,
-    val idrefeicao: Int,
-)
 
 data class ReceitaFavoritaDto(
     val id: Int,
@@ -247,7 +269,7 @@ interface DietaApiService {
     @POST("refeicoes")
     suspend fun addRefeicaoFavorita(
         @Body body: CreateRefeicaoRequest,
-    ): SimpleMessageResponse
+    ): CreateRefeicaoResponse
 
     @PUT("refeicoes/{id}")
     suspend fun updateRefeicaoFavorita(

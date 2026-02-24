@@ -12,7 +12,6 @@ import kotlinx.coroutines.launch
 import local.UserLocalRepository
 import javax.inject.Inject
 
-//Tipo a funcionalidade do UI, o JS pro HTML
 @HiltViewModel
 class LoginViewModel @Inject constructor(
     private val authRepository: AuthRepository,
@@ -42,10 +41,10 @@ class LoginViewModel @Inject constructor(
             var passwordError: String? = null
 
             if (loginUIState.email.isBlank()) {
-                emailError = "Email obrigatório"
+                emailError = "Email is mandatory"
             }
             if (loginUIState.password.isBlank()) {
-                passwordError = "Password obrigatória"
+                passwordError = "Password is mandatory"
             }
 
             // Se houver erro, atualiza o estado e não chama a API
@@ -121,7 +120,7 @@ class LoginViewModel @Inject constructor(
                 .onFailure { e ->
                     loginUIState = loginUIState.copy(
                         isLoading = false,
-                        errorMessage = e.message ?: "Erro no login"
+                        errorMessage = e.message ?: "Error during login, please try again"
                     )
                 }
         }

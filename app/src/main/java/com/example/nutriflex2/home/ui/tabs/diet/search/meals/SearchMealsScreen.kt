@@ -25,11 +25,11 @@ import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.ArrowBack
 import androidx.compose.material.icons.filled.ExpandLess
 import androidx.compose.material.icons.filled.ExpandMore
 import androidx.compose.material.icons.filled.Favorite
-import androidx.compose.material.icons.filled.PhotoCamera
 import androidx.compose.material.icons.filled.Search
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.DropdownMenu
@@ -88,7 +88,8 @@ fun SearchMealsScreen(
     navController: NavController,
     onBack: () -> Unit,
     onOpenFavorites: () -> Unit,
-    onOpenPhoto: () -> Unit,
+    onOpenCreateMeal: () -> Unit,
+    onFoodClick: ((String) -> Unit)? = null,
     viewModel: SearchMealsViewModel = hiltViewModel(),
 ) {
     val state by viewModel.uiState.collectAsState()
@@ -179,13 +180,13 @@ fun SearchMealsScreen(
                 horizontalArrangement = Arrangement.spacedBy(12.dp)
             ) {
                 ElevatedButton(
-                    onClick = onOpenPhoto,
+                    onClick = onOpenCreateMeal,
                     modifier = Modifier.weight(1f),
                     shape = RoundedCornerShape(12.dp)
                 ) {
-                    Icon(Icons.Default.PhotoCamera, contentDescription = null, tint = colorScheme.primary)
+                    Icon(Icons.Default.Add, contentDescription = null, tint = colorScheme.primary)
                     Spacer(Modifier.width(8.dp))
-                    Text("Photo", color = colorScheme.onSurface)
+                    Text("Create Meal", color = colorScheme.onSurface)
                 }
                 ElevatedButton(
                     onClick = onOpenFavorites,
@@ -293,7 +294,13 @@ fun SearchMealsScreen(
                     items(state.suggestions) { food ->
                         FoodRow(
                             food = food,
-                            onClick = { navController.navigate("foodDetail/${food.id}") }
+                            onClick = {
+                                if (onFoodClick != null) {
+                                    onFoodClick(food.id)
+                                } else {
+                                    navController.navigate("foodDetail/${food.id}")
+                                }
+                            }
                         )
                     }
                 }

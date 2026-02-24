@@ -14,9 +14,12 @@ class DietaRemoteRepository @Inject constructor(
     suspend fun getRefeicaoById(id: Int): RefeicaoDto =
         api.getRefeicaoById(id)
 
-    suspend fun addRefeicao(nome: String, userId: Int): SimpleMessageResponse =
-        api.addRefeicaoFavorita(CreateRefeicaoRequest(nome = nome, iduser = userId))
-
+    suspend fun addRefeicao(nome: String, userId: Int): Int {
+        // Agora usamos idUser (ou id_user) conforme definiste no DTO
+        val request = CreateRefeicaoRequest(nome = nome, idUser = userId)
+        val response = api.addRefeicaoFavorita(request)
+        return response.id
+    }
     suspend fun updateRefeicao(id: Int, nome: String): SimpleMessageResponse =
         api.updateRefeicaoFavorita(id, UpdateRefeicaoRequest(nome = nome))
 

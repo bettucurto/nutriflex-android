@@ -1367,7 +1367,7 @@ fun BmiCard(
                 bmi = bmi,
                 modifier = Modifier
                     .fillMaxWidth()
-                    .height(250.dp)
+                    .height(260.dp)
             )
         }
     }
@@ -1550,7 +1550,7 @@ fun BmiGauge(
             Text(
                 modifier=  Modifier
                     .background(color, RoundedCornerShape(26.dp))
-                    .padding(6.dp),
+                    .padding(vertical = 6.dp, horizontal = 20.dp),
                 text = label,
                 fontSize = 22.sp,
                 fontWeight = FontWeight.SemiBold,

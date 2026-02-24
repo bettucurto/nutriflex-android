@@ -82,6 +82,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.hilt.navigation.compose.hiltViewModel
 import coil.compose.AsyncImage
+import com.example.dieta.domain.FatSecretFoodDetails
 import com.example.dieta.domain.FatSecretServing
 import com.example.nutriflex2.R
 import components.HeadingTextComponent
@@ -93,7 +94,10 @@ import components.LeftTitleText
 fun MealInfoScreen(
     foodId: String,
     onBack: () -> Unit,
-    onAddToMeal: () -> Unit,
+    // Se for NULL, funciona como antes (Log no diário).
+    // Se tiver valor, devolve os dados para o ecrã anterior.
+    onReturnIngredient: ((FatSecretFoodDetails, FatSecretServing, Double) -> Unit)? = null,
+    onAddToMealCompleted: () -> Unit,
     viewModel: MealInfoViewModel = hiltViewModel()
 ) {
     val uiState by viewModel.uiState.collectAsState()
@@ -226,9 +230,22 @@ fun MealInfoScreen(
 
                         Button(
                             onClick = {
-                                Toast.makeText(context, "Meal Logged Successfully!", Toast.LENGTH_SHORT).show()
-                                viewModel.addToMeal()
-                                onAddToMeal()
+                                // LÓGICA HÍBRIDA AQUI
+                                if (onReturnIngredient != null) {
+                                    // MODO RASCUNHO: Devolve os dados para o SharedViewModel
+                                    uiState.food?.let { food ->
+                                        val serving = uiState.servings.getOrNull(uiState.selectedServingIndex)
+                                        if (serving != null) {
+                                            onReturnIngredient(food, serving, uiState.portionCount)
+                                            onAddToMealCompleted()
+                                        }
+                                    }
+                                } else {
+                                    // MODO NORMAL: Loga no diário (comportamento antigo)
+                                    Toast.makeText(context, "Meal Logged Successfully!", Toast.LENGTH_SHORT).show()
+                                    viewModel.addToMeal()
+                                    onAddToMealCompleted()
+                                }
                             },
                             modifier = Modifier
                                 .fillMaxWidth()
@@ -241,7 +258,11 @@ fun MealInfoScreen(
                         ) {
                             Icon(Icons.Default.Add, contentDescription = null)
                             Spacer(Modifier.width(8.dp))
-                            Text("Log Meal", fontSize = 20.sp, fontWeight = FontWeight.Bold)
+                            Text(
+                                if (onReturnIngredient != null) "Add to Meal" else "Log Meal",
+                                fontSize = 20.sp,
+                                fontWeight = FontWeight.Bold
+                            )
                         }
 
                         Spacer(Modifier.height(24.dp))
