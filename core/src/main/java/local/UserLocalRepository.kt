@@ -75,7 +75,27 @@ class UserLocalRepository @Inject constructor(
         userLocalDao.updateBmi(bmi)
     }
 
-
+    suspend fun updateAccountData(
+        userId: Int,
+        height: Int,
+        activityLevel: Int,
+        birthDate: String,
+        dailyCalories: Int,
+        bmi: Float
+    ) {
+        val macros = calculateDailyMacros(dailyCalories)
+        userLocalDao.updateAccountData(
+            userId = userId,
+            height = height,
+            activityLevel = activityLevel,
+            birthDate = birthDate,
+            dailyCalories = dailyCalories,
+            dailyCarbs = macros.carbsGrams,
+            dailyProtein = macros.proteinGrams,
+            dailyFat = macros.fatGrams,
+            bmi = bmi
+        )
+    }
 
     suspend fun clear() = userLocalDao.clear()
 

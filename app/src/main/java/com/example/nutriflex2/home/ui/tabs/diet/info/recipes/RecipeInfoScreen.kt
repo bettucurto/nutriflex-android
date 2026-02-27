@@ -85,6 +85,9 @@ import com.example.nutriflex2.R
 import components.HeadingTextComponent
 import components.LeftTitleText
 
+import androidx.compose.material.icons.filled.Favorite
+import androidx.compose.material.icons.filled.FavoriteBorder
+
 @RequiresApi(Build.VERSION_CODES.O)
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -122,6 +125,15 @@ fun RecipeInfoScreen(
                 navigationIcon = {
                     IconButton(onClick = onBack) {
                         Icon(Icons.Default.ArrowBack, contentDescription = "Back")
+                    }
+                },
+                actions = {
+                    IconButton(onClick = { viewModel.toggleFavorite() }) {
+                        Icon(
+                            imageVector = if (uiState.isFavorite) Icons.Default.Favorite else Icons.Default.FavoriteBorder,
+                            contentDescription = "Favorite",
+                            tint = if (uiState.isFavorite) Color.Red else colorScheme.onSurface
+                        )
                     }
                 }
             )

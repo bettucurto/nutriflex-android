@@ -32,6 +32,9 @@ class DietaLocalRepository @Inject constructor(
     suspend fun getRefeicaoById(id: Int): RefeicaoFavoritaLocal? =
         refeicoesDao.getRefeicaoById(id)
 
+    fun observeRefeicaoById(id: Int): Flow<RefeicaoFavoritaLocal?> =
+        refeicoesDao.observeRefeicaoById(id)
+
     suspend fun saveRefeicao(refeicao: RefeicaoFavoritaLocal): Long =
         refeicoesDao.insertRefeicao(refeicao)
 
@@ -40,6 +43,12 @@ class DietaLocalRepository @Inject constructor(
 
     suspend fun deleteRefeicao(refeicao: RefeicaoFavoritaLocal) =
         refeicoesDao.deleteRefeicao(refeicao)
+
+    suspend fun deleteRefeicaoById(id: Int) =
+        refeicoesDao.deleteRefeicaoById(id)
+
+    suspend fun deleteRefeicoesByUser(userId: Int) =
+        refeicoesDao.deleteRefeicoesByUser(userId)
 
     fun getIngredientesByRefeicao(idRefeicao: Int): Flow<List<IngredienteRefeicaoLocal>> =
         refeicoesDao.getIngredientesByRefeicao(idRefeicao)
@@ -59,4 +68,7 @@ class DietaLocalRepository @Inject constructor(
 
     suspend fun deleteReceitaFavorita(receita: ReceitaFavoritaLocal) =
         receitasFavoritasDao.deleteReceitaFavorita(receita)
+
+    suspend fun deleteReceitasFavoritasByUser(userId: Int) =
+        receitasFavoritasDao.deleteReceitasFavoritasByUser(userId)
 }

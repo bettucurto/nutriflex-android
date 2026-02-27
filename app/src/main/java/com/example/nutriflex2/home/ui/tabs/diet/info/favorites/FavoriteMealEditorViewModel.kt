@@ -159,7 +159,26 @@ class FavoriteMealEditorViewModel @Inject constructor(
                 val userId = user?.userId ?: throw Exception("User not found locally")
 
                 // 2. Criar a Refeição
-                val newMealId = repository.addMeal(_uiState.value.mealName, userId)
+                val totalCalories = _uiState.value.caloriesTotal.toInt()
+                val totalCarbs = _uiState.value.carbsTotal
+                val totalProtein = _uiState.value.proteinTotal
+                val totalFat = _uiState.value.fatTotal
+                val totalMacros = totalCarbs + totalProtein + totalFat
+
+                val carbsPct = if (totalMacros > 0) ((totalCarbs / totalMacros) * 100).toInt() else 0
+                val proteinPct = if (totalMacros > 0) ((totalProtein / totalMacros) * 100).toInt() else 0
+                val fatPct = if (totalMacros > 0) ((totalFat / totalMacros) * 100).toInt() else 0
+
+                val newMealId = repository.addMeal(
+                    name = _uiState.value.mealName,
+                    userId = userId,
+                    calories = totalCalories,
+                    image = _uiState.value.coverImage,
+                    carbsPct = carbsPct,
+                    proteinPct = proteinPct,
+                    fatPct = fatPct,
+                    description = "${_uiState.value.ingredients.size} ingredients"
+                )
 
                 // 3. Adicionar Ingredientes
                 _uiState.value.ingredients.forEach { draft ->

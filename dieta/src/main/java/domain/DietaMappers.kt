@@ -26,6 +26,12 @@ fun RefeicaoFavoritaLocal.toDomain(): Refeicao =
         id = id,
         nome = nome,
         userId = idUser,
+        calories = calories,
+        image = image,
+        carbsPct = carbsPct,
+        proteinPct = proteinPct,
+        fatPct = fatPct,
+        description = description
     )
 
 fun RefeicaoDto.toDomain(): Refeicao =
@@ -40,6 +46,12 @@ fun Refeicao.toLocal(): RefeicaoFavoritaLocal =
         id = id,
         nome = nome,
         idUser = userId,
+        calories = calories,
+        image = image,
+        carbsPct = carbsPct,
+        proteinPct = proteinPct,
+        fatPct = fatPct,
+        description = description
     )
 
 // --------- Ingredientes ---------
@@ -78,6 +90,13 @@ fun ReceitaFavoritaLocal.toDomain(): ReceitaFavorita =
         id = id,
         userId = idUser,
         receitaApiId = idReceitaApi,
+        nome = nome,
+        image = image,
+        calories = calories,
+        carbsPct = carbsPct,
+        proteinPct = proteinPct,
+        fatPct = fatPct,
+        description = description
     )
 
 fun ReceitaFavoritaDto.toDomain(): ReceitaFavorita =
@@ -92,6 +111,13 @@ fun ReceitaFavorita.toLocal(): ReceitaFavoritaLocal =
         id = id,
         idUser = userId,
         idReceitaApi = receitaApiId,
+        nome = nome,
+        image = image,
+        calories = calories,
+        carbsPct = carbsPct,
+        proteinPct = proteinPct,
+        fatPct = fatPct,
+        description = description
     )
 
 // --------- FatSecret alimentos ---------

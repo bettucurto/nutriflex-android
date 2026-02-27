@@ -14,12 +14,17 @@ import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.launch
 import javax.inject.Inject
 
+import com.example.dieta.domain.Refeicao
+import local.UserLocalRepository
+import kotlinx.coroutines.flow.collectLatest
+
 data class SearchMealsUiState(
     val query: String = "",
     val isLoading: Boolean = false,
 
     val suggestions: List<FatSecretFood> = emptyList(),
     val rawResults: List<FatSecretFood> = emptyList(),
+    val favoriteMeals: List<Refeicao> = emptyList(),
     val errorMessage: String? = null,
 
     val calorieRange: CalorieRangeFilter = CalorieRangeFilter.NONE,
@@ -36,6 +41,7 @@ data class SearchMealsUiState(
 @HiltViewModel
 class SearchMealsViewModel @Inject constructor(
     private val dietaRepository: DietaRepository,
+    private val userLocalRepository: UserLocalRepository
 ) : ViewModel() {
 
     private val _uiState = MutableStateFlow(SearchMealsUiState())
@@ -44,6 +50,18 @@ class SearchMealsViewModel @Inject constructor(
     private var searchJob: Job? = null
 
     init {
+        viewModelScope.launch {
+            userLocalRepository.getUserLocal().collectLatest { user ->
+                user?.let {
+                    // Carregar favoritos do utilizador
+                    launch {
+                        dietaRepository.observeMeals(it.userId).collect { meals ->
+                            _uiState.value = _uiState.value.copy(favoriteMeals = meals)
+                        }
+                    }
+                }
+            }
+        }
         // pesquisa inicial para não começar vazio
         viewModelScope.launch {
             // podes trocar "chicken" por algo mais neutro, tipo "apple"

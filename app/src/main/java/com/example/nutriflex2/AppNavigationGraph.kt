@@ -39,6 +39,7 @@ import com.example.nutriflex2.home.account.AccountScreen
 import com.example.nutriflex2.home.ui.HomeScreen
 import com.example.nutriflex2.home.ui.tabs.diet.favorites.FavoriteMealEditorScreen
 import com.example.nutriflex2.home.ui.tabs.diet.favorites.FavoriteMealEditorViewModel
+import com.example.nutriflex2.home.ui.tabs.diet.info.favorites.FavoriteMealInfoScreen
 import com.example.nutriflex2.home.ui.tabs.diet.info.meals.MealInfoScreen
 import com.example.nutriflex2.home.ui.tabs.diet.info.recipes.RecipeInfoScreen
 import com.example.nutriflex2.home.ui.tabs.diet.search.recipes.SearchRecipeScreen
@@ -95,7 +96,7 @@ fun AppNavGraph(navController: NavHostController) {
                 onBack = { navController.popBackStack() },
                 onOpenFavorites = { /* TODO */ },
 
-                // MUDANÇA 1: Ao clicar em Create Meal, iniciamos o FLUXO ANINHADO
+                // Ao clicar em Create Meal, iniciamos o FLUXO ANINHADO
                 onOpenCreateMeal = { navController.navigate("create_meal_flow") },
 
                 // Comportamento normal: vai para detalhes para logar no dia
@@ -159,16 +160,32 @@ fun AppNavGraph(navController: NavHostController) {
             )
         }
 
+        // --- Detalhes da Refeição Favorita (Personalizada) ---
+        composable(
+            route = "favoriteMealDetail/{mealId}",
+            arguments = listOf(navArgument("mealId") { type = NavType.StringType })
+        ) { backStackEntry ->
+            val mealId = backStackEntry.arguments?.getString("mealId") ?: ""
+            FavoriteMealInfoScreen(
+                mealId = mealId,
+                onBack = { navController.popBackStack() },
+                onLogMeal = {
+                    navController.navigate("homeScreen") {
+                        popUpTo("homeScreen") { inclusive = true }
+                    }
+                },
+                onIngredientClick = { foodId ->
+                    navController.navigate("foodDetail/$foodId")
+                }
+            )
+        }
+
         // === NOVO FLUXO ANINHADO: CRIAR REFEIÇÃO FAVORITA ===
-        // Todos os ecrãs aqui dentro partilham o mesmo FavoriteMealViewModel
         navigation(
             startDestination = "favoriteMealEditor",
             route = "create_meal_flow"
         ) {
-
-            // 1. O Editor (Lista de ingredientes, Nome, Botão Salvar)
             composable("favoriteMealEditor") { backStackEntry ->
-                // Obtém o ViewModel associado ao GRAFO, não ao ecrã
                 val parentEntry = remember(backStackEntry) {
                     navController.getBackStackEntry("create_meal_flow")
                 }
@@ -176,13 +193,11 @@ fun AppNavGraph(navController: NavHostController) {
 
                 FavoriteMealEditorScreen(
                     viewModel = sharedViewModel,
-                    onBack = { navController.popBackStack() }, // Sai do fluxo
+                    onBack = { navController.popBackStack() },
                     onAddFoodClick = {
-                        // Navega para a pesquisa DENTRO deste fluxo
                         navController.navigate("meal_creation_search")
                     },
                     onMealSaved = {
-                        // Sucesso: volta para a Home
                         navController.navigate("homeScreen") {
                             popUpTo("homeScreen") { inclusive = true }
                         }
@@ -190,29 +205,23 @@ fun AppNavGraph(navController: NavHostController) {
                 )
             }
 
-            // 2. A Pesquisa (para adicionar ao rascunho)
             composable("meal_creation_search") {
                 SearchMealsScreen(
                     navController = navController,
                     onBack = { navController.popBackStack() },
-                    onOpenFavorites = { }, // Desativado neste modo
-                    onOpenCreateMeal = { }, // Desativado neste modo
-
-                    // IMPORTANTE: Navega para a versão "creation" do detalhe
+                    onOpenFavorites = { },
+                    onOpenCreateMeal = { },
                     onFoodClick = { foodId ->
                         navController.navigate("meal_creation_detail/$foodId")
                     }
                 )
             }
 
-            // 3. O Detalhe (Modo: Retornar Ingrediente)
             composable(
                 route = "meal_creation_detail/{foodId}",
                 arguments = listOf(navArgument("foodId") { type = NavType.StringType })
             ) { backStackEntry ->
                 val foodId = backStackEntry.arguments?.getString("foodId") ?: ""
-
-                // Precisamos do SharedViewModel para chamar o método addIngredient
                 val parentEntry = remember(backStackEntry) {
                     navController.getBackStackEntry("create_meal_flow")
                 }
@@ -221,14 +230,10 @@ fun AppNavGraph(navController: NavHostController) {
                 MealInfoScreen(
                     foodId = foodId,
                     onBack = { navController.popBackStack() },
-
-                    // MODO RASCUNHO ATIVADO: Passamos a lambda
                     onReturnIngredient = { food, serving, qty ->
                         sharedViewModel.addIngredient(food, serving, qty)
                     },
-
                     onAddToMealCompleted = {
-                        // Volta direto para o Editor, removendo a pesquisa e o detalhe da stack
                         navController.navigate("favoriteMealEditor") {
                             popUpTo("favoriteMealEditor") { inclusive = true }
                         }
@@ -236,7 +241,6 @@ fun AppNavGraph(navController: NavHostController) {
                 )
             }
         }
-        // === FIM DO FLUXO ANINHADO ===
 
         composable("accountScreen") {
             AccountScreen(
@@ -253,7 +257,6 @@ fun AppNavGraph(navController: NavHostController) {
             startDestination = "registrationScreen1",
             route = "registrationFlow"
         ) {
-            // ... (Telas de registo mantêm-se iguais) ...
             composable("registrationScreen1") { backStackEntry ->
                 val parentEntry = remember(backStackEntry) {
                     navController.getBackStackEntry("registrationFlow")
@@ -299,7 +302,6 @@ fun AppNavGraph(navController: NavHostController) {
         }
     }
 }
-
 
 private fun AnimatedContentTransitionScope<NavBackStackEntry>.defaultEnterTransition(
     initial: NavBackStackEntry,
@@ -347,7 +349,6 @@ private fun AnimatedContentTransitionScope<NavBackStackEntry>.defaultExitTransit
         )
     }
 }
-
 
 @Composable
 fun SplashScreen(navController: NavController, viewModel: SplashViewModel = hiltViewModel()) {

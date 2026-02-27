@@ -1,5 +1,8 @@
 package com.example.nutriflex2.home.account
 
+import android.os.Build
+import android.util.Log
+import androidx.annotation.RequiresApi
 import androidx.compose.runtime.mutableStateOf
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
@@ -8,6 +11,8 @@ import kotlinx.coroutines.flow.firstOrNull
 import kotlinx.coroutines.launch
 import local.UserLocalRepository
 import remote.UserRepository
+import utils.calculateDailyCaloriesForWeightChange
+import utils.calculateMaintenanceCalories
 import javax.inject.Inject
 
 data class AccountUiState(
@@ -109,6 +114,7 @@ class AccountViewModel @Inject constructor(
         uiState.value = uiState.value.copy(dateOfBirth = value)
     }
 
+    @RequiresApi(Build.VERSION_CODES.O)
     fun saveChanges() {
         val id = userId ?: return
 
@@ -126,33 +132,78 @@ class AccountViewModel @Inject constructor(
                 successMessage = null
             )
             try {
+                val newHeight = uiState.value.height.toFloatOrNull()
+                val newActivityLevel = uiState.value.activityLevel.toIntOrNull() ?: 0
+                val newBirthDate = normalizeDate(uiState.value.dateOfBirth)
+
                 val result = userRepository.updateUser(
                     id = id,
                     currentPassword = uiState.value.currentPassword,
                     nome = uiState.value.name,
-                    altura = uiState.value.height.toFloatOrNull(),
+                    altura = newHeight,
                     genero = null,
-                    dataNascenca = uiState.value.dateOfBirth,
-                    nivel_atividade = uiState.value.activityLevel.toInt(),
+                    dataNascenca = newBirthDate,
+                    nivel_atividade = newActivityLevel,
                     newPassword = uiState.value.newPassword.takeIf { it.isNotBlank() }
                 )
 
                 result.onSuccess {
                     val local = userLocalRepository.getUserLocal().firstOrNull()
                     if (local != null) {
-                        userLocalRepository.saveUserLocal(
-                            userId = local.userId,
-                            token = local.token,
-                            bmi = local.bmi,
-                            currentWeight = local.currentWeight,
-                            initialWeight = local.initialWeight,
-                            goalWeight = local.goalWeight,
-                            heightCm = uiState.value.height.toIntOrNull() ?: local.heightCm,
-                            dailyCalories = local.dailyCalories,
-                            gender = local.gender,
-                            activityLevel = uiState.value.activityLevel.toIntOrNull() ?: local.activityLevel,
-                            birthDate = normalizeDate(uiState.value.dateOfBirth),
+                        val finalHeight = newHeight?.toInt() ?: local.heightCm
+                        val finalActivityLevel = newActivityLevel
+                        val finalBirthDate = newBirthDate
+
+                        // --- RECALCULAR BMI ---
+                        val heightM = finalHeight / 100f
+                        val newBmi = if (heightM > 0f) local.currentWeight / (heightM * heightM) else 0f
+
+                        // --- RECALCULAR CALORIAS ---
+                        val isMale = local.gender == "M"
+                        val age = try {
+                            val (y, m, d) = finalBirthDate.split("-").map { it.toInt() }
+                            val dob = java.time.LocalDate.of(y, m, d)
+                            val today = java.time.LocalDate.now()
+                            java.time.Period.between(dob, today).years
+                        } catch (e: Exception) {
+                            30
+                        }
+
+                        val maintenance = calculateMaintenanceCalories(
+                            isMale = isMale,
+                            weightKg = local.currentWeight,
+                            heightCm = finalHeight,
+                            age = age,
+                            activityLevel = finalActivityLevel
                         )
+
+                        val newCalories = calculateDailyCaloriesForWeightChange(
+                            maintenanceCalories = maintenance,
+                            currentWeightKg = local.currentWeight,
+                            goalWeightKg = local.goalWeight
+                        )
+
+                        // Atualizar local usando o novo método que não faz reset ao dia
+                        userLocalRepository.updateAccountData(
+                            userId = local.userId,
+                            height = finalHeight,
+                            activityLevel = finalActivityLevel,
+                            birthDate = finalBirthDate,
+                            dailyCalories = newCalories,
+                            bmi = newBmi
+                        )
+
+                        // Sincronizar tmb o progresso no servidor com as novas calorias
+                        try {
+                            userRepository.createProgress(
+                                idUser = local.userId,
+                                pesoAtual = local.currentWeight,
+                                pesoMeta = local.goalWeight,
+                                caloriasDiarias = newCalories
+                            )
+                        } catch (e: Exception) {
+                            Log.e("AccountViewModel", "Error creating progress sync", e)
+                        }
                     }
 
                     uiState.value = uiState.value.copy(

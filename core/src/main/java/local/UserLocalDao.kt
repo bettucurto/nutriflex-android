@@ -34,6 +34,30 @@ interface UserLocalDao {
     @Query("UPDATE user_local SET bmi = :bmi")
     suspend fun updateBmi(bmi: Float)
 
+    @Query("""
+        UPDATE user_local
+        SET heightCm = :height,
+            activityLevel = :activityLevel,
+            birthDate = :birthDate,
+            dailyCalories = :dailyCalories,
+            dailyCarbsGrams = :dailyCarbs,
+            dailyProteinGrams = :dailyProtein,
+            dailyFatGrams = :dailyFat,
+            bmi = :bmi
+        WHERE userId = :userId
+    """)
+    suspend fun updateAccountData(
+        userId: Int,
+        height: Int,
+        activityLevel: Int,
+        birthDate: String,
+        dailyCalories: Int,
+        dailyCarbs: Int,
+        dailyProtein: Int,
+        dailyFat: Int,
+        bmi: Float
+    )
+
     @Query("UPDATE user_local SET dailyCalories = :calories")
     suspend fun updateDailyCaloriesValue(calories: Int)
 

@@ -15,11 +15,16 @@ import kotlinx.coroutines.launch
 import java.util.regex.Pattern
 import javax.inject.Inject
 
+import com.example.dieta.domain.ReceitaFavorita
+import local.UserLocalRepository
+import kotlinx.coroutines.flow.collectLatest
+
 data class SearchRecipeUiState(
     val query: String = "",
     val isLoading: Boolean = false,
     val suggestions: List<FatSecretRecipeSummary> = emptyList(),
     val rawResults: List<FatSecretRecipeSummary> = emptyList(),
+    val favoriteRecipes: List<ReceitaFavorita> = emptyList(),
     val errorMessage: String? = null,
     val calorieRange: CalorieRangeFilter = CalorieRangeFilter.NONE,
     val carbsMin: Int = 0,
@@ -32,7 +37,8 @@ data class SearchRecipeUiState(
 
 @HiltViewModel
 class SearchRecipeViewModel @Inject constructor(
-    private val dietaRepository: DietaRepository
+    private val dietaRepository: DietaRepository,
+    private val userLocalRepository: UserLocalRepository
 ) : ViewModel() {
 
     private val _uiState = MutableStateFlow(SearchRecipeUiState())
@@ -41,6 +47,17 @@ class SearchRecipeViewModel @Inject constructor(
     private var searchJob: Job? = null
 
     init {
+        viewModelScope.launch {
+            userLocalRepository.getUserLocal().collectLatest { user ->
+                user?.let {
+                    launch {
+                        dietaRepository.observeFavoriteRecipes(it.userId).collect { recipes ->
+                            _uiState.value = _uiState.value.copy(favoriteRecipes = recipes)
+                        }
+                    }
+                }
+            }
+        }
         viewModelScope.launch {
             val defaultQuery = "Salad"
             _uiState.value = _uiState.value.copy(query = defaultQuery)

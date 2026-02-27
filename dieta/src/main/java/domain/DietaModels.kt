@@ -12,6 +12,12 @@ data class Refeicao(
     val id: Int,
     val nome: String,
     val userId: Int,
+    val calories: Int? = 0,
+    val image: String? = null,
+    val carbsPct: Int? = 0,
+    val proteinPct: Int? = 0,
+    val fatPct: Int? = 0,
+    val description: String? = "Custom Meal"
 )
 
 // Ingrediente que compõe uma refeição favorita
@@ -28,6 +34,13 @@ data class ReceitaFavorita(
     val id: Int,
     val userId: Int,
     val receitaApiId: String,
+    val nome: String? = "Favorite Recipe",
+    val image: String? = null,
+    val calories: Int? = 0,
+    val carbsPct: Int? = 0,
+    val proteinPct: Int? = 0,
+    val fatPct: Int? = 0,
+    val description: String? = ""
 )
 
 // --------- FatSecret: alimentos ---------

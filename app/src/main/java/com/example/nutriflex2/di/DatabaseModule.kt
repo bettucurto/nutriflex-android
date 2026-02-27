@@ -63,7 +63,10 @@ object DatabaseModule {
             DietaDatabase::class.java,
             "nutriflex_dieta.db"
         )
-            .addMigrations(DietaDatabase.MIGRATION_1_2)
+            .addMigrations(
+                DietaDatabase.MIGRATION_1_2,
+                DietaDatabase.MIGRATION_2_3
+            )
             .build()
 
     @Provides

@@ -18,7 +18,7 @@ import data.local.tables.RefeicaoFavoritaLocal
         IngredienteRefeicaoLocal::class,
         ReceitaFavoritaLocal::class,
     ],
-    version = 2,
+    version = 3,
     exportSchema = false
 )
 abstract class DietaDatabase : RoomDatabase() {
@@ -29,44 +29,27 @@ abstract class DietaDatabase : RoomDatabase() {
     companion object {
 
         val MIGRATION_1_2 = object : Migration(1, 2) {
+            // ... (mantém o código atual)
+        }
+
+        val MIGRATION_2_3 = object : Migration(2, 3) {
             override fun migrate(connection: SQLiteConnection) {
-                // 1. Adiciona a nova coluna tipoPorcao (String)
-                connection.execSQL(
-                    """
-                    ALTER TABLE refeicao_ingredientes 
-                    ADD COLUMN tipoPorcao TEXT NOT NULL DEFAULT ''
-                    """.trimIndent()
-                )
+                // Colunas para refeicoes_favoritas
+                connection.execSQL("ALTER TABLE refeicoes_favoritas ADD COLUMN calories INTEGER DEFAULT 0")
+                connection.execSQL("ALTER TABLE refeicoes_favoritas ADD COLUMN image TEXT")
+                connection.execSQL("ALTER TABLE refeicoes_favoritas ADD COLUMN carbsPct INTEGER DEFAULT 0")
+                connection.execSQL("ALTER TABLE refeicoes_favoritas ADD COLUMN proteinPct INTEGER DEFAULT 0")
+                connection.execSQL("ALTER TABLE refeicoes_favoritas ADD COLUMN fatPct INTEGER DEFAULT 0")
+                connection.execSQL("ALTER TABLE refeicoes_favoritas ADD COLUMN description TEXT DEFAULT 'Custom Meal'")
 
-                // 3. Cria nova tabela com o schema atualizado (SEM porcaoGramas)
-                connection.execSQL(
-                    """
-                    CREATE TABLE refeicao_ingredientes_new (
-                        id INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL,
-                        alimentoApiId TEXT NOT NULL,
-                        tipoPorcao TEXT NOT NULL,
-                        quantidadePorcoes REAL NOT NULL,
-                        idRefeicao INTEGER NOT NULL
-                    )
-                    """.trimIndent()
-                )
-
-                // 4. Copia os dados relevantes da antiga para a nova
-                connection.execSQL(
-                    """
-                    INSERT INTO refeicao_ingredientes_new (id, alimentoApiId, tipoPorcao, quantidadePorcoes, idRefeicao)
-                    SELECT id, alimentoApiId, tipoPorcao, quantidadePorcoes, idRefeicao
-                    FROM refeicao_ingredientes
-                    """.trimIndent()
-                )
-
-                // 5. Remove a tabela antiga
-                connection.execSQL("DROP TABLE refeicao_ingredientes")
-
-                // 6. Renomeia a nova tabela para o nome original
-                connection.execSQL(
-                    "ALTER TABLE refeicao_ingredientes_new RENAME TO refeicao_ingredientes"
-                )
+                // Colunas para receitas_favoritas
+                connection.execSQL("ALTER TABLE receitas_favoritas ADD COLUMN nome TEXT DEFAULT 'Favorite Recipe'")
+                connection.execSQL("ALTER TABLE receitas_favoritas ADD COLUMN image TEXT")
+                connection.execSQL("ALTER TABLE receitas_favoritas ADD COLUMN calories INTEGER DEFAULT 0")
+                connection.execSQL("ALTER TABLE receitas_favoritas ADD COLUMN carbsPct INTEGER DEFAULT 0")
+                connection.execSQL("ALTER TABLE receitas_favoritas ADD COLUMN proteinPct INTEGER DEFAULT 0")
+                connection.execSQL("ALTER TABLE receitas_favoritas ADD COLUMN fatPct INTEGER DEFAULT 0")
+                connection.execSQL("ALTER TABLE receitas_favoritas ADD COLUMN description TEXT DEFAULT ''")
             }
         }
     }

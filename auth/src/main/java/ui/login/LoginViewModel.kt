@@ -20,7 +20,7 @@ class LoginViewModel @Inject constructor(
 
     var loginUIState by mutableStateOf(LoginUIState())
         private set
-
+ 
     fun onEvent(event: LoginUIEvent) {
         when (event) {
             is LoginUIEvent.LoginEmailChanged -> {

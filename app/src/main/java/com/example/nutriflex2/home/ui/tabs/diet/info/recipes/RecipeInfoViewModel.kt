@@ -11,15 +11,18 @@ import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.firstOrNull
 import kotlinx.coroutines.launch
 import local.UserLocalRepository
 import javax.inject.Inject
+
 
 data class RecipeInfoUiState(
     val isLoading: Boolean = true,
     val recipe: FatSecretRecipe? = null,
     val error: String? = null,
     val portionCount: Double = 1.0, // Quantas porções o utilizador vai comer
+    val isFavorite: Boolean = false,
 
     // Totais calculados
     val caloriesTotal: Double = 0.0,
@@ -32,6 +35,7 @@ data class RecipeInfoUiState(
     val fiberTotal: Double = 0.0,
     val sugarsTotal: Double = 0.0
 )
+
 
 @HiltViewModel
 class RecipeInfoViewModel @Inject constructor(
@@ -51,6 +55,15 @@ class RecipeInfoViewModel @Inject constructor(
 
         viewModelScope.launch {
             loadRecipeDetails(recipeId)
+            checkIfFavorite(recipeId)
+        }
+    }
+
+    private suspend fun checkIfFavorite(recipeId: String) {
+        val user = userLocalRepository.getUserLocal().firstOrNull() ?: return
+        repository.observeFavoriteRecipes(user.userId).collect { favorites ->
+            val isFav = favorites.any { it.receitaApiId == recipeId }
+            _uiState.value = _uiState.value.copy(isFavorite = isFav)
         }
     }
 
@@ -95,6 +108,42 @@ class RecipeInfoViewModel @Inject constructor(
             fiberTotal = (serving?.fiber?.toDoubleOrNull() ?: 0.0) * factor,
             sugarsTotal = (serving?.sugar?.toDoubleOrNull() ?: 0.0) * factor
         )
+    }
+
+    @RequiresApi(Build.VERSION_CODES.O)
+    fun toggleFavorite() {
+        val recipe = _uiState.value.recipe ?: return
+        viewModelScope.launch {
+            val user = userLocalRepository.getUserLocal().firstOrNull() ?: return@launch
+            if (_uiState.value.isFavorite) {
+                repository.observeFavoriteRecipes(user.userId).firstOrNull()?.find { it.receitaApiId == recipe.id }?.let {
+                    repository.deleteFavoriteRecipe(it.id)
+                }
+            } else {
+                val serving = recipe.servings.firstOrNull()
+                val calories = serving?.calories?.filter { it.isDigit() }?.toIntOrNull() ?: 0
+                val carbs = serving?.carbohydrate?.filter { it.isDigit() || it == '.' }?.toDoubleOrNull() ?: 0.0
+                val protein = serving?.protein?.filter { it.isDigit() || it == '.' }?.toDoubleOrNull() ?: 0.0
+                val fat = serving?.fat?.filter { it.isDigit() || it == '.' }?.toDoubleOrNull() ?: 0.0
+                val totalMacros = carbs + protein + fat
+
+                val carbsPct = if (totalMacros > 0) ((carbs / totalMacros) * 100).toInt() else 0
+                val proteinPct = if (totalMacros > 0) ((protein / totalMacros) * 100).toInt() else 0
+                val fatPct = if (totalMacros > 0) ((fat / totalMacros) * 100).toInt() else 0
+
+                repository.addFavoriteRecipe(
+                    userId = user.userId,
+                    recipeApiId = recipe.id,
+                    nome = recipe.name,
+                    image = recipe.images.firstOrNull(),
+                    calories = calories,
+                    carbsPct = carbsPct,
+                    proteinPct = proteinPct,
+                    fatPct = fatPct,
+                    description = recipe.description
+                )
+            }
+        }
     }
 
     @RequiresApi(Build.VERSION_CODES.O)

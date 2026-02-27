@@ -12,7 +12,7 @@ import kotlinx.coroutines.flow.Flow
 @Dao
 interface ReceitasFavoritasDao {
 
-    @Query("SELECT * FROM receitas_favoritas WHERE idUser = :userId")
+    @Query("SELECT * FROM receitas_favoritas WHERE id_user = :userId")
     fun getReceitasFavoritasByUser(userId: Int): Flow<List<ReceitaFavoritaLocal>>
 
     @Insert(onConflict = OnConflictStrategy.REPLACE)
@@ -23,5 +23,8 @@ interface ReceitasFavoritasDao {
 
     @Query("DELETE FROM receitas_favoritas WHERE id = :id")
     suspend fun deleteReceitaFavoritaById(id: Int)
+
+    @Query("DELETE FROM receitas_favoritas WHERE id_user = :userId")
+    suspend fun deleteReceitasFavoritasByUser(userId: Int)
 
 }

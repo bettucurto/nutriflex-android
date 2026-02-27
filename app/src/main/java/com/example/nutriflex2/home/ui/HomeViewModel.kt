@@ -110,7 +110,8 @@ sealed class HomeUiEvent {
 @HiltViewModel
 class HomeViewModel @Inject constructor(
     private val userLocalRepository: UserLocalRepository,
-    private val userRepository: UserRepository
+    private val userRepository: UserRepository,
+    private val dietaRepository: com.example.dieta.domain.DietaRepository
 ) : ViewModel() {
 
     private val _uiState = MutableStateFlow(HomeUiState())
@@ -138,6 +139,14 @@ class HomeViewModel @Inject constructor(
                         goalWeight = user.goalWeight,
                         bmi = user.bmi
                     )
+
+                    // Refresh dieta data from remote
+                    launch {
+                        dietaRepository.refreshMealsFromRemote(user.userId)
+                    }
+                    launch {
+                        dietaRepository.refreshFavoriteRecipesFromRemote(user.userId)
+                    }
 
                     if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
                         val existing = userLocalRepository.getAllWeightHistory(user.userId)

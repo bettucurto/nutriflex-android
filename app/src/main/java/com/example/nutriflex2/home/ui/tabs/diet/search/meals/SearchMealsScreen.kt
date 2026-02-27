@@ -22,6 +22,8 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.pager.HorizontalPager
+import androidx.compose.foundation.pager.rememberPagerState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
@@ -29,7 +31,6 @@ import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.ArrowBack
 import androidx.compose.material.icons.filled.ExpandLess
 import androidx.compose.material.icons.filled.ExpandMore
-import androidx.compose.material.icons.filled.Favorite
 import androidx.compose.material.icons.filled.Search
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.DropdownMenu
@@ -49,6 +50,10 @@ import androidx.compose.material3.RangeSlider
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.SliderDefaults
 import androidx.compose.material3.Surface
+import androidx.compose.material3.Tab
+import androidx.compose.material3.TabRow
+import androidx.compose.material3.TabRowDefaults
+import androidx.compose.material3.TabRowDefaults.tabIndicatorOffset
 import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBar
 import androidx.compose.runtime.Composable
@@ -56,6 +61,7 @@ import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -78,16 +84,18 @@ import androidx.navigation.NavController
 import coil.compose.AsyncImage
 import coil.request.ImageRequest
 import com.example.dieta.domain.FatSecretFood
+import com.example.dieta.domain.Refeicao
 import com.example.nutriflex2.R
 import components.CalorieRangeFilter
 import components.LeftTitleText
+import kotlinx.coroutines.launch
 
-@OptIn(ExperimentalMaterial3Api::class)
+@OptIn(ExperimentalMaterial3Api::class, androidx.compose.foundation.ExperimentalFoundationApi::class)
 @Composable
 fun SearchMealsScreen(
     navController: NavController,
     onBack: () -> Unit,
-    onOpenFavorites: () -> Unit,
+    onOpenFavorites: () -> Unit, // Mantido por compatibilidade de assinatura se necessário, mas não será usado
     onOpenCreateMeal: () -> Unit,
     onFoodClick: ((String) -> Unit)? = null,
     viewModel: SearchMealsViewModel = hiltViewModel(),
@@ -99,6 +107,9 @@ fun SearchMealsScreen(
     val isFocused by interactionSource.collectIsFocusedAsState()
     val focusManager = LocalFocusManager.current
     val focusRequester = remember { FocusRequester() }
+
+    val pagerState = rememberPagerState(pageCount = { 2 })
+    val scope = rememberCoroutineScope()
 
     Scaffold(
         topBar = {
@@ -118,192 +129,407 @@ fun SearchMealsScreen(
         Column(
             modifier = Modifier
                 .padding(padding)
-                .padding(horizontal = 16.dp)
                 .fillMaxSize()
         ) {
-            Spacer(modifier = Modifier.height(8.dp))
+            Column(modifier = Modifier.padding(horizontal = 16.dp)) {
+                Spacer(modifier = Modifier.height(8.dp))
 
-            // --- Search Bar ---
-            Box {
-                Column(horizontalAlignment = Alignment.CenterHorizontally) {
-                    OutlinedTextField(
-                        value = state.query,
-                        onValueChange = { newValue -> viewModel.onQueryChange(newValue) },
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .focusRequester(focusRequester)
-                            .shadow(
-                                elevation = 6.dp,
-                                shape = RoundedCornerShape(12.dp)
+                // --- Search Bar ---
+                Box {
+                    Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                        OutlinedTextField(
+                            value = state.query,
+                            onValueChange = { newValue -> viewModel.onQueryChange(newValue) },
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .focusRequester(focusRequester)
+                                .shadow(
+                                    elevation = 6.dp,
+                                    shape = RoundedCornerShape(12.dp)
+                                )
+                                .background(
+                                    color = colorScheme.surface,
+                                    shape = RoundedCornerShape(12.dp)
+                                ),
+                            leadingIcon = { Icon(Icons.Default.Search, null) },
+                            placeholder = { Text("Search food") },
+                            singleLine = true,
+                            interactionSource = interactionSource,
+                            shape = RoundedCornerShape(12.dp),
+                            colors = OutlinedTextFieldDefaults.colors(
+                                focusedContainerColor = Color.Transparent,
+                                unfocusedContainerColor = Color.Transparent
                             )
-                            .background(
-                                color = colorScheme.surface,
-                                shape = RoundedCornerShape(12.dp)
-                            ),
-                        leadingIcon = { Icon(Icons.Default.Search, null) },
-                        placeholder = { Text("Search food") },
-                        singleLine = true,
-                        interactionSource = interactionSource,
-                        shape = RoundedCornerShape(12.dp),
-                        colors = OutlinedTextFieldDefaults.colors(
-                            focusedContainerColor = Color.Transparent,
-                            unfocusedContainerColor = Color.Transparent
                         )
-                    )
 
-                    DropdownMenu(
-                        expanded = isFocused &&
-                                state.autocompleteSuggestions.isNotEmpty() &&
-                                state.query.length >= 2 &&
-                                !state.isLoading,
-                        modifier = Modifier.fillMaxWidth(0.92f),
-                        onDismissRequest = { focusManager.clearFocus() },
-                        properties = PopupProperties(focusable = false)
-                    ) {
-                        state.autocompleteSuggestions.take(3).forEach { suggestion ->
-                            DropdownMenuItem(
-                                text = { Text(text = suggestion, style = MaterialTheme.typography.bodyMedium) },
-                                onClick = {
-                                    viewModel.onQueryChange(suggestion)
-                                    focusManager.clearFocus()
-                                },
-                            )
+                        DropdownMenu(
+                            expanded = isFocused &&
+                                    state.autocompleteSuggestions.isNotEmpty() &&
+                                    state.query.length >= 2 &&
+                                    !state.isLoading,
+                            modifier = Modifier.fillMaxWidth(0.92f),
+                            onDismissRequest = { focusManager.clearFocus() },
+                            properties = PopupProperties(focusable = false)
+                        ) {
+                            state.autocompleteSuggestions.take(3).forEach { suggestion ->
+                                DropdownMenuItem(
+                                    text = {
+                                        Text(
+                                            text = suggestion,
+                                            style = MaterialTheme.typography.bodyMedium
+                                        )
+                                    },
+                                    onClick = {
+                                        viewModel.onQueryChange(suggestion)
+                                        focusManager.clearFocus()
+                                    },
+                                )
+                            }
                         }
                     }
                 }
-            }
-            Spacer(modifier = Modifier.height(16.dp))
+                Spacer(modifier = Modifier.height(16.dp))
 
-            // --- Photo + Favorites Buttons ---
-            Row(
-                modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.spacedBy(12.dp)
-            ) {
-                ElevatedButton(
-                    onClick = onOpenCreateMeal,
-                    modifier = Modifier.weight(1f),
-                    shape = RoundedCornerShape(12.dp)
+                // --- Photo + Favorites Buttons -> Agora apenas Create Meal e Tabs ---
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.Center
                 ) {
-                    Icon(Icons.Default.Add, contentDescription = null, tint = colorScheme.primary)
-                    Spacer(Modifier.width(8.dp))
-                    Text("Create Meal", color = colorScheme.onSurface)
+                    ElevatedButton(
+                        onClick = onOpenCreateMeal,
+                        modifier = Modifier.fillMaxWidth(0.7f),
+                        shape = RoundedCornerShape(12.dp)
+                    ) {
+                        Icon(Icons.Default.Add, contentDescription = null, tint = colorScheme.primary)
+                        Spacer(Modifier.width(8.dp))
+                        Text("Create Meal", color = colorScheme.onSurface)
+                    }
                 }
-                ElevatedButton(
-                    onClick = onOpenFavorites,
-                    modifier = Modifier.weight(1f),
-                    shape = RoundedCornerShape(12.dp)
+
+                Spacer(modifier = Modifier.height(8.dp))
+
+                // --- Tabs para alternar entre Geral e Favoritos ---
+                TabRow(
+                    selectedTabIndex = pagerState.currentPage,
+                    containerColor = Color.Transparent,
+                    contentColor = colorScheme.primary,
+                    indicator = { tabPositions ->
+                        TabRowDefaults.SecondaryIndicator(
+                            Modifier.tabIndicatorOffset(tabPositions[pagerState.currentPage]),
+                            color = colorScheme.primary
+                        )
+                    },
+                    divider = {}
                 ) {
-                    Icon(Icons.Default.Favorite, contentDescription = null, tint = colorScheme.error)
-                    Spacer(Modifier.width(8.dp))
-                    Text("Favorites", color = colorScheme.onSurface)
+                    Tab(
+                        selected = pagerState.currentPage == 0,
+                        onClick = { scope.launch { pagerState.animateScrollToPage(0) } },
+                        text = { Text("General", fontWeight = if(pagerState.currentPage == 0) FontWeight.Bold else FontWeight.Normal) }
+                    )
+                    Tab(
+                        selected = pagerState.currentPage == 1,
+                        onClick = { scope.launch { pagerState.animateScrollToPage(1) } },
+                        text = { Text("Favorites", fontWeight = if(pagerState.currentPage == 1) FontWeight.Bold else FontWeight.Normal) }
+                    )
                 }
-            }
 
-            Spacer(modifier = Modifier.height(8.dp))
+                Spacer(modifier = Modifier.height(8.dp))
 
-            // --- Filters Toggle ---
-            Row(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .clip(RoundedCornerShape(8.dp))
-                    .clickable { filtersExpanded.value = !filtersExpanded.value }
-                    .padding(vertical = 8.dp),
-                verticalAlignment = Alignment.CenterVertically,
-                horizontalArrangement = Arrangement.End
-            ) {
-                Text(
-                    text = "Advanced filters",
-                    style = MaterialTheme.typography.bodyMedium,
-                    color = colorScheme.primary
-                )
-                Icon(
-                    imageVector = if (filtersExpanded.value) Icons.Default.ExpandLess else Icons.Default.ExpandMore,
-                    contentDescription = null,
-                    tint = colorScheme.primary
-                )
-            }
-
-            // --- Filters Section ---
-            AnimatedVisibility(
-                visible = filtersExpanded.value,
-                enter = expandVertically(),
-                exit = shrinkVertically()
-            ) {
-                Surface(
-                    shape = RoundedCornerShape(16.dp),
-                    border = BorderStroke(1.dp, colorScheme.outlineVariant),
-                    modifier = Modifier.fillMaxWidth().padding(bottom = 16.dp),
-                    color = colorScheme.surfaceVariant.copy(alpha = 0.5f)
-                ) {
-                    Column(
+                // Só mostrar filtros na tab Geral
+                if (pagerState.currentPage == 0) {
+                    // --- Filters Toggle ---
+                    Row(
                         modifier = Modifier
-                            .padding(16.dp)
                             .fillMaxWidth()
+                            .clip(RoundedCornerShape(8.dp))
+                            .clickable { filtersExpanded.value = !filtersExpanded.value }
+                            .padding(vertical = 8.dp),
+                        verticalAlignment = Alignment.CenterVertically,
+                        horizontalArrangement = Arrangement.End
                     ) {
                         Text(
-                            "Calorie Range",
-                            style = MaterialTheme.typography.titleSmall,
-                            color = colorScheme.onSurfaceVariant
+                            text = "Advanced filters",
+                            style = MaterialTheme.typography.bodyMedium,
+                            color = colorScheme.primary
                         )
-                        Spacer(modifier = Modifier.height(8.dp))
+                        Icon(
+                            imageVector = if (filtersExpanded.value) Icons.Default.ExpandLess else Icons.Default.ExpandMore,
+                            contentDescription = null,
+                            tint = colorScheme.primary
+                        )
+                    }
 
-                        Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
-                            Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                                CalorieChip("Under 100", state.calorieRange == CalorieRangeFilter.UNDER_100, Modifier.weight(1f)) {
-                                    viewModel.onCalorieRangeSelected(if (state.calorieRange == CalorieRangeFilter.UNDER_100) CalorieRangeFilter.NONE else CalorieRangeFilter.UNDER_100)
+                    // --- Filters Section ---
+                    AnimatedVisibility(
+                        visible = filtersExpanded.value,
+                        enter = expandVertically(),
+                        exit = shrinkVertically()
+                    ) {
+                        Surface(
+                            shape = RoundedCornerShape(16.dp),
+                            border = BorderStroke(1.dp, colorScheme.outlineVariant),
+                            modifier = Modifier.fillMaxWidth().padding(bottom = 16.dp),
+                            color = colorScheme.surfaceVariant.copy(alpha = 0.5f)
+                        ) {
+                            Column(
+                                modifier = Modifier
+                                    .padding(16.dp)
+                                    .fillMaxWidth()
+                            ) {
+                                Text(
+                                    "Calorie Range",
+                                    style = MaterialTheme.typography.titleSmall,
+                                    color = colorScheme.onSurfaceVariant
+                                )
+                                Spacer(modifier = Modifier.height(8.dp))
+
+                                Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                                    Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                                        CalorieChip(
+                                            "Under 100",
+                                            state.calorieRange == CalorieRangeFilter.UNDER_100,
+                                            Modifier.weight(1f)
+                                        ) {
+                                            viewModel.onCalorieRangeSelected(if (state.calorieRange == CalorieRangeFilter.UNDER_100) CalorieRangeFilter.NONE else CalorieRangeFilter.UNDER_100)
+                                        }
+                                        CalorieChip(
+                                            "100 - 250",
+                                            state.calorieRange == CalorieRangeFilter.FROM_100_TO_250,
+                                            Modifier.weight(1f)
+                                        ) {
+                                            viewModel.onCalorieRangeSelected(if (state.calorieRange == CalorieRangeFilter.FROM_100_TO_250) CalorieRangeFilter.NONE else CalorieRangeFilter.FROM_100_TO_250)
+                                        }
+                                    }
+                                    Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                                        CalorieChip(
+                                            "250 - 500",
+                                            state.calorieRange == CalorieRangeFilter.FROM_250_TO_500,
+                                            Modifier.weight(1f)
+                                        ) {
+                                            viewModel.onCalorieRangeSelected(if (state.calorieRange == CalorieRangeFilter.FROM_250_TO_500) CalorieRangeFilter.NONE else CalorieRangeFilter.FROM_250_TO_500)
+                                        }
+                                        CalorieChip(
+                                            "Over 500",
+                                            state.calorieRange == CalorieRangeFilter.OVER_500,
+                                            Modifier.weight(1f)
+                                        ) {
+                                            viewModel.onCalorieRangeSelected(if (state.calorieRange == CalorieRangeFilter.OVER_500) CalorieRangeFilter.NONE else CalorieRangeFilter.OVER_500)
+                                        }
+                                    }
                                 }
-                                CalorieChip("100 - 250", state.calorieRange == CalorieRangeFilter.FROM_100_TO_250, Modifier.weight(1f)) {
-                                    viewModel.onCalorieRangeSelected(if (state.calorieRange == CalorieRangeFilter.FROM_100_TO_250) CalorieRangeFilter.NONE else CalorieRangeFilter.FROM_100_TO_250)
-                                }
-                            }
-                            Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                                CalorieChip("250 - 500", state.calorieRange == CalorieRangeFilter.FROM_250_TO_500, Modifier.weight(1f)) {
-                                    viewModel.onCalorieRangeSelected(if (state.calorieRange == CalorieRangeFilter.FROM_250_TO_500) CalorieRangeFilter.NONE else CalorieRangeFilter.FROM_250_TO_500)
-                                }
-                                CalorieChip("Over 500", state.calorieRange == CalorieRangeFilter.OVER_500, Modifier.weight(1f)) {
-                                    viewModel.onCalorieRangeSelected(if (state.calorieRange == CalorieRangeFilter.OVER_500) CalorieRangeFilter.NONE else CalorieRangeFilter.OVER_500)
-                                }
+
+                                Spacer(modifier = Modifier.height(16.dp))
+
+                                MacroRangeSection(
+                                    "Carbs %",
+                                    state.carbsMin,
+                                    state.carbsMax
+                                ) { min, max -> viewModel.onCarbsRangeChanged(min, max) }
+                                Spacer(modifier = Modifier.height(8.dp))
+                                MacroRangeSection(
+                                    "Protein %",
+                                    state.proteinMin,
+                                    state.proteinMax
+                                ) { min, max -> viewModel.onProteinRangeChanged(min, max) }
+                                Spacer(modifier = Modifier.height(8.dp))
+                                MacroRangeSection(
+                                    "Fat %",
+                                    state.fatMin,
+                                    state.fatMax
+                                ) { min, max -> viewModel.onFatRangeChanged(min, max) }
                             }
                         }
-
-                        Spacer(modifier = Modifier.height(16.dp))
-
-                        MacroRangeSection("Carbs %", state.carbsMin, state.carbsMax) { min, max -> viewModel.onCarbsRangeChanged(min, max) }
-                        Spacer(modifier = Modifier.height(8.dp))
-                        MacroRangeSection("Protein %", state.proteinMin, state.proteinMax) { min, max -> viewModel.onProteinRangeChanged(min, max) }
-                        Spacer(modifier = Modifier.height(8.dp))
-                        MacroRangeSection("Fat %", state.fatMin, state.fatMax) { min, max -> viewModel.onFatRangeChanged(min, max) }
                     }
                 }
             }
 
-            // --- Meal List ---
-            if (state.isLoading) {
-                Box(
-                    modifier = Modifier.fillMaxSize(),
-                    contentAlignment = Alignment.Center
-                ) {
-                    CircularProgressIndicator(color = colorScheme.primary)
+            // --- Pager com as Listas ---
+            HorizontalPager(
+                state = pagerState,
+                modifier = Modifier.fillMaxSize()
+            ) { page ->
+                when (page) {
+                    0 -> GeneralSearchTab(state, onFoodClick, navController)
+                    1 -> FavoriteMealsTab(state, navController)
                 }
-            } else {
-                LazyColumn(
-                    modifier = Modifier.fillMaxSize(),
-                    verticalArrangement = Arrangement.spacedBy(16.dp),
-                    contentPadding = PaddingValues(bottom = 16.dp)
-                ) {
-                    items(state.suggestions) { food ->
-                        FoodRow(
-                            food = food,
-                            onClick = {
-                                if (onFoodClick != null) {
-                                    onFoodClick(food.id)
-                                } else {
-                                    navController.navigate("foodDetail/${food.id}")
-                                }
-                            }
-                        )
+            }
+        }
+    }
+}
+
+@Composable
+fun GeneralSearchTab(
+    state: SearchMealsUiState,
+    onFoodClick: ((String) -> Unit)?,
+    navController: NavController
+) {
+    if (state.isLoading) {
+        Box(
+            modifier = Modifier.fillMaxSize(),
+            contentAlignment = Alignment.Center
+        ) {
+            CircularProgressIndicator(color = colorScheme.primary)
+        }
+    } else {
+        LazyColumn(
+            modifier = Modifier.fillMaxSize().padding(horizontal = 16.dp),
+            verticalArrangement = Arrangement.spacedBy(16.dp),
+            contentPadding = PaddingValues(bottom = 16.dp)
+        ) {
+            items(state.suggestions) { food ->
+                FoodRow(
+                    food = food,
+                    onClick = {
+                        if (onFoodClick != null) {
+                            onFoodClick(food.id)
+                        } else {
+                            navController.navigate("foodDetail/${food.id}")
+                        }
                     }
+                )
+            }
+        }
+    }
+}
+
+@Composable
+fun FavoriteMealsTab(
+    state: SearchMealsUiState,
+    navController: NavController
+) {
+    if (state.favoriteMeals.isEmpty()) {
+        Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
+            Text("No favorite meals created yet", color = colorScheme.onSurfaceVariant)
+        }
+    } else {
+        LazyColumn(
+            modifier = Modifier.fillMaxSize().padding(horizontal = 16.dp),
+            verticalArrangement = Arrangement.spacedBy(16.dp),
+            contentPadding = PaddingValues(top = 16.dp, bottom = 16.dp)
+        ) {
+            items(state.favoriteMeals) { meal ->
+                FavoriteMealRow(
+                    meal = meal,
+                    onClick = {
+                        navController.navigate("favoriteMealDetail/${meal.id}")
+                    }
+                )
+            }
+        }
+    }
+}
+
+@Composable
+fun FavoriteMealRow(
+    meal: Refeicao,
+    onClick: () -> Unit
+) {
+    val context = LocalContext.current
+    val carbColor = Color(0xFF4FC3F7)
+    val proteinColor = Color(0xFF81C784)
+    val fatColor = Color(0xFFFFB74D)
+    val trackBackgroundColor = colorScheme.surfaceVariant
+
+    Surface(
+        shape = RoundedCornerShape(20.dp),
+        color = colorScheme.surface,
+        tonalElevation = 2.dp,
+        shadowElevation = 6.dp,
+        modifier = Modifier
+            .fillMaxWidth()
+            .clickable(onClick = onClick)
+    ) {
+        Column(
+            modifier = Modifier.padding(16.dp)
+        ) {
+            Row(
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                AsyncImage(
+                    model = ImageRequest.Builder(context)
+                        .data(meal.image)
+                        .crossfade(true)
+                        .build(),
+                    contentDescription = meal.nome,
+                    modifier = Modifier
+                        .size(60.dp)
+                        .clip(CircleShape)
+                        .background(colorScheme.surfaceVariant),
+                    contentScale = ContentScale.Crop,
+                    placeholder = painterResource(R.drawable.nutrilogo),
+                    error = painterResource(R.drawable.nutrilogo)
+                )
+
+                Spacer(Modifier.width(16.dp))
+
+                Column(modifier = Modifier.weight(1f)) {
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        horizontalArrangement = Arrangement.SpaceBetween,
+                        verticalAlignment = Alignment.Top
+                    ) {
+                        Text(
+                            text = meal.nome,
+                            style = MaterialTheme.typography.titleMedium.copy(
+                                fontWeight = FontWeight.Bold,
+                                fontSize = 18.sp
+                            ),
+                            color = colorScheme.onSurface,
+                            maxLines = 1,
+                            overflow = TextOverflow.Ellipsis,
+                            modifier = Modifier.weight(1f)
+                        )
+
+                        Row(verticalAlignment = Alignment.CenterVertically) {
+                            Text(
+                                text = "${meal.calories ?: 0} kcal",
+                                style = MaterialTheme.typography.bodyMedium.copy(
+                                    fontWeight = FontWeight.Bold
+                                ),
+                                color = colorScheme.primary
+                            )
+                        }
+                    }
+
+                    Text(
+                        text = meal.description ?: "Custom Meal",
+                        style = MaterialTheme.typography.bodyMedium,
+                        color = colorScheme.onSurfaceVariant,
+                        maxLines = 2,
+                        overflow = TextOverflow.Ellipsis
+                    )
                 }
+            }
+
+            Spacer(modifier = Modifier.height(16.dp))
+
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.spacedBy(16.dp)
+            ) {
+                MacroItem(
+                    label = "Carbs",
+                    percentage = (meal.carbsPct ?: 0),
+                    color = carbColor,
+                    trackColor = trackBackgroundColor,
+                    modifier = Modifier.weight(1f)
+                )
+
+                MacroItem(
+                    label = "Protein",
+                    percentage = (meal.proteinPct ?: 0),
+                    color = proteinColor,
+                    trackColor = trackBackgroundColor,
+                    modifier = Modifier.weight(1f)
+                )
+
+                MacroItem(
+                    label = "Fat",
+                    percentage = (meal.fatPct ?: 0),
+                    color = fatColor,
+                    trackColor = trackBackgroundColor,
+                    modifier = Modifier.weight(1f)
+                )
             }
         }
     }
