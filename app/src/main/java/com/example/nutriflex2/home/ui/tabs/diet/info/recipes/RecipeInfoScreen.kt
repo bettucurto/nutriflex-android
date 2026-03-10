@@ -34,6 +34,8 @@ import androidx.compose.material.icons.filled.ArrowBack
 import androidx.compose.material.icons.filled.Edit
 import androidx.compose.material.icons.filled.ExpandLess
 import androidx.compose.material.icons.filled.ExpandMore
+import androidx.compose.material.icons.filled.Favorite
+import androidx.compose.material.icons.filled.FavoriteBorder
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.CircularProgressIndicator
@@ -84,9 +86,6 @@ import coil.compose.AsyncImage
 import com.example.nutriflex2.R
 import components.HeadingTextComponent
 import components.LeftTitleText
-
-import androidx.compose.material.icons.filled.Favorite
-import androidx.compose.material.icons.filled.FavoriteBorder
 
 @RequiresApi(Build.VERSION_CODES.O)
 @OptIn(ExperimentalMaterial3Api::class)
@@ -294,9 +293,7 @@ fun RecipeInfoScreen(
     }
 }
 
-// Secção Expansível para Ingredientes e Passos
-// Importação nova necessária no topo do ficheiro (caso não tenhas):
-// import androidx.compose.ui.text.style.TextDecoration
+
 
 // Nova classe para guardar a informação da lista
 data class ExpandableItemData(

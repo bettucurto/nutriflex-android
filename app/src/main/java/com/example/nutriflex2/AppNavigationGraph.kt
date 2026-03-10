@@ -34,14 +34,15 @@ import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.navigation
 import androidx.navigation.navArgument
-import com.example.nutriflex2.diet.search.SearchMealsScreen
 import com.example.nutriflex2.home.account.AccountScreen
 import com.example.nutriflex2.home.ui.HomeScreen
+import com.example.nutriflex2.home.ui.SyncViewModel
 import com.example.nutriflex2.home.ui.tabs.diet.favorites.FavoriteMealEditorScreen
 import com.example.nutriflex2.home.ui.tabs.diet.favorites.FavoriteMealEditorViewModel
 import com.example.nutriflex2.home.ui.tabs.diet.info.favorites.FavoriteMealInfoScreen
 import com.example.nutriflex2.home.ui.tabs.diet.info.meals.MealInfoScreen
 import com.example.nutriflex2.home.ui.tabs.diet.info.recipes.RecipeInfoScreen
+import com.example.nutriflex2.home.ui.tabs.diet.search.meals.SearchMealsScreen
 import com.example.nutriflex2.home.ui.tabs.diet.search.recipes.SearchRecipeScreen
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
@@ -69,7 +70,10 @@ private fun screenOrder(route: String?): Int = when (route) {
 
 @RequiresApi(Build.VERSION_CODES.O)
 @Composable
-fun AppNavGraph(navController: NavHostController) {
+fun AppNavGraph(
+    navController: NavHostController,
+    syncViewModel: SyncViewModel = hiltViewModel()
+) {
     NavHost(
         navController = navController,
         startDestination = "splashScreen",
@@ -78,9 +82,28 @@ fun AppNavGraph(navController: NavHostController) {
     ) {
         composable("splashScreen") { SplashScreen(navController) }
         composable("welcomeScreen") { WelcomeScreen(navController) }
-        composable("loginScreen") { LoginScreen(navController) }
+        composable("loginScreen") {
+            LoginScreen(navController)
+            
+            // Observar se o utilizador acabou de fazer login com sucesso para disparar o sync
+            // Nota: Como o LoginScreen navega para homeScreen ao ter sucesso, 
+            // podemos detetar a mudança de destino ou simplesmente confiar no fluxo de navegação.
+        }
 
         composable("homeScreen") {
+            // Verificar se viemos do Login ou Registo
+            val previousBackStackEntry = navController.previousBackStackEntry
+            val fromAuth = previousBackStackEntry?.destination?.route?.let { 
+                it == "loginScreen" || it.contains("registration") 
+            } ?: false
+            
+            LaunchedEffect(Unit) {
+                if (fromAuth) {
+                    android.util.Log.d("AppNavGraph", "Navigated from Auth, triggering sync...")
+                    syncViewModel.performInitialSync()
+                }
+            }
+
             HomeScreen(
                 onNavigateToTreino = { /* ... */ },
                 onNavigateToSearchMeals = { navController.navigate("searchMealsScreen") },
@@ -174,24 +197,38 @@ fun AppNavGraph(navController: NavHostController) {
                         popUpTo("homeScreen") { inclusive = true }
                     }
                 },
+                onEditClick = { id ->
+                    navController.navigate("favoriteMealEditor?mealId=$id")
+                },
                 onIngredientClick = { foodId ->
                     navController.navigate("foodDetail/$foodId")
                 }
             )
         }
 
-        // === NOVO FLUXO ANINHADO: CRIAR REFEIÇÃO FAVORITA ===
+        // === NOVO FLUXO ANINHADO: CRIAR/EDITAR REFEIÇÃO FAVORITA ===
         navigation(
             startDestination = "favoriteMealEditor",
             route = "create_meal_flow"
         ) {
-            composable("favoriteMealEditor") { backStackEntry ->
+            composable(
+                route = "favoriteMealEditor?mealId={mealId}",
+                arguments = listOf(navArgument("mealId") { 
+                    type = NavType.StringType
+                    nullable = true
+                    defaultValue = null
+                })
+            ) { backStackEntry ->
+                val mealIdStr = backStackEntry.arguments?.getString("mealId")
+                val mealId = mealIdStr?.toIntOrNull()
+
                 val parentEntry = remember(backStackEntry) {
                     navController.getBackStackEntry("create_meal_flow")
                 }
                 val sharedViewModel: FavoriteMealEditorViewModel = hiltViewModel(parentEntry)
 
                 FavoriteMealEditorScreen(
+                    mealId = mealId,
                     viewModel = sharedViewModel,
                     onBack = { navController.popBackStack() },
                     onAddFoodClick = {

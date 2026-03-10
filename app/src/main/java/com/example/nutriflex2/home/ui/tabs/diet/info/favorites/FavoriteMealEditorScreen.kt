@@ -6,6 +6,7 @@ import androidx.annotation.RequiresApi
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.background
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -88,6 +89,7 @@ import components.LeftTitleText
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun FavoriteMealEditorScreen(
+    mealId: Int? = null,
     onBack: () -> Unit,
     onAddFoodClick: () -> Unit, // Navega para Search
     onMealSaved: () -> Unit,
@@ -96,6 +98,11 @@ fun FavoriteMealEditorScreen(
     val uiState by viewModel.uiState.collectAsState()
     val density = LocalDensity.current
     val context = LocalContext.current
+
+    // Carregar a refeição se o mealId for fornecido
+    LaunchedEffect(mealId) {
+        mealId?.let { viewModel.loadMeal(it) }
+    }
 
     // Efeito para mostrar erros ou sucesso
     LaunchedEffect(uiState.error) {
@@ -112,7 +119,7 @@ fun FavoriteMealEditorScreen(
         }
     }
 
-    // Scroll Logic para o Parallax (igual ao MealInfoScreen)
+    // Scroll Logic para o Parallax
     var scrollOffset by remember { mutableFloatStateOf(0f) }
     val nestedScrollConnection = remember {
         object : NestedScrollConnection {
@@ -128,7 +135,7 @@ fun FavoriteMealEditorScreen(
     Scaffold(
         topBar = {
             TopAppBar(
-                title = { LeftTitleText("Create Meal") },
+                title = { LeftTitleText(if (uiState.mealId != null) "Edit Favorite Meal" else "Create Meal") },
                 navigationIcon = {
                     IconButton(onClick = onBack) {
                         Icon(Icons.Default.ArrowBack, contentDescription = "Back")
@@ -138,7 +145,7 @@ fun FavoriteMealEditorScreen(
         }
     ) { padding ->
         if (uiState.isLoading) {
-            Box(Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
+            Box(Modifier.fillMaxSize().padding(padding), contentAlignment = Alignment.Center) {
                 CircularProgressIndicator()
             }
             return@Scaffold
@@ -153,7 +160,7 @@ fun FavoriteMealEditorScreen(
                 .verticalScroll(rememberScrollState()),
             horizontalAlignment = Alignment.CenterHorizontally
         ) {
-            // Hero Image dinâmica (usa a do primeiro alimento ou placeholder)
+            // Hero Image dinâmica
             HeroImage(
                 imageUrl = uiState.coverImage ?: "https://m.ftscrt.com/static/generic-food.jpg",
                 scrollOffset = scrollOffset,
@@ -188,7 +195,7 @@ fun FavoriteMealEditorScreen(
 
                     Spacer(Modifier.height(24.dp))
 
-                    // Círculo de Nutrição (Totais Agregados)
+                    // Círculo de Nutrição
                     NutritionCircle(uiState)
 
                     Spacer(Modifier.height(32.dp))
@@ -250,12 +257,12 @@ fun FavoriteMealEditorScreen(
                     ) {
                         Icon(Icons.Default.Save, contentDescription = null)
                         Spacer(Modifier.width(8.dp))
-                        Text("Save Meal", fontSize = 20.sp, fontWeight = FontWeight.Bold)
+                        Text(if (uiState.mealId != null) "Update Meal" else "Save Meal", fontSize = 20.sp, fontWeight = FontWeight.Bold)
                     }
 
                     Spacer(Modifier.height(24.dp))
 
-                    // Tabela Nutricional Completa (Agregada)
+                    // Tabela Nutricional Completa
                     Column(
                         modifier = Modifier
                             .fillMaxWidth()
@@ -276,9 +283,7 @@ fun FavoriteMealEditorScreen(
 fun MealNameInput(name: String, onNameChange: (String) -> Unit) {
     val focusManager = LocalFocusManager.current
     var isFocused by remember { mutableStateOf(false) }
-
-    // Cor do texto baseada no título da imagem ("Apples"), um azul vibrante ou a cor primária
-    val titleColor = Color(0xFF0288D1) // Azul semelhante ao da imagem
+    val titleColor = Color(0xFF0288D1)
 
     Column(
         horizontalAlignment = Alignment.CenterHorizontally,
@@ -318,7 +323,6 @@ fun MealNameInput(name: String, onNameChange: (String) -> Unit) {
             )
         }
 
-        // Ícone de edição subtil se não estiver vazio
         if (name.isNotEmpty() && !isFocused) {
             Spacer(Modifier.height(4.dp))
             Icon(
@@ -328,7 +332,6 @@ fun MealNameInput(name: String, onNameChange: (String) -> Unit) {
                 modifier = Modifier.size(16.dp)
             )
         } else {
-            // Espaço reservado para manter layout estável
             Spacer(Modifier.height(20.dp))
         }
     }
@@ -347,7 +350,6 @@ fun IngredientRow(
             .padding(8.dp),
         verticalAlignment = Alignment.CenterVertically
     ) {
-        // Miniatura
         AsyncImage(
             model = ingredient.food.image,
             contentDescription = null,
@@ -384,10 +386,6 @@ fun IngredientRow(
         }
     }
 }
-
-// ----------------------------------------------------------------
-// Componentes reutilizados do MealInfoScreen (Copiados e adaptados para receber UiState diferente)
-// ----------------------------------------------------------------
 
 @Composable
 private fun HeroImage(
@@ -434,7 +432,6 @@ private fun HeroImage(
 @Composable
 private fun NutritionCircle(uiState: FavoriteMealEditorUiState) {
     val totalCals = uiState.caloriesTotal.coerceAtLeast(0.0)
-
     val kcalCarb = uiState.carbsTotal * 4
     val kcalFat = uiState.fatTotal * 9
     val kcalProt = uiState.proteinTotal * 4
@@ -451,8 +448,6 @@ private fun NutritionCircle(uiState: FavoriteMealEditorUiState) {
     val fatPct  = if (sum == 0) 0 else (rawFat  * 100f / sum).toInt()
     val protPct = if (sum == 0) 0 else (rawProt * 100f / sum).toInt()
 
-    val colors = colorScheme
-
     Row(
         modifier = Modifier.fillMaxWidth(),
         horizontalArrangement = Arrangement.Center,
@@ -466,7 +461,6 @@ private fun NutritionCircle(uiState: FavoriteMealEditorUiState) {
         ) {
             Canvas(modifier = Modifier.fillMaxSize(0.95f)) {
                 val strokeWidth = 12.dp.toPx()
-                val diameter = size.minDimension
                 var startAngle = -90f
 
                 fun sweep(pct: Int) = 360f * (pct / 100f)
@@ -517,12 +511,12 @@ private fun NutritionCircle(uiState: FavoriteMealEditorUiState) {
                 Text(
                     text = totalCals.toInt().toString(),
                     style = MaterialTheme.typography.headlineMedium,
-                    color = colors.primary
+                    color = colorScheme.primary
                 )
                 Text(
                     text = "Calories",
                     style = MaterialTheme.typography.bodyMedium,
-                    color = colors.onSurfaceVariant
+                    color = colorScheme.onSurfaceVariant
                 )
             }
         }

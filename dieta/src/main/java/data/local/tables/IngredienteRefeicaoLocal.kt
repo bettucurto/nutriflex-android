@@ -5,7 +5,19 @@ import androidx.room.ColumnInfo
 import androidx.room.Entity
 import androidx.room.PrimaryKey
 
-@Entity(tableName = "refeicao_ingredientes")
+import androidx.room.ForeignKey
+
+@Entity(
+    tableName = "refeicao_ingredientes",
+    foreignKeys = [
+        ForeignKey(
+            entity = RefeicaoFavoritaLocal::class,
+            parentColumns = ["id"],
+            childColumns = ["id_refeicao"],
+            onDelete = ForeignKey.CASCADE
+        )
+    ]
+)
 data class IngredienteRefeicaoLocal(
     @PrimaryKey(autoGenerate = true) val id: Int = 0,
     @ColumnInfo(name = "alimento_api_id")
@@ -14,6 +26,8 @@ data class IngredienteRefeicaoLocal(
     val tipoPorcao: String,
     @ColumnInfo(name = "quantidade_porcoes")
     val quantidadePorcoes: Double,
+    @ColumnInfo(name = "nome_alimento")
+    val nomeAlimento: String? = null,
     @ColumnInfo(name = "id_refeicao")
     val idRefeicao: Int,
 )

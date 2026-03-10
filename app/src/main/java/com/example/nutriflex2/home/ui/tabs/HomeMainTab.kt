@@ -1,3 +1,4 @@
+import androidx.compose.foundation.ScrollState
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Spacer
@@ -24,11 +25,12 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.text.font.Font
 import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
-import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.sp
 import com.example.components.R
 import com.example.nutriflex2.home.ui.HomeUiState
@@ -41,13 +43,14 @@ import components.WeightProgressCard
 import components.WeightRange
 import components.WeightsCardRow
 import kotlinx.coroutines.launch
+import theme.AppTheme
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun HomeMainTab(
     state: HomeUiState,
-    topBarHeightDp: androidx.compose.ui.unit.Dp,
-    scrollState: androidx.compose.foundation.ScrollState,
+    topBarHeightDp: Dp,
+    scrollState: ScrollState,
     selectedRange: WeightRange,
     onRangeChange: (WeightRange) -> Unit,
     onNavigateToSearchMeals: () -> Unit,
@@ -56,11 +59,16 @@ fun HomeMainTab(
     onChangeCurrentWeight: (Float) -> Unit,
     onChangeGoalWeight: (Float) -> Unit,
     onRequestScrollToBottom: () -> Unit,
-    onOpenDrawer: () -> Unit // <-- NOVO PARÂMETRO AQUI
+    onOpenDrawer: () -> Unit
 ) {
     val sheetState = rememberModalBottomSheetState()
     var showSheet by remember { mutableStateOf(false) }
     val scope = rememberCoroutineScope()
+
+    val configuration = LocalConfiguration.current
+    val screenWidth = configuration.screenWidthDp
+    // Com Formula Condensed, 0.18f da largura do ecrã aproxima-se de 90% da width.
+    val dynamicFontSize = (screenWidth * 0.28f).sp
 
     Column(
         modifier = Modifier
@@ -70,11 +78,14 @@ fun HomeMainTab(
     ) {
 
         // --- CABEÇALHO ---
-        // 1. Botão Hambúrguer no topo, alinhado à esquerda
         Box(
             modifier = Modifier
                 .fillMaxWidth()
-                .padding(top = 40.dp, start = 16.dp, end = 16.dp) // Reduzi ligeiramente o top para equilibrar
+                .padding(
+                    top = AppTheme.dimens.extraLargePadding, 
+                    start = AppTheme.dimens.mediumPadding, 
+                    end = AppTheme.dimens.mediumPadding
+                )
         ) {
             IconButton(
                 onClick = onOpenDrawer,
@@ -84,22 +95,22 @@ fun HomeMainTab(
                     imageVector = Icons.Filled.Menu,
                     contentDescription = "Menu",
                     tint = Color.White,
-                    modifier = Modifier.size(32.dp)
+                    modifier = Modifier.size(AppTheme.dimens.iconMedium)
                 )
             }
         }
 
-        // 2. Título ao centro, por baixo do botão
         Text(
             text = "NUTRIFLEX",
             fontWeight = FontWeight.Bold,
             fontFamily = FontFamily(Font(R.font.formulacondensedbold)),
-            fontSize = 115.sp,
+            fontSize = dynamicFontSize,
             color = Color.White,
             textAlign = TextAlign.Center,
-            modifier = Modifier.fillMaxWidth().padding(top = 8.dp) // Espaçamento entre o ícone e o texto
+            modifier = Modifier
+                .fillMaxWidth(0.9f)
+                .padding(top = AppTheme.dimens.smallPadding)
         )
-        // -----------------------------------
 
         CaloriesCard(
             remainingCalories = state.dailyCalories - state.eatenCaloriesToday,
@@ -117,7 +128,7 @@ fun HomeMainTab(
             }
         )
 
-        Spacer(modifier = Modifier.height(30.dp))
+        Spacer(modifier = Modifier.height(AppTheme.dimens.largePadding))
 
         NextWorkoutCard(
             workoutName = state.nextWorkoutName,
@@ -125,14 +136,14 @@ fun HomeMainTab(
             onStartClick = { onNavigateToTreino() }
         )
 
-        Spacer(modifier = Modifier.height(30.dp))
+        Spacer(modifier = Modifier.height(AppTheme.dimens.largePadding))
 
         BmiCard(
             bmi = state.bmi,
             category = state.bmiCategory
         )
 
-        Spacer(modifier = Modifier.height(30.dp))
+        Spacer(modifier = Modifier.height(AppTheme.dimens.largePadding))
 
         WeightForecastCard(
             weeks = state.weeklyProgressWeeks,
@@ -145,7 +156,7 @@ fun HomeMainTab(
             onRangeChange = onRangeChange
         )
 
-        Spacer(modifier = Modifier.height(30.dp))
+        Spacer(modifier = Modifier.height(AppTheme.dimens.largePadding))
 
         WeightsCardRow(
             currentWeight = state.currentWeight,
@@ -155,7 +166,7 @@ fun HomeMainTab(
             onRequestScroll = { onRequestScrollToBottom() }
         )
 
-        Spacer(modifier = Modifier.height(20.dp))
+        Spacer(modifier = Modifier.height(AppTheme.dimens.mediumPadding))
     }
 
     if (showSheet) {

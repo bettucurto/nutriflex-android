@@ -25,11 +25,18 @@ data class FavoriteMealInfoUiState(
     val error: String? = null,
     val portionCount: Double = 1.0,
 
-    // Totais calculados dinamicamente
+    // Totais calculados dinamicamente (em gramas ou unidades respetivas)
     val caloriesTotal: Double = 0.0,
     val carbsTotal: Double = 0.0,
     val proteinTotal: Double = 0.0,
-    val fatTotal: Double = 0.0
+    val fatTotal: Double = 0.0,
+    
+    // Detalhes para a Nutrition Facts Table
+    val saturatedFatTotal: Double = 0.0,
+    val cholesterolTotal: Double = 0.0,
+    val sodiumTotal: Double = 0.0,
+    val fiberTotal: Double = 0.0,
+    val sugarsTotal: Double = 0.0
 )
 
 @HiltViewModel
@@ -43,11 +50,16 @@ class FavoriteMealInfoViewModel @Inject constructor(
     val uiState: StateFlow<FavoriteMealInfoUiState> = _uiState.asStateFlow()
 
     init {
-        val mealId = checkNotNull(savedStateHandle["mealId"]) as String
-        val idInt = mealId.toIntOrNull() ?: 0
+        val mealIdStr = checkNotNull(savedStateHandle["mealId"]) as String
+        val idInt = mealIdStr.toIntOrNull() ?: 0
 
         viewModelScope.launch {
             _uiState.value = _uiState.value.copy(isLoading = true)
+
+            // Sincronizar ingredientes do remoto
+            launch {
+                repository.refreshIngredientsFromRemote(idInt)
+            }
             
             // Observar a refeição
             launch {
@@ -60,7 +72,10 @@ class FavoriteMealInfoViewModel @Inject constructor(
             // Observar os ingredientes
             launch {
                 repository.observeIngredients(idInt).collectLatest { ingredients ->
-                    _uiState.value = _uiState.value.copy(ingredients = ingredients, isLoading = false)
+                    _uiState.value = _uiState.value.copy(
+                        ingredients = ingredients,
+                        isLoading = false
+                    )
                 }
             }
         }
@@ -76,14 +91,27 @@ class FavoriteMealInfoViewModel @Inject constructor(
         val meal = state.meal ?: return
         val factor = state.portionCount.coerceAtLeast(0.0)
 
+        // Nota: A Refeicao favoritada no domínio atualmente guarda carbsPct, proteinPct, fatPct.
+        // Se quisermos mostrar gramas na UI (como o design das receitas faz), 
+        // precisamos de estimar baseando-nos em 4kcal/g para carb/prot e 9kcal/g para fat.
+        
+        val totalCals = (meal.calories?.toDouble() ?: 0.0) * factor
+        
+        val estCarbs = if (totalCals > 0) (totalCals * (meal.carbsPct ?: 0) / 100.0) / 4.0 else 0.0
+        val estProt = if (totalCals > 0) (totalCals * (meal.proteinPct ?: 0) / 100.0) / 4.0 else 0.0
+        val estFat = if (totalCals > 0) (totalCals * (meal.fatPct ?: 0) / 100.0) / 9.0 else 0.0
+
         _uiState.value = state.copy(
-            caloriesTotal = (meal.calories?.toDouble() ?: 0.0) * factor,
-            // Para simplificar, usamos as percentagens e as calorias totais para estimar gramas se necessário,
-            // ou apenas multiplicamos o total guardado se tivéssemos gramas. 
-            // Como guardamos carbsPct, vamos assumir que o total visual é o que importa.
-            carbsTotal = (meal.carbsPct?.toDouble() ?: 0.0) * factor, // Aqui seriam gramas no ideal
-            proteinTotal = (meal.proteinPct?.toDouble() ?: 0.0) * factor,
-            fatTotal = (meal.fatPct?.toDouble() ?: 0.0) * factor
+            caloriesTotal = totalCals,
+            carbsTotal = estCarbs,
+            proteinTotal = estProt,
+            fatTotal = estFat,
+            // Valores detalhados começam a 0 pois não estão no modelo simplificado da Refeicao
+            saturatedFatTotal = 0.0,
+            cholesterolTotal = 0.0,
+            sodiumTotal = 0.0,
+            fiberTotal = 0.0,
+            sugarsTotal = 0.0
         )
     }
 

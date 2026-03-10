@@ -62,6 +62,9 @@ class DietaLocalRepository @Inject constructor(
     suspend fun deleteIngrediente(ingrediente: IngredienteRefeicaoLocal) =
         refeicoesDao.deleteIngrediente(ingrediente)
 
+    suspend fun deleteIngredientesByRefeicao(idRefeicao: Int) =
+        refeicoesDao.deleteIngredientesByRefeicao(idRefeicao)
+
     fun getReceitasFavoritasByUser(userId: Int): Flow<List<ReceitaFavoritaLocal>> =
         receitasFavoritasDao.getReceitasFavoritasByUser(userId)
 

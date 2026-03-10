@@ -14,14 +14,52 @@ class DietaRemoteRepository @Inject constructor(
     suspend fun getRefeicaoById(id: Int): RefeicaoDto =
         api.getRefeicaoById(id)
 
-    suspend fun addRefeicao(nome: String, userId: Int): Int {
-        // Agora usamos idUser (ou id_user) conforme definiste no DTO
-        val request = CreateRefeicaoRequest(nome = nome, idUser = userId)
+    suspend fun addRefeicao(
+        nome: String,
+        userId: Int,
+        image: String? = null,
+        calories: Int? = 0,
+        fatPct: Int? = 0,
+        carbsPct: Int? = 0,
+        proteinPct: Int? = 0,
+        description: String? = ""
+    ): Int {
+        val request = CreateRefeicaoRequest(
+            nome = nome,
+            idUser = userId,
+            image = image,
+            calories = calories,
+            fatPct = fatPct,
+            carbsPct = carbsPct,
+            proteinPct = proteinPct,
+            description = description
+        )
         val response = api.addRefeicaoFavorita(request)
-        return response.id
+        return response.id ?: 0
     }
-    suspend fun updateRefeicao(id: Int, nome: String): SimpleMessageResponse =
-        api.updateRefeicaoFavorita(id, UpdateRefeicaoRequest(nome = nome))
+
+    suspend fun updateRefeicao(
+        id: Int,
+        nome: String,
+        image: String? = null,
+        calories: Int? = 0,
+        fatPct: Int? = 0,
+        carbsPct: Int? = 0,
+        proteinPct: Int? = 0,
+        description: String? = ""
+    ): SimpleMessageResponse =
+        api.updateRefeicaoFavorita(
+            id,
+            UpdateRefeicaoRequest(
+                nome = nome,
+                image = image,
+                calories = calories,
+                fatPct = fatPct,
+                carbsPct = carbsPct,
+                proteinPct = proteinPct,
+                description = description
+            )
+        )
 
     suspend fun deleteRefeicao(id: Int): SimpleMessageResponse =
         api.deleteRefeicaoFavorita(id)
@@ -38,6 +76,7 @@ class DietaRemoteRepository @Inject constructor(
         tipoPorcao: String,
         quantidadePorcoes: Double,
         idRefeicao: Int,
+        nomeAlimento: String
     ): SimpleMessageResponse =
         api.addIngrediente(
             CreateIngredienteRequest(
@@ -45,6 +84,7 @@ class DietaRemoteRepository @Inject constructor(
                 tipoporcao = tipoPorcao,
                 quantidadeporcoes = quantidadePorcoes,
                 idrefeicao = idRefeicao,
+                nomealimento = nomeAlimento
             )
         )
 
@@ -54,7 +94,8 @@ class DietaRemoteRepository @Inject constructor(
         tipoPorcao: String,
         quantidadePorcoes: Double,
         idRefeicao: Int,
-    ): SimpleMessageResponse =
+        nomeAlimento: String
+        ): SimpleMessageResponse =
         api.updateIngrediente(
             id,
             UpdateIngredienteRequest(
@@ -62,21 +103,42 @@ class DietaRemoteRepository @Inject constructor(
                 tipoporcao = tipoPorcao,
                 quantidadeporcoes = quantidadePorcoes,
                 idrefeicao = idRefeicao,
+                nomealimento = nomeAlimento
             )
         )
 
     suspend fun deleteIngrediente(id: Int): SimpleMessageResponse =
         api.deleteIngrediente(id)
 
+    suspend fun deleteIngredientesByRefeicao(idRefeicao: Int): SimpleMessageResponse =
+        api.deleteIngredientesByRefeicao(idRefeicao)
+
     // --- Receitas favoritas ---
     suspend fun getReceitasFavoritasByUser(userId: Int): List<ReceitaFavoritaDto> =
         api.getReceitasFavoritasByUser(userId)
 
-    suspend fun addReceitaFavorita(userId: Int, receitaApiId: String): SimpleMessageResponse =
+    suspend fun addReceitaFavorita(
+        userId: Int,
+        recipeApiId: String,
+        nome: String? = null,
+        image: String? = null,
+        calories: Int? = 0,
+        carbsPct: Int? = 0,
+        proteinPct: Int? = 0,
+        fatPct: Int? = 0,
+        description: String? = ""
+    ): SimpleMessageResponse =
         api.addReceitaFavorita(
             CreateReceitaFavoritaRequest(
                 iduser = userId,
-                idreceitaapi = receitaApiId,
+                idreceitaapi = recipeApiId,
+                nome = nome,
+                image = image,
+                calories = calories,
+                carbsPct = carbsPct,
+                proteinPct = proteinPct,
+                fatPct = fatPct,
+                description = description
             )
         )
 

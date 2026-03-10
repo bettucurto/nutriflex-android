@@ -19,6 +19,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.withStyle
 import androidx.compose.ui.unit.TextUnit
+import androidx.compose.ui.unit.TextUnitType
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.example.components.R
@@ -40,15 +41,16 @@ fun TitleText(value: String){
 }
 
 @Composable
-fun LeftTitleText(value: String, modifier: Modifier = Modifier, textSize: TextUnit = 30.sp){
+fun LeftTitleText(value: String, modifier: Modifier = Modifier, textSize: TextUnit = 32.sp){
     Text(
         text = value,
         modifier = modifier.fillMaxWidth().heightIn(),
         style = TextStyle(
             fontSize = textSize,
             fontWeight = FontWeight.Bold,
-            fontFamily = FontFamily(Font(R.font.audiowide)),
-            color = colorScheme.secondary
+            fontFamily = FontFamily(Font(R.font.gtwalsheimcondensedmedium)),
+            color = colorScheme.secondary,
+            letterSpacing = TextUnit(1.2f, type = TextUnitType.Sp),
         )
     )
 }
@@ -64,7 +66,8 @@ fun HeadingTextComponent(value: String, modifier: Modifier = Modifier, textSize:
             fontFamily = FontFamily(Font(R.font.gtwalsheimcondensedmedium)),
             textAlign = TextAlign.Center,
             color = textColor
-        )
+        ),
+        maxLines = 1
     )
 }
 

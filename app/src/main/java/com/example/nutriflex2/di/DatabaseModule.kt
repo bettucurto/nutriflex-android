@@ -65,7 +65,9 @@ object DatabaseModule {
         )
             .addMigrations(
                 DietaDatabase.MIGRATION_1_2,
-                DietaDatabase.MIGRATION_2_3
+                DietaDatabase.MIGRATION_2_3,
+                DietaDatabase.MIGRATION_3_4,
+                DietaDatabase.MIGRATION_4_5
             )
             .build()
 

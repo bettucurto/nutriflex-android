@@ -55,6 +55,8 @@ class RecipeInfoViewModel @Inject constructor(
 
         viewModelScope.launch {
             loadRecipeDetails(recipeId)
+        }
+        viewModelScope.launch {
             checkIfFavorite(recipeId)
         }
     }
@@ -113,11 +115,18 @@ class RecipeInfoViewModel @Inject constructor(
     @RequiresApi(Build.VERSION_CODES.O)
     fun toggleFavorite() {
         val recipe = _uiState.value.recipe ?: return
+        val currentlyFavorite = _uiState.value.isFavorite
+        
         viewModelScope.launch {
             val user = userLocalRepository.getUserLocal().firstOrNull() ?: return@launch
-            if (_uiState.value.isFavorite) {
-                repository.observeFavoriteRecipes(user.userId).firstOrNull()?.find { it.receitaApiId == recipe.id }?.let {
-                    repository.deleteFavoriteRecipe(it.id)
+            
+            if (currentlyFavorite) {
+                // Tentar encontrar o ID da receita favoritada para apagar
+                val favorites = repository.observeFavoriteRecipes(user.userId).firstOrNull()
+                val favItem = favorites?.find { it.receitaApiId == recipe.id }
+                
+                if (favItem != null) {
+                    repository.deleteFavoriteRecipe(favItem.id)
                 }
             } else {
                 val serving = recipe.servings.firstOrNull()
@@ -143,6 +152,7 @@ class RecipeInfoViewModel @Inject constructor(
                     description = recipe.description
                 )
             }
+            // O collect no init vai atualizar o isFavorite automaticamente quando a DB mudar
         }
     }
 
@@ -155,6 +165,7 @@ class RecipeInfoViewModel @Inject constructor(
                 repository.addIngredientToMeal(
                     mealId = mealIdLocal,
                     alimentoApiId = currentRecipe.id,
+                    nomeAlimento = currentRecipe.name,
                     tipoPorcao = "Serving",
                     quantidadePorcoes = _uiState.value.portionCount
                 )

@@ -24,6 +24,7 @@ data class Refeicao(
 data class IngredienteRefeicao(
     val id: Int,
     val alimentoApiId: String,
+    val nomeAlimento: String? = null,
     val tipoPorcao: String,
     val quantidadePorcoes: Double,
     val refeicaoId: Int,
@@ -67,6 +68,7 @@ data class FatSecretFood(
 data class FatSecretServing(
     val id: String,
     val description: String,
+    val measurementDescription: String?,
     val metricAmount: Double?,
     val metricUnit: String?,
     val numberOfUnits: Double?,

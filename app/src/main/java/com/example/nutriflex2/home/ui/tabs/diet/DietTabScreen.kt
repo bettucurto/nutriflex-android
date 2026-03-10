@@ -1,5 +1,6 @@
 package com.example.nutriflex2.home.ui.tabs.diet
 
+import androidx.compose.foundation.ScrollState
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -10,6 +11,7 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Favorite
 import androidx.compose.material.icons.filled.Menu
@@ -55,6 +57,7 @@ import kotlinx.coroutines.launch
 fun DietTabScreen(
     onNavigateToSearchMeals: () -> Unit,
     onNavigateToSearchRecipes: () -> Unit,
+    scrollState: ScrollState,
     viewModel: DietTabViewModel = hiltViewModel(),
     onOpenDrawer: () -> Unit
 ) {
@@ -65,7 +68,9 @@ fun DietTabScreen(
     val scope = rememberCoroutineScope()
 
     Surface(
-        modifier = Modifier.fillMaxSize(),
+        modifier = Modifier
+            .fillMaxSize()
+            .verticalScroll(scrollState),
         color = Color.Transparent
     ) {
 

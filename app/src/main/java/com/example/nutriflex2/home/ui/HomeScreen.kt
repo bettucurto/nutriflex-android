@@ -72,6 +72,7 @@ fun HomeScreen(
     onNavigateToAccount: () -> Unit,
     viewModel: HomeViewModel = hiltViewModel()
 ) {
+    // syncViewModel removido daqui
 
     //LÓGICA DO GRADIENTE
     val gradientColors = listOf(
@@ -136,6 +137,7 @@ fun HomeScreen(
 
     // Scroll vertical apenas da tab Home
     val homeScrollState = rememberScrollState()
+    val dietScrollState = rememberScrollState()
     var pendingScroll by remember { mutableStateOf(false) }
     var selectedRange by remember { mutableStateOf(WeightRange.ONE_MONTH) }
 
@@ -267,7 +269,6 @@ fun HomeScreen(
                             )
 
                             1 -> {
-                                val homeViewModel: HomeViewModel = hiltViewModel()
                                 HomeMainTab(
                                     state = state,
                                     topBarHeightDp = topBarHeightDp,
@@ -289,8 +290,6 @@ fun HomeScreen(
                                     },
                                     onRequestScrollToBottom = { pendingScroll = true },
                                     onNavigateToSearchRecipes = onNavigateToSearchRecipes,
-
-                                    // ---> ADICIONA ESTA LINHA AQUI <---
                                     onOpenDrawer = { scope.launch { drawerState.open() } }
                                 )
                             }
@@ -301,6 +300,7 @@ fun HomeScreen(
                                     onNavigateToSearchMeals = onNavigateToSearchMeals,
                                     onNavigateToSearchRecipes = onNavigateToSearchRecipes,
                                     viewModel = dietVm,
+                                    scrollState = dietScrollState,
                                     onOpenDrawer = { scope.launch { drawerState.open() } }
                                 )
                             }

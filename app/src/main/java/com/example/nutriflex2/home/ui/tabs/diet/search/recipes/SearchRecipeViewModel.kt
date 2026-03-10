@@ -4,6 +4,7 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.example.dieta.domain.DietaRepository
 import com.example.dieta.domain.FatSecretRecipeSummary
+import com.example.dieta.domain.ReceitaFavorita
 import components.CalorieRangeFilter
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.Job
@@ -11,13 +12,11 @@ import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
-import kotlinx.coroutines.launch
-import java.util.regex.Pattern
-import javax.inject.Inject
-
-import com.example.dieta.domain.ReceitaFavorita
-import local.UserLocalRepository
 import kotlinx.coroutines.flow.collectLatest
+import kotlinx.coroutines.flow.update
+import kotlinx.coroutines.launch
+import local.UserLocalRepository
+import javax.inject.Inject
 
 data class SearchRecipeUiState(
     val query: String = "",
@@ -35,6 +34,7 @@ data class SearchRecipeUiState(
     val fatMax: Int = 100,
 )
 
+
 @HiltViewModel
 class SearchRecipeViewModel @Inject constructor(
     private val dietaRepository: DietaRepository,
@@ -50,9 +50,10 @@ class SearchRecipeViewModel @Inject constructor(
         viewModelScope.launch {
             userLocalRepository.getUserLocal().collectLatest { user ->
                 user?.let {
+                    // Carregar favoritos do utilizador da base de dados local apenas
                     launch {
                         dietaRepository.observeFavoriteRecipes(it.userId).collect { recipes ->
-                            _uiState.value = _uiState.value.copy(favoriteRecipes = recipes)
+                            _uiState.update { it.copy(favoriteRecipes = recipes) }
                         }
                     }
                 }
@@ -60,20 +61,20 @@ class SearchRecipeViewModel @Inject constructor(
         }
         viewModelScope.launch {
             val defaultQuery = "Salad"
-            _uiState.value = _uiState.value.copy(query = defaultQuery)
+            _uiState.update { it.copy(query = defaultQuery) }
             searchRecipes(defaultQuery)
         }
     }
 
     fun onQueryChange(newQuery: String) {
-        _uiState.value = _uiState.value.copy(query = newQuery)
+        _uiState.update { it.copy(query = newQuery) }
         searchJob?.cancel()
 
         if (newQuery.isBlank()) {
-            _uiState.value = _uiState.value.copy(
+            _uiState.update { it.copy(
                 suggestions = emptyList(),
                 rawResults = emptyList()
-            )
+            ) }
             return
         }
 
@@ -84,76 +85,77 @@ class SearchRecipeViewModel @Inject constructor(
     }
 
     private suspend fun searchRecipes(query: String) {
-        _uiState.value = _uiState.value.copy(isLoading = true, errorMessage = null)
+        _uiState.update { it.copy(isLoading = true, errorMessage = null) }
         try {
             val searchResult = dietaRepository.searchRecipes(query)
             if (searchResult.sucesso) {
-                _uiState.value = _uiState.value.copy(
+                _uiState.update { it.copy(
                     isLoading = false,
                     rawResults = searchResult.receitas
-                )
+                ) }
                 applyFilters()
             } else {
-                _uiState.value = _uiState.value.copy(
+                _uiState.update { it.copy(
                     isLoading = false,
                     errorMessage = "Search failed",
                     rawResults = emptyList(),
                     suggestions = emptyList()
-                )
+                ) }
             }
         } catch (e: Exception) {
-            _uiState.value = _uiState.value.copy(
+            _uiState.update { it.copy(
                 isLoading = false,
                 errorMessage = e.message ?: "Error searching recipes",
                 rawResults = emptyList(),
                 suggestions = emptyList()
-            )
+            ) }
         }
     }
 
     fun onCalorieRangeSelected(range: CalorieRangeFilter) {
-        _uiState.value = _uiState.value.copy(calorieRange = range)
+        _uiState.update { it.copy(calorieRange = range) }
         applyFilters()
     }
 
     fun onCarbsRangeChanged(min: Int, max: Int) {
-        _uiState.value = _uiState.value.copy(
+        _uiState.update { it.copy(
             carbsMin = min.coerceIn(0, 100),
             carbsMax = max.coerceIn(0, 100)
-        )
+        ) }
         applyFilters()
     }
 
     fun onProteinRangeChanged(min: Int, max: Int) {
-        _uiState.value = _uiState.value.copy(
+        _uiState.update { it.copy(
             proteinMin = min.coerceIn(0, 100),
             proteinMax = max.coerceIn(0, 100)
-        )
+        ) }
         applyFilters()
     }
 
     fun onFatRangeChanged(min: Int, max: Int) {
-        _uiState.value = _uiState.value.copy(
+        _uiState.update { it.copy(
             fatMin = min.coerceIn(0, 100),
             fatMax = max.coerceIn(0, 100)
-        )
+        ) }
         applyFilters()
     }
 
     private fun applyFilters() {
-        val state = _uiState.value
-        val filtered = state.rawResults.filter { recipe ->
-            val calories = parseCalories(recipe)
-            val carbsPct = parseMacroPct(recipe, "carbohydrate")
-            val proteinPct = parseMacroPct(recipe, "protein")
-            val fatPct = parseMacroPct(recipe, "fat")
+        _uiState.update { state ->
+            val filtered = state.rawResults.filter { recipe ->
+                val calories = parseCalories(recipe)
+                val carbsPct = parseMacroPct(recipe, "carbohydrate")
+                val proteinPct = parseMacroPct(recipe, "protein")
+                val fatPct = parseMacroPct(recipe, "fat")
 
-            matchesCalorieRange(calories, state.calorieRange) &&
-                    carbsPct in state.carbsMin..state.carbsMax &&
-                    proteinPct in state.proteinMin..state.proteinMax &&
-                    fatPct in state.fatMin..state.fatMax
+                matchesCalorieRange(calories, state.calorieRange) &&
+                        carbsPct in state.carbsMin..state.carbsMax &&
+                        proteinPct in state.proteinMin..state.proteinMax &&
+                        fatPct in state.fatMin..state.fatMax
+            }
+            state.copy(suggestions = filtered)
         }
-        _uiState.value = state.copy(suggestions = filtered)
     }
 
     private fun parseCalories(recipe: FatSecretRecipeSummary): Int {

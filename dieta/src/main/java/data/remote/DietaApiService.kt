@@ -13,13 +13,33 @@ import retrofit2.http.Query
 data class RefeicaoDto(
     val id: Int,
     val nome: String,
+    @SerializedName("id_user")
     val iduser: Int,
+    val image: String?,
+    val calories: Int?,
+    @SerializedName("fat_pct")
+    val fatPct: Int?,
+    @SerializedName("carbs_pct")
+    val carbsPct: Int?,
+    @SerializedName("protein_pct")
+    val proteinPct: Int?,
+    val description: String?,
+    val ingredientes: List<IngredienteDto>? = emptyList()
 )
 
 data class CreateRefeicaoRequest(
     val nome: String,
     @SerializedName("id_user")
     val idUser: Int,
+    val image: String? = null,
+    val calories: Int? = 0,
+    @SerializedName("fat_pct")
+    val fatPct: Int? = 0,
+    @SerializedName("carbs_pct")
+    val carbsPct: Int? = 0,
+    @SerializedName("protein_pct")
+    val proteinPct: Int? = 0,
+    val description: String? = ""
 )
 
 data class CreateRefeicaoResponse(
@@ -29,19 +49,37 @@ data class CreateRefeicaoResponse(
 
 data class UpdateRefeicaoRequest(
     val nome: String,
+    val image: String? = null,
+    val calories: Int? = 0,
+    @SerializedName("fat_pct")
+    val fatPct: Int? = 0,
+    @SerializedName("carbs_pct")
+    val carbsPct: Int? = 0,
+    @SerializedName("protein_pct")
+    val proteinPct: Int? = 0,
+    val description: String? = ""
 )
 
 data class IngredienteDto(
     val id: Int,
+    @SerializedName("alimento_api_id")
     val alimentoapiid: String,
+    @SerializedName("nome_alimento")
+    val nomealimento: String?,
+    @SerializedName("tipo_porcao")
     val tipoporcao: String,
+    @SerializedName("quantidade_porcoes")
     val quantidadeporcoes: Double,
+    @SerializedName("id_refeicao")
     val idrefeicao: Int?,
 )
 
 data class CreateIngredienteRequest(
     @SerializedName("alimento_api_id")
     val alimentoapiid: String,
+
+    @SerializedName("nome_alimento")
+    val nomealimento: String,
 
     @SerializedName("tipo_porcao")
     val tipoporcao: String,
@@ -56,6 +94,9 @@ data class CreateIngredienteRequest(
 data class UpdateIngredienteRequest(
     @SerializedName("alimento_api_id")
     val alimentoapiid: String,
+
+    @SerializedName("nome_alimento")
+    val nomealimento: String,
 
     @SerializedName("tipo_porcao")
     val tipoporcao: String,
@@ -72,13 +113,37 @@ data class StringDto(val nome: String)
 
 data class ReceitaFavoritaDto(
     val id: Int,
+    @SerializedName("id_user")
     val iduser: Int,
+    @SerializedName("id_receita_api")
     val idreceitaapi: String,
+    val nome: String?,
+    val image: String?,
+    val calories: Int?,
+    @SerializedName("carbs_pct")
+    val carbsPct: Int?,
+    @SerializedName("protein_pct")
+    val proteinPct: Int?,
+    @SerializedName("fat_pct")
+    val fatPct: Int?,
+    val description: String?
 )
 
 data class CreateReceitaFavoritaRequest(
+    @SerializedName("id_user")
     val iduser: Int,
+    @SerializedName("id_receita_api")
     val idreceitaapi: String,
+    val nome: String?,
+    val image: String?,
+    val calories: Int?,
+    @SerializedName("carbs_pct")
+    val carbsPct: Int?,
+    @SerializedName("protein_pct")
+    val proteinPct: Int?,
+    @SerializedName("fat_pct")
+    val fatPct: Int?,
+    val description: String?
 )
 
 data class FatSecretFoodDto(
@@ -251,12 +316,13 @@ data class FatSecretRecipeDetailsResponse(
 
 data class SimpleMessageResponse(
     val message: String?,
+    val id: Int? = null
 )
 
 interface DietaApiService {
 
     // --- Refeições favoritas ---
-    @GET("refeicoes/userid/{userId}")
+    @GET("refeicoes/user/{userId}")
     suspend fun getRefeicoesByUser(
         @Path("userId") userId: Int,
     ): List<RefeicaoDto>
@@ -312,18 +378,23 @@ interface DietaApiService {
         @Path("id") id: Int,
     ): SimpleMessageResponse
 
+    @DELETE("refeicoes/ingredientes/refeicao/{idrefeicao}")
+    suspend fun deleteIngredientesByRefeicao(
+        @Path("idrefeicao") idRefeicao: Int,
+    ): SimpleMessageResponse
+
     // --- Receitas favoritas ---
-    @GET("refeicoes/receitasfavoritas/{userId}")
+    @GET("refeicoes/receitas/favoritas/{userId}")
     suspend fun getReceitasFavoritasByUser(
         @Path("userId") userId: Int,
     ): List<ReceitaFavoritaDto>
 
-    @POST("refeicoes/receitasfavoritas")
+    @POST("refeicoes/receitas/favoritas")
     suspend fun addReceitaFavorita(
         @Body body: CreateReceitaFavoritaRequest,
     ): SimpleMessageResponse
 
-    @DELETE("refeicoes/receitasfavoritas/{id}")
+    @DELETE("refeicoes/receitas/favoritas/{id}")
     suspend fun deleteReceitaFavorita(
         @Path("id") id: Int,
     ): SimpleMessageResponse

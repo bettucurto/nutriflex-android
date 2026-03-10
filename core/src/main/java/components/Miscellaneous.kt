@@ -7,7 +7,10 @@ import androidx.annotation.RequiresApi
 import androidx.compose.animation.Animatable
 import androidx.compose.animation.core.Animatable
 import androidx.compose.animation.core.FastOutSlowInEasing
+import androidx.compose.animation.core.Spring
 import androidx.compose.animation.core.animateFloatAsState
+import androidx.compose.animation.core.exponentialDecay
+import androidx.compose.animation.core.spring
 import androidx.compose.animation.core.tween
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.Canvas
@@ -15,7 +18,7 @@ import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
-import androidx.compose.foundation.gestures.detectDragGestures
+import androidx.compose.foundation.gestures.detectHorizontalDragGestures
 import androidx.compose.foundation.gestures.detectTapGestures
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -39,6 +42,7 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.DateRange
+import androidx.compose.material.icons.filled.Edit
 import androidx.compose.material.icons.filled.LocalFireDepartment
 import androidx.compose.material.icons.outlined.BreakfastDining
 import androidx.compose.material.icons.outlined.FitnessCenter
@@ -95,6 +99,7 @@ import androidx.compose.ui.graphics.nativeCanvas
 import androidx.compose.ui.graphics.toArgb
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.input.pointer.pointerInput
+import androidx.compose.ui.input.pointer.util.VelocityTracker
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.res.painterResource
@@ -313,7 +318,7 @@ fun CaloriesCard(
         elevation = CardDefaults.cardElevation(defaultElevation = 4.dp),
         border = BorderStroke(1.dp, borderColor),
         modifier = modifier
-            .fillMaxWidth(0.95f)
+            .fillMaxWidth(0.90f)
             .height(IntrinsicSize.Min)
             .clickable { onAddClick() }
     ) {
@@ -661,7 +666,7 @@ fun DietCaloriesCard(
 
     Box(
         modifier = Modifier
-            .fillMaxWidth(0.95f)
+            .fillMaxWidth(0.90f)
             .height(520.dp),
         contentAlignment = Alignment.TopCenter
     ) {
@@ -882,7 +887,7 @@ fun NextWorkoutCard(
         shape = RoundedCornerShape(24.dp),
         elevation = CardDefaults.cardElevation(defaultElevation = 8.dp),
         modifier = modifier
-            .fillMaxWidth(0.95f)
+            .fillMaxWidth(0.90f)
             .height(220.dp)
     ) {
         Box(modifier = Modifier.fillMaxSize()) {
@@ -982,7 +987,7 @@ fun WeightsCardRow(
     // Row contendo os dois cartões
     Row(
         horizontalArrangement = Arrangement.spacedBy(8.dp),
-        modifier = Modifier.fillMaxWidth(0.95f)
+        modifier = Modifier.fillMaxWidth(0.90f)
     ) {
         // Coluna 1: Peso Atual
         Column(
@@ -1044,6 +1049,8 @@ fun WeightPickerDialog(
     onConfirm: (Float) -> Unit
 ) {
     var currentWeight by remember { mutableFloatStateOf(initialWeight) }
+    var showManualInput by remember { mutableStateOf(false) }
+    var manualValue by remember { mutableStateOf(currentWeight.toString()) }
 
     Dialog(onDismissRequest = onDismiss) {
         Surface(
@@ -1066,23 +1073,67 @@ fun WeightPickerDialog(
                     modifier = Modifier.padding(bottom = 24.dp)
                 )
 
-                // Régua/Escala
-                WeightScalePicker(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .height(100.dp),
-                    initialValue = initialWeight,
-                    onValueChange = { currentWeight = it }
-                )
+                if (showManualInput) {
+                    OutlinedTextField(
+                        value = manualValue,
+                        onValueChange = { manualValue = it },
+                        label = { Text("Enter Weight (kg)") },
+                        modifier = Modifier.fillMaxWidth().padding(vertical = 16.dp),
+                        singleLine = true,
+                        keyboardOptions = androidx.compose.foundation.text.KeyboardOptions(
+                            keyboardType = androidx.compose.ui.text.input.KeyboardType.Decimal
+                        ),
+                        colors = OutlinedTextFieldDefaults.colors(
+                            focusedBorderColor = colorScheme.primary,
+                            unfocusedBorderColor = Color.Gray,
+                            focusedLabelColor = colorScheme.primary
+                        )
+                    )
+                    
+                    Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.End) {
+                        TextButton(onClick = { showManualInput = false }) {
+                            Text("Back to scale", color = colorScheme.primary)
+                        }
+                    }
+                } else {
+                    // Régua/Escala
+                    WeightScalePicker(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .height(100.dp),
+                        initialValue = currentWeight,
+                        onValueChange = { currentWeight = it }
+                    )
 
-                // Texto do valor selecionado (opcional, já que a régua mostra, mas ajuda na precisão)
-                Text(
-                    text = String.format("%.1f kg", currentWeight),
-                    fontSize = 18.sp,
-                    fontWeight = FontWeight.SemiBold,
-                    color = colorScheme.primary,
-                    modifier = Modifier.padding(vertical = 16.dp)
-                )
+                    // Texto do valor selecionado (Clicável para input manual)
+                    Surface(
+                        onClick = { 
+                            manualValue = String.format("%.1f", currentWeight).replace(",", ".")
+                            showManualInput = true 
+                        },
+                        color = Color.Transparent,
+                        shape = RoundedCornerShape(8.dp)
+                    ) {
+                        Row(
+                            verticalAlignment = Alignment.CenterVertically,
+                            modifier = Modifier.padding(horizontal = 12.dp, vertical = 16.dp)
+                        ) {
+                            Text(
+                                text = String.format("%.1f kg", currentWeight),
+                                fontSize = 22.sp,
+                                fontWeight = FontWeight.ExtraBold,
+                                color = colorScheme.primary
+                            )
+                            Spacer(Modifier.width(8.dp))
+                            Icon(
+                                imageVector = Icons.Default.Edit,
+                                contentDescription = "Edit manual",
+                                tint = colorScheme.primary,
+                                modifier = Modifier.size(18.dp)
+                            )
+                        }
+                    }
+                }
 
                 Spacer(modifier = Modifier.height(8.dp))
 
@@ -1091,12 +1142,17 @@ fun WeightPickerDialog(
                     modifier = Modifier.fillMaxWidth(),
                     horizontalAlignment = Alignment.CenterHorizontally
                 ) {
-                    // Botão OK (Preto)
+                    // Botão OK
                     Button(
                         onClick = {
-                            currentWeight = (currentWeight * 10).roundToInt() / 10f
-                            onConfirm(currentWeight)
-                                  },
+                            val finalVal = if (showManualInput) {
+                                manualValue.replace(",", ".").toFloatOrNull() ?: currentWeight
+                            } else {
+                                currentWeight
+                            }
+                            val rounded = (finalVal * 10).roundToInt() / 10f
+                            onConfirm(rounded)
+                        },
                         colors = ButtonDefaults.buttonColors(
                             containerColor = Color.Black,
                             contentColor = Color.White
@@ -1111,7 +1167,7 @@ fun WeightPickerDialog(
 
                     Spacer(modifier = Modifier.height(8.dp))
 
-                    // Botão Cancel (Texto preto)
+                    // Botão Cancel
                     TextButton(
                         onClick = onDismiss,
                         modifier = Modifier.height(48.dp)
@@ -1135,95 +1191,126 @@ fun WeightScalePicker(
     range: ClosedFloatingPointRange<Float> = 30f..200f,
     onValueChange: (Float) -> Unit
 ) {
-    // Configurações visuais
     val density = LocalDensity.current
     val spacingPx = with(density) { 15.dp.toPx() } // Espaço entre traços (100g)
-    val majorTickHeight = with(density) { 40.dp.toPx() }
-    val minorTickHeight = with(density) { 25.dp.toPx() }
+    
+    val scrollOffset = remember { Animatable(initialValue * 10f * spacingPx) }
+    val scope = rememberCoroutineScope()
 
-    // Estado do valor atual
-    var value by remember { mutableFloatStateOf(initialValue) }
-
-    // TextPaint para desenhar os números
-    val textPaint = remember {
-        android.graphics.Paint().apply {
-            color = android.graphics.Color.BLACK
-            textAlign = android.graphics.Paint.Align.CENTER
-            textSize = with(density) { 16.sp.toPx() }
-            isAntiAlias = true
+    LaunchedEffect(initialValue) {
+        val targetOffset = initialValue * 10f * spacingPx
+        if (kotlin.math.abs(scrollOffset.value - targetOffset) > 1f && !scrollOffset.isRunning) {
+            scrollOffset.snapTo(targetOffset)
         }
     }
 
     BoxWithConstraints(
         modifier = modifier
+            .background(Color.White)
             .pointerInput(Unit) {
-                detectDragGestures { change, dragAmount ->
-                    change.consume()
-                    // Drag para a esquerda aumenta o valor (visual move para direita), e vice-versa
-                    // Quanto maior o spacingPx, mais lento muda o valor
-                    val delta = (-dragAmount.x / spacingPx) * 0.1f
-                    val newValue = (value + delta).coerceIn(range)
-                    value = newValue
-                    onValueChange(newValue)
-                }
-            }
+                val velocityTracker = VelocityTracker()
+                detectHorizontalDragGestures(
+                    onHorizontalDrag = { change, dragAmount ->
+                        change.consume()
+                        velocityTracker.addPosition(change.uptimeMillis, change.position)
+                        scope.launch {
+                            val newOffset = (scrollOffset.value - dragAmount)
+                                .coerceIn(range.start * 10f * spacingPx, range.endInclusive * 10f * spacingPx)
+                            scrollOffset.snapTo(newOffset)
+                            onValueChange(newOffset / (10f * spacingPx))
+                        }
+                    },
+                    onDragEnd = {
+                        val velocity = velocityTracker.calculateVelocity().x
+                        scope.launch {
+                            // REDUZIDA A FRICÇÃO: de 1.2f para 0.5f para deslizar mais tempo
+                            val decay = exponentialDecay<Float>(frictionMultiplier = 0.5f)
+                            scrollOffset.animateDecay(-velocity, decay)
+                            
+                            val finalWeight = scrollOffset.value / (10f * spacingPx)
+                            val snappedWeight = (finalWeight * 10).roundToInt() / 10f
+                            scrollOffset.animateTo(
+                                snappedWeight * 10f * spacingPx,
+                                spring(stiffness = Spring.StiffnessLow)
+                            )
+                            onValueChange(snappedWeight)
+                        }
+                    }
+                )
+            },
+        contentAlignment = Alignment.Center
     ) {
         val width = constraints.maxWidth.toFloat()
         val height = constraints.maxHeight.toFloat()
         val centerX = width / 2f
 
+        // TextPaint para os números
+        val textPaint = remember {
+            android.graphics.Paint().apply {
+                color = android.graphics.Color.BLACK
+                textAlign = android.graphics.Paint.Align.CENTER
+                textSize = with(density) { 14.sp.toPx() }
+                isAntiAlias = true
+            }
+        }
+
         Canvas(modifier = Modifier.fillMaxSize()) {
-            // Desenhar linha central de indicação (Vermelha ou cor de destaque)
+            // Linha central fixa (Vermelha)
             drawLine(
-                color = Color(0xFFFF5252), // Vermelho suave para indicar o centro
-                start = Offset(centerX, 0f),
-                end = Offset(centerX, height * 0.6f),
-                strokeWidth = 4.dp.toPx()
+                color = Color(0xFFFF5252),
+                start = Offset(centerX, 10.dp.toPx()),
+                end = Offset(centerX, height - 20.dp.toPx()),
+                strokeWidth = 3.dp.toPx(),
+                cap = StrokeCap.Round
             )
 
-            // Calcular intervalo de valores visíveis para otimizar desenho
-            // Quantos ticks cabem em metade da tela?
-            val visibleTicks = (width / 2f / spacingPx).toInt() + 2
+            // Valor atual em tempo real
+            val currentWeight = scrollOffset.value / (10f * spacingPx)
+            
+            // Desenhar os traços num intervalo visível ao redor do centro
+            val startWeight = (currentWeight - (centerX / spacingPx / 10f)).toInt().coerceAtLeast(range.start.toInt())
+            val endWeight = (currentWeight + (centerX / spacingPx / 10f)).toInt().coerceAtMost(range.endInclusive.toInt())
 
-            // Arredondar valor central para o décimo mais próximo para alinhar o grid
-            val currentTenth = (value * 10).roundToInt()
+            for (w in (startWeight * 10)..(endWeight * 10)) {
+                val tickWeight = w / 10f
+                if (tickWeight !in range) continue
 
-            // Desenhar os traços
-            for (i in -visibleTicks..visibleTicks) {
-                val tickValueInt = currentTenth + i
-                val tickValue = tickValueInt / 10f
+                // Posição X: Centro + (Diferença de peso * pixels por kg)
+                val x = centerX + (tickWeight - currentWeight) * 10f * spacingPx
 
-                // Posição X deste traço
-                val x = centerX + (i * spacingPx) - ((value * 10 - currentTenth) * spacingPx / 10f)
+                val isMajor = w % 10 == 0
+                val isHalf = w % 5 == 0 && !isMajor
+                
+                val tickHeight = when {
+                    isMajor -> 45.dp.toPx()
+                    isHalf -> 30.dp.toPx()
+                    else -> 20.dp.toPx()
+                }
+                
+                val alpha = (1f - (kotlin.math.abs(x - centerX) / centerX)).coerceIn(0f, 1f)
 
-                // Verifica se é um número inteiro (ex: 75.0, 76.0)
-                val isMajor = tickValueInt % 10 == 0
-
-                val tickHeight = if (isMajor) majorTickHeight else minorTickHeight
-                val strokeW = if (isMajor) 2.dp.toPx() else 1.dp.toPx()
-                val color = if (isMajor) Color.Black else Color.Gray
-
-                // Desenha a linha
                 drawLine(
-                    color = color,
-                    start = Offset(x, height / 2f - tickHeight / 2f),
-                    end = Offset(x, height / 2f + tickHeight / 2f),
-                    strokeWidth = strokeW
+                    color = (if (isMajor) Color.Black else Color.Gray).copy(alpha = alpha),
+                    start = Offset(x, (height - tickHeight) / 2f),
+                    end = Offset(x, (height + tickHeight) / 2f),
+                    strokeWidth = (if (isMajor) 2.dp.toPx() else 1.dp.toPx())
                 )
 
-                // Desenha o texto se for Major (Inteiro)
                 if (isMajor) {
-                    drawContext.canvas.nativeCanvas.drawText(
-                        tickValue.toInt().toString(),
-                        x,
-                        height / 2f + tickHeight / 2f + 25.dp.toPx(), // Posição Y do texto
-                        textPaint
-                    )
+                    drawIntoCanvas { canvas ->
+                        canvas.nativeCanvas.drawText(
+                            tickWeight.toInt().toString(),
+                            x,
+                            (height + tickHeight) / 2f + 20.dp.toPx(),
+                            textPaint.apply { this.alpha = (alpha * 255).toInt() }
+                        )
+                    }
                 }
             }
         }
     }
 }
+
 
 @Composable
 private fun SingleWeightCard(
@@ -1238,12 +1325,12 @@ private fun SingleWeightCard(
         shape = cardShape,
         tonalElevation = 2.dp,
         shadowElevation = 8.dp,
-        border = androidx.compose.foundation.BorderStroke(
+        border = BorderStroke(
             width = 2.dp,
-            brush = androidx.compose.ui.graphics.Brush.linearGradient(
+            brush = Brush.linearGradient(
                 colors = listOf(
-                    MaterialTheme.colorScheme.primary,
-                    MaterialTheme.colorScheme.secondary
+                    colorScheme.primary,
+                    colorScheme.secondary
                 )
             )
         ),
@@ -1252,8 +1339,8 @@ private fun SingleWeightCard(
             .shadow(
                 elevation = 8.dp,
                 shape = cardShape,
-                ambientColor = MaterialTheme.colorScheme.primary,
-                spotColor = MaterialTheme.colorScheme.primary
+                ambientColor = colorScheme.primary,
+                spotColor = colorScheme.primary
             )
     ) {
         Column(
@@ -1263,7 +1350,7 @@ private fun SingleWeightCard(
             horizontalAlignment = Alignment.CenterHorizontally,
             verticalArrangement = Arrangement.SpaceBetween
         ) {
-            HeadingTextComponent(title, textSize = 24.sp, textColor = MaterialTheme.colorScheme.primary)
+            HeadingTextComponent(title, textSize = 24.sp, textColor = colorScheme.primary)
             HeadingTextComponent(text, textSize = 20.sp)
 
             NFButton(
@@ -1297,7 +1384,7 @@ fun WeightForecastCard(
             )
         ),
         modifier = Modifier
-            .fillMaxWidth(0.95f)
+            .fillMaxWidth(0.90f)
             .shadow(
                 elevation = 8.dp,
                 shape = cardShape,
@@ -1346,7 +1433,7 @@ fun BmiCard(
         tonalElevation = 2.dp,
         shadowElevation = 8.dp,
         color = MaterialTheme.colorScheme.surface,
-        modifier = Modifier.fillMaxWidth(0.95f)
+        modifier = Modifier.fillMaxWidth(0.90f)
     ) {
         Column(
             modifier = Modifier
@@ -1400,7 +1487,7 @@ fun BmiGauge(
 
     Column(
         horizontalAlignment = Alignment.CenterHorizontally,
-        modifier = modifier
+        modifier = modifier.fillMaxWidth()
     ) {
         Box(
             modifier = Modifier
@@ -1450,7 +1537,7 @@ fun BmiGauge(
                     drawIntoCanvas { canvas ->
                         val paint = Paint().apply {
                             this.color = textColor
-                            this.textSize = with(density) { 13.sp.toPx() } // Tamanho legível
+                            this.textSize = with(density) { 12.sp.toPx() } // Tamanho legível
                             this.textAlign = Paint.Align.LEFT // Importante: Desenhamos do inicio do offset calculado
                             this.typeface = Typeface.DEFAULT_BOLD
                             this.alpha = 200
@@ -1537,7 +1624,7 @@ fun BmiGauge(
                 text = String.format("%.1f", bmi),
                 fontSize = 54.sp,
                 fontWeight = FontWeight.ExtraBold,
-                color = MaterialTheme.colorScheme.onSurface
+                color = colorScheme.onSurface
             )
 
             val (label, color) = when {
@@ -2048,8 +2135,8 @@ private fun DrawScope.drawPointTooltip(
     val arrowWidth = 12.dp.toPx()
     val arrowHeight = 8.dp.toPx()
 
-    val boxWidth = max(weightLayout.size.width, dateLayout.size.width) + paddingH * 2
-    val boxHeight = weightLayout.size.height + dateLayout.size.height + paddingV * 2.5f
+    val boxWidth = max(weightLayout.size.width.toFloat(), dateLayout.size.width.toFloat()) + paddingH * 2
+    val boxHeight = weightLayout.size.height.toFloat() + dateLayout.size.height.toFloat() + paddingV * 2.5f
 
     val margin = 6.dp.toPx()
     val topSafeMargin = 8.dp.toPx()
@@ -2146,7 +2233,7 @@ fun WeightProgressCard(
             )
         ),
         modifier = modifier
-            .fillMaxWidth(0.95f)
+            .fillMaxWidth(0.90f)
             .shadow(
                 elevation = 8.dp,
                 shape = cardShape,

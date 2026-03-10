@@ -84,6 +84,12 @@ import com.example.nutriflex2.R
 import components.HeadingTextComponent
 import components.LeftTitleText
 
+import androidx.compose.material.icons.filled.Favorite
+import androidx.compose.material.icons.filled.FavoriteBorder
+import androidx.compose.material3.HorizontalDivider
+import androidx.compose.ui.geometry.Size
+import androidx.compose.foundation.shape.CircleShape
+
 @RequiresApi(Build.VERSION_CODES.O)
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -91,6 +97,7 @@ fun FavoriteMealInfoScreen(
     mealId: String,
     onBack: () -> Unit,
     onLogMeal: () -> Unit,
+    onEditClick: (String) -> Unit,
     onIngredientClick: (String) -> Unit,
     viewModel: FavoriteMealInfoViewModel = hiltViewModel()
 ) {
@@ -118,6 +125,11 @@ fun FavoriteMealInfoScreen(
                 navigationIcon = {
                     IconButton(onClick = onBack) {
                         Icon(Icons.Default.ArrowBack, contentDescription = "Back")
+                    }
+                },
+                actions = {
+                    IconButton(onClick = { onEditClick(mealId) }) {
+                        Icon(Icons.Default.Edit, contentDescription = "Edit Meal", tint = colorScheme.primary)
                     }
                 }
             )
@@ -220,13 +232,30 @@ fun FavoriteMealInfoScreen(
                         Spacer(Modifier.height(24.dp))
 
                         // INGREDITENTES
-                        ExpandableIngredientsSection(
+                        val ingredientsList = uiState.ingredients.map { ing ->
+                            ExpandableItemData(
+                                text = "${ing.quantidadePorcoes} x ${ing.tipoPorcao} de ${ing.nomeAlimento ?: "Ingredient"}",
+                                clickId = ing.alimentoApiId
+                            )
+                        }
+                        ExpandableSection(
                             title = "Ingredients",
-                            ingredients = uiState.ingredients,
-                            onIngredientClick = onIngredientClick
+                            items = ingredientsList,
+                            onItemClick = onIngredientClick
                         )
 
                         Spacer(Modifier.height(24.dp))
+
+                        Column(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .clip(RoundedCornerShape(12.dp))
+                                .padding(16.dp)
+                        ) {
+                            FullNutritionFacts(uiState)
+                        }
+
+                        Spacer(Modifier.height(20.dp))
                     }
                 }
             }
@@ -238,11 +267,17 @@ fun FavoriteMealInfoScreen(
     }
 }
 
+data class ExpandableItemData(
+    val text: String,
+    val clickId: String? = null
+)
+
 @Composable
-private fun ExpandableIngredientsSection(
+private fun ExpandableSection(
     title: String,
-    ingredients: List<IngredienteRefeicao>,
-    onIngredientClick: (String) -> Unit
+    items: List<ExpandableItemData>,
+    isNumbered: Boolean = false,
+    onItemClick: ((String) -> Unit)? = null
 ) {
     var expanded by remember { mutableStateOf(false) }
 
@@ -253,7 +288,10 @@ private fun ExpandableIngredientsSection(
             .background(colorScheme.surfaceVariant.copy(alpha = 0.5f))
     ) {
         Row(
-            modifier = Modifier.fillMaxWidth().clickable { expanded = !expanded }.padding(16.dp),
+            modifier = Modifier
+                .fillMaxWidth()
+                .clickable { expanded = !expanded }
+                .padding(16.dp),
             horizontalArrangement = Arrangement.SpaceBetween,
             verticalAlignment = Alignment.CenterVertically
         ) {
@@ -276,28 +314,50 @@ private fun ExpandableIngredientsSection(
             exit = shrinkVertically()
         ) {
             Column(
-                modifier = Modifier.fillMaxWidth().padding(start = 16.dp, end = 16.dp, bottom = 16.dp),
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(start = 16.dp, end = 16.dp, bottom = 16.dp),
                 verticalArrangement = Arrangement.spacedBy(12.dp)
             ) {
-                if (ingredients.isEmpty()) {
-                    Text("No ingredients found.", color = colorScheme.onSurfaceVariant)
+                if (items.isEmpty()) {
+                    Text(
+                        text = "No details available.",
+                        style = MaterialTheme.typography.bodyMedium,
+                        color = colorScheme.onSurfaceVariant
+                    )
                 } else {
-                    ingredients.forEach { ing ->
+                    items.forEachIndexed { index, item ->
+                        val isClickable = item.clickId != null && onItemClick != null
+
                         Row(
-                            modifier = Modifier.fillMaxWidth().clickable { onIngredientClick(ing.alimentoApiId) },
-                            verticalAlignment = Alignment.CenterVertically
+                            verticalAlignment = Alignment.Top,
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .then(
+                                    if (isClickable) Modifier.clickable { onItemClick!!(item.clickId!!) }
+                                    else Modifier
+                                )
+                                .padding(vertical = if (isClickable) 4.dp else 0.dp)
                         ) {
+                            if (isNumbered) {
+                                Text(
+                                    text = "${index + 1}. ",
+                                    style = MaterialTheme.typography.bodyMedium,
+                                    fontWeight = FontWeight.Bold,
+                                    color = colorScheme.primary
+                                )
+                            } else {
+                                Text(
+                                    text = "• ",
+                                    style = MaterialTheme.typography.bodyMedium,
+                                    color = colorScheme.onSurfaceVariant
+                                )
+                            }
                             Text(
-                                text = "• ${ing.quantidadePorcoes} x ${ing.tipoPorcao}",
+                                text = item.text,
                                 style = MaterialTheme.typography.bodyMedium,
-                                color = colorScheme.primary,
-                                textDecoration = TextDecoration.Underline
-                            )
-                            Spacer(Modifier.width(8.dp))
-                            Text(
-                                text = "(ID: ${ing.alimentoApiId})",
-                                style = MaterialTheme.typography.bodySmall,
-                                color = colorScheme.onSurfaceVariant
+                                color = if (isClickable) colorScheme.primary else colorScheme.onSurface,
+                                textDecoration = if (isClickable) TextDecoration.Underline else null
                             )
                         }
                     }
@@ -306,10 +366,6 @@ private fun ExpandableIngredientsSection(
         }
     }
 }
-
-// Reutilização dos componentes internos (HeroImage, NutritionCircle, etc.)
-// Como são idênticos ao RecipeInfoScreen, no ideal seriam extraídos para 'components'.
-// Para este passo, vou colar as versões simplificadas aqui.
 
 @Composable
 private fun ServingAmountField(value: String, onValueChange: (String) -> Unit, modifier: Modifier = Modifier) {
@@ -336,51 +392,243 @@ private fun ServingAmountField(value: String, onValueChange: (String) -> Unit, m
 private fun HeroImage(imageUrl: String?, scrollOffset: Float, density: Density, contentDescription: String) {
     val maxHeightPx = with(density) { 290.dp.toPx() }
     val minHeightPx = with(density) { 70.dp.toPx() }
+    val minScale = 0.3f
+
     val heightProgress = (scrollOffset / 400f).coerceIn(0f, 1.5f)
-    val currentHeight = (maxHeightPx - (heightProgress * (maxHeightPx * 0.6f))).coerceAtLeast(minHeightPx)
-    val scale = 1f - ((scrollOffset / 350f).coerceIn(0f, 1f) * 0.7f)
+    val currentHeight = (maxHeightPx - (heightProgress * (maxHeightPx * 0.6f)))
+        .coerceAtLeast(minHeightPx)
+
+    val scaleProgress = (scrollOffset / 350f).coerceIn(0f, 1f)
+    val scale = 1f - (scaleProgress * 0.7f)
 
     Box(
-        modifier = Modifier.fillMaxWidth().height(with(density) { currentHeight.toDp() }).padding(vertical = 8.dp).offset(y = with(density) { (scrollOffset / 8f).toDp() }),
+        modifier = Modifier
+            .fillMaxWidth()
+            .height(with(density) { currentHeight.toDp() })
+            .padding(vertical = 8.dp)
+            .offset(y = with(density) { (scrollOffset / 8f).toDp() }),
         contentAlignment = Alignment.Center
     ) {
         AsyncImage(
-            model = imageUrl, contentDescription = contentDescription, contentScale = ContentScale.Crop,
-            modifier = Modifier.fillMaxWidth(scale.coerceAtLeast(0.3f)).clip(RoundedCornerShape(20.dp)).graphicsLayer(scaleX = scale, scaleY = scale),
+            model = imageUrl,
+            contentDescription = contentDescription,
+            contentScale = ContentScale.Crop,
+            modifier = Modifier
+                .fillMaxWidth(scale.coerceAtLeast(minScale))
+                .clip(RoundedCornerShape(20.dp))
+                .graphicsLayer(
+                    scaleX = scale,
+                    scaleY = scale
+                ),
             error = painterResource(id = R.drawable.nutrilogo)
         )
     }
 }
 
 @Composable
+private fun FullNutritionFacts(uiState: FavoriteMealInfoUiState) {
+    Column(
+        modifier = Modifier.fillMaxWidth()
+    ) {
+        Text(
+            text = "Nutrition Facts",
+            fontWeight = FontWeight.ExtraBold,
+            fontSize = 28.sp,
+            color = colorScheme.secondary
+        )
+
+        HorizontalDivider(thickness = 3.dp, color = colorScheme.onSurface, modifier = Modifier.padding(vertical = 4.dp))
+
+        NutrientLine("Total Fat", "${uiState.fatTotal.toInt()}g", isBold = true, showDivider = false)
+        NutrientLine("Saturated Fat", "${uiState.saturatedFatTotal.toInt()}g", isBold = false, indent = true)
+        NutrientLine("Trans Fat", "0g", isBold = false, indent = true)
+
+        NutrientLine("Cholesterol", "${uiState.cholesterolTotal.toInt()}mg", isBold = true)
+        NutrientLine("Sodium", "${uiState.sodiumTotal.toInt()}mg", isBold = true)
+
+        NutrientLine("Total Carbohydrate", "${uiState.carbsTotal.toInt()}g", isBold = true)
+        NutrientLine("Dietary Fiber", "${uiState.fiberTotal.toInt()}g", isBold = false, indent = true)
+        NutrientLine("Total Sugars", "${uiState.sugarsTotal.toInt()}g", isBold = false, indent = true)
+
+        NutrientLine("Protein", "${uiState.proteinTotal.toInt()}g", isBold = true)
+
+        HorizontalDivider(thickness = 3.dp, color = colorScheme.onSurface, modifier = Modifier.padding(top = 4.dp))
+    }
+}
+
+@Composable
+private fun NutrientLine(
+    label: String,
+    amount: String,
+    isBold: Boolean = false,
+    indent: Boolean = false,
+    showDivider: Boolean = true
+) {
+    Column {
+        if (showDivider) {
+            HorizontalDivider(thickness = 1.dp, color = colorScheme.outlineVariant)
+        }
+        Row(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(start = if (indent) 16.dp else 0.dp, top = 6.dp, bottom = 6.dp),
+            horizontalArrangement = Arrangement.SpaceBetween
+        ) {
+            Text(
+                text = label,
+                fontWeight = if (isBold) FontWeight.Bold else FontWeight.Normal,
+                color = colorScheme.onSurface,
+                fontSize = 16.sp
+            )
+            Text(
+                text = amount,
+                fontWeight = FontWeight.Bold,
+                color = Color(0xFF3C82F6),
+                fontSize = 16.sp
+            )
+        }
+    }
+}
+
+@Composable
 private fun NutritionCircle(uiState: FavoriteMealInfoUiState) {
     val totalCals = uiState.caloriesTotal.coerceAtLeast(0.0)
-    val carbPct = uiState.meal?.carbsPct ?: 0
-    val fatPct = uiState.meal?.fatPct ?: 0
-    val protPct = uiState.meal?.proteinPct ?: 0
 
-    Box(modifier = Modifier.size(150.dp), contentAlignment = Alignment.Center) {
-        Canvas(modifier = Modifier.fillMaxSize(0.95f)) {
-            val strokeWidth = 12.dp.toPx()
-            var startAngle = -90f
-            fun sweep(pct: Int) = 360f * (pct / 100f)
+    val kcalCarb = uiState.carbsTotal * 4
+    val kcalFat = uiState.fatTotal * 9
+    val kcalProt = uiState.proteinTotal * 4
 
-            drawArc(color = Color(0xFFE0E0E0), startAngle = 0f, sweepAngle = 360f, useCenter = false, style = Stroke(width = strokeWidth))
-            
-            val fatSweep = sweep(fatPct)
-            drawArc(color = Color(0xFFFFB74D), startAngle = startAngle, sweepAngle = fatSweep, useCenter = false, style = Stroke(width = strokeWidth, cap = StrokeCap.Round))
-            startAngle += fatSweep
-            
-            val carbSweep = sweep(carbPct)
-            drawArc(color = Color(0xFF4FC3F7), startAngle = startAngle, sweepAngle = carbSweep, useCenter = false, style = Stroke(width = strokeWidth, cap = StrokeCap.Round))
-            startAngle += carbSweep
-            
-            val protSweep = sweep(protPct)
-            drawArc(color = Color(0xFF81C784), startAngle = startAngle, sweepAngle = protSweep, useCenter = false, style = Stroke(width = strokeWidth, cap = StrokeCap.Round))
+    fun pctFrom(kcal: Double): Int =
+        if (totalCals <= 0.0) 0 else ((kcal * 100) / totalCals).toInt()
+
+    val rawCarb = pctFrom(kcalCarb)
+    val rawFat  = pctFrom(kcalFat)
+    val rawProt = pctFrom(kcalProt)
+
+    val sum = rawCarb + rawFat + rawProt
+    val carbPct = if (sum == 0) 0 else (rawCarb * 100f / sum).toInt()
+    val fatPct  = if (sum == 0) 0 else (rawFat  * 100f / sum).toInt()
+    val protPct = if (sum == 0) 0 else (rawProt * 100f / sum).toInt()
+
+    Row(
+        modifier = Modifier.fillMaxWidth(),
+        horizontalArrangement = Arrangement.Center,
+        verticalAlignment = Alignment.CenterVertically
+    ) {
+        Spacer(Modifier.width(16.dp))
+
+        Box(
+            modifier = Modifier.size(150.dp).weight(0.45f),
+            contentAlignment = Alignment.Center,
+        ) {
+            Canvas(modifier = Modifier.fillMaxSize(0.95f)) {
+                val strokeWidth = 12.dp.toPx()
+                val diameter = size.minDimension
+                val arcSize = Size(diameter, diameter)
+                var startAngle = -90f
+
+                fun sweep(pct: Int) = 360f * (pct / 100f)
+
+                drawArc(
+                    color = Color(0xFFE0E0E0),
+                    startAngle = 0f,
+                    sweepAngle = 360f,
+                    useCenter = false,
+                    style = Stroke(width = strokeWidth, cap = StrokeCap.Round)
+                )
+
+                val fatSweep = sweep(fatPct)
+                drawArc(
+                    color = Color(0xFFFFB74D),
+                    startAngle = startAngle,
+                    sweepAngle = fatSweep,
+                    useCenter = false,
+                    style = Stroke(width = strokeWidth, cap = StrokeCap.Round)
+                )
+                startAngle += fatSweep
+
+                val carbSweep = sweep(carbPct)
+                drawArc(
+                    color = Color(0xFF4FC3F7),
+                    startAngle = startAngle,
+                    sweepAngle = carbSweep,
+                    useCenter = false,
+                    style = Stroke(width = strokeWidth, cap = StrokeCap.Round)
+                )
+                startAngle += carbSweep
+
+                val protSweep = sweep(protPct)
+                drawArc(
+                    color = Color(0xFF81C784),
+                    startAngle = startAngle,
+                    sweepAngle = protSweep,
+                    useCenter = false,
+                    style = Stroke(width = strokeWidth, cap = StrokeCap.Round)
+                )
+            }
+
+            Column(
+                horizontalAlignment = Alignment.CenterHorizontally,
+                verticalArrangement = Arrangement.Center,
+                modifier = Modifier.fillMaxSize()
+            ) {
+                Text(
+                    text = totalCals.toInt().toString(),
+                    style = MaterialTheme.typography.headlineMedium,
+                    color = colorScheme.primary
+                )
+                Text(
+                    text = "Calories",
+                    style = MaterialTheme.typography.bodyMedium,
+                    color = colorScheme.onSurfaceVariant
+                )
+            }
         }
-        Column(horizontalAlignment = Alignment.CenterHorizontally) {
-            Text(text = totalCals.toInt().toString(), style = MaterialTheme.typography.headlineMedium, color = colorScheme.primary)
-            Text(text = "Calories", style = MaterialTheme.typography.bodyMedium, color = colorScheme.onSurfaceVariant)
+
+        Spacer(Modifier.weight(0.05f))
+
+        Column(
+            verticalArrangement = Arrangement.spacedBy(8.dp),
+            modifier = Modifier.weight(0.45f)
+        ) {
+            MacroLegendRow(Color(0xFFFFB74D), "Fat",    uiState.fatTotal,    fatPct)
+            MacroLegendRow(Color(0xFF4FC3F7), "Carbs",  uiState.carbsTotal,  carbPct)
+            MacroLegendRow(Color(0xFF81C384), "Protein",uiState.proteinTotal,protPct)
+        }
+    }
+}
+
+@Composable
+private fun MacroLegendRow(
+    color: Color,
+    label: String,
+    grams: Double,
+    percent: Int
+) {
+    Row(
+        verticalAlignment = Alignment.CenterVertically,
+        horizontalArrangement = Arrangement.Start
+    ) {
+        Box(
+            modifier = Modifier
+                .size(10.dp)
+                .clip(CircleShape)
+                .background(color)
+        )
+
+        Spacer(Modifier.width(8.dp))
+
+        Column {
+            Text(
+                text = "$percent% $label",
+                style = MaterialTheme.typography.bodyMedium,
+                color = colorScheme.onSurface
+            )
+            Text(
+                text = String.format("%.2fg", grams),
+                style = MaterialTheme.typography.bodySmall,
+                color = colorScheme.onSurfaceVariant
+            )
         }
     }
 }

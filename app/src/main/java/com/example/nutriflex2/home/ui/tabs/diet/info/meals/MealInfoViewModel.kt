@@ -158,6 +158,7 @@ class MealInfoViewModel @Inject constructor(
                 repository.addIngredientToMeal(
                     mealId = mealIdLocal,
                     alimentoApiId = food.id,
+                    nomeAlimento = food.nomeEn,
                     tipoPorcao = serving.description,
                     quantidadePorcoes = _uiState.value.portionCount
                 )

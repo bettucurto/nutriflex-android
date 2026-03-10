@@ -140,14 +140,6 @@ class HomeViewModel @Inject constructor(
                         bmi = user.bmi
                     )
 
-                    // Refresh dieta data from remote
-                    launch {
-                        dietaRepository.refreshMealsFromRemote(user.userId)
-                    }
-                    launch {
-                        dietaRepository.refreshFavoriteRecipesFromRemote(user.userId)
-                    }
-
                     if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
                         val existing = userLocalRepository.getAllWeightHistory(user.userId)
                         if (existing.isEmpty()) {

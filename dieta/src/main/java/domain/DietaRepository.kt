@@ -26,16 +26,35 @@ class DietaRepository @Inject constructor(
     suspend fun refreshMealsFromRemote(userId: Int) {
         try {
             val remoteMeals = remote.getRefeicoesByUser(userId)
-            // Simples: Limpar local do user e inserir novos do remoto
+            // Sincronização: só apaga localmente se a chamada remota for bem sucedida
             local.deleteRefeicoesByUser(userId)
             remoteMeals.forEach { dto ->
                 local.saveRefeicao(
                     RefeicaoFavoritaLocal(
                         id = dto.id,
                         nome = dto.nome,
-                        idUser = dto.iduser
+                        idUser = dto.iduser,
+                        calories = dto.calories,
+                        image = dto.image,
+                        carbsPct = dto.carbsPct,
+                        proteinPct = dto.proteinPct,
+                        fatPct = dto.fatPct,
+                        description = dto.description
                     )
                 )
+                // Salvar ingredientes se existirem no DTO
+                dto.ingredientes?.forEach { ingDto ->
+                    local.saveIngrediente(
+                        IngredienteRefeicaoLocal(
+                            id = ingDto.id,
+                            alimentoApiId = ingDto.alimentoapiid,
+                            nomeAlimento = ingDto.nomealimento,
+                            tipoPorcao = ingDto.tipoporcao,
+                            quantidadePorcoes = ingDto.quantidadeporcoes,
+                            idRefeicao = dto.id
+                        )
+                    )
+                }
             }
         } catch (e: Exception) {
             e.printStackTrace()
@@ -52,7 +71,19 @@ class DietaRepository @Inject constructor(
         fatPct: Int? = 0,
         description: String? = "Custom Meal"
     ): Int {
-        val remoteId = remote.addRefeicao(name, userId)
+        android.util.Log.d("DietaRepository", "addMeal: Starting remote add for user $userId")
+        val remoteId = remote.addRefeicao(
+            nome = name,
+            userId = userId,
+            image = image,
+            calories = calories,
+            fatPct = fatPct,
+            carbsPct = carbsPct,
+            proteinPct = proteinPct,
+            description = description
+        )
+        android.util.Log.d("DietaRepository", "addMeal: Remote success, got ID: $remoteId")
+
         val localEntity = RefeicaoFavoritaLocal(
             id = remoteId,
             nome = name,
@@ -64,16 +95,52 @@ class DietaRepository @Inject constructor(
             fatPct = fatPct,
             description = description
         )
-        local.saveRefeicao(localEntity)
+        val resultId = local.saveRefeicao(localEntity)
+        android.util.Log.d("DietaRepository", "addMeal: Local save result: $resultId (expected $remoteId)")
+
         return remoteId
     }
 
-    suspend fun updateMeal(id: Int, name: String) {
-        remote.updateRefeicao(id, name)
-        // Buscar o user id para manter integridade se necessário, ou assumir que o DAO trata se tivermos o objeto completo
+    suspend fun updateMeal(
+        id: Int,
+        name: String,
+        calories: Int? = 0,
+        image: String? = null,
+        carbsPct: Int? = 0,
+        proteinPct: Int? = 0,
+        fatPct: Int? = 0,
+        description: String? = "Custom Meal"
+    ) {
+        // Atualizar dados da refeição
+        remote.updateRefeicao(
+            id = id,
+            nome = name,
+            image = image,
+            calories = calories,
+            fatPct = fatPct,
+            carbsPct = carbsPct,
+            proteinPct = proteinPct,
+            description = description
+        )
+        
+        // Limpar ingredientes antigos para evitar duplicação
+        // O FavoriteMealEditorViewModel voltará a adicionar os ingredientes da lista atual
+        remote.deleteIngredientesByRefeicao(id)
+        local.deleteIngredientesByRefeicao(id)
+
         val current = local.getRefeicaoById(id)
         if (current != null) {
-            local.updateRefeicao(current.copy(nome = name))
+            local.updateRefeicao(
+                current.copy(
+                    nome = name,
+                    calories = calories,
+                    image = image,
+                    carbsPct = carbsPct,
+                    proteinPct = proteinPct,
+                    fatPct = fatPct,
+                    description = description
+                )
+            )
         }
     }
 
@@ -90,13 +157,12 @@ class DietaRepository @Inject constructor(
     suspend fun refreshIngredientsFromRemote(mealId: Int) {
         try {
             val remoteIngs = remote.getIngredientesByRefeicao(mealId)
-            // Aqui poderíamos ter um deleteByRefeicao no DAO se necessário
-            // Por agora, o saveRefeicao usa REPLACE se o ID for o mesmo
             remoteIngs.forEach { dto ->
                 local.saveIngrediente(
                     IngredienteRefeicaoLocal(
                         id = dto.id,
                         alimentoApiId = dto.alimentoapiid,
+                        nomeAlimento = dto.nomealimento,
                         tipoPorcao = dto.tipoporcao,
                         quantidadePorcoes = dto.quantidadeporcoes,
                         idRefeicao = dto.idrefeicao ?: mealId
@@ -111,28 +177,24 @@ class DietaRepository @Inject constructor(
     suspend fun addIngredientToMeal(
         mealId: Int,
         alimentoApiId: String,
+        nomeAlimento: String,
         tipoPorcao: String,
         quantidadePorcoes: Double,
     ) {
-        // No remote.addIngrediente o backend devia devolver o ID criado!
-        // Como a DietaApiService.addIngrediente devolve SimpleMessageResponse,
-        // vamos ter de fazer refresh ou o backend mudar para devolver o ID.
-        // Assumindo que por agora fazemos os dois e o local auto-gera se for 0,
-        // mas o ideal é o ID vir do remote.
         remote.addIngrediente(
             alimentoApiId = alimentoApiId,
+            nomeAlimento = nomeAlimento,
             tipoPorcao = tipoPorcao,
             quantidadePorcoes = quantidadePorcoes,
             idRefeicao = mealId,
         )
-        
-        // Para manter sincronia perfeita sem ID de volta, fazemos refresh
         refreshIngredientsFromRemote(mealId)
     }
 
     suspend fun updateIngredient(
         id: Int,
         alimentoApiId: String,
+        nomeAlimento: String,
         tipoPorcao: String,
         quantidadePorcoes: Double,
         mealId: Int,
@@ -140,6 +202,7 @@ class DietaRepository @Inject constructor(
         remote.updateIngrediente(
             id = id,
             alimentoApiId = alimentoApiId,
+            nomeAlimento = nomeAlimento,
             tipoPorcao = tipoPorcao,
             quantidadePorcoes = quantidadePorcoes,
             idRefeicao = mealId,
@@ -147,6 +210,7 @@ class DietaRepository @Inject constructor(
         val localEntity = IngredienteRefeicaoLocal(
             id = id,
             alimentoApiId = alimentoApiId,
+            nomeAlimento = nomeAlimento,
             tipoPorcao = tipoPorcao,
             quantidadePorcoes = quantidadePorcoes,
             idRefeicao = mealId,
@@ -167,13 +231,21 @@ class DietaRepository @Inject constructor(
     suspend fun refreshFavoriteRecipesFromRemote(userId: Int) {
         try {
             val remoteFavs = remote.getReceitasFavoritasByUser(userId)
+            // Só apaga localmente se a chamada remota for bem sucedida
             local.deleteReceitasFavoritasByUser(userId)
             remoteFavs.forEach { dto ->
                 local.saveReceitaFavorita(
                     ReceitaFavoritaLocal(
                         id = dto.id,
                         idUser = dto.iduser,
-                        idReceitaApi = dto.idreceitaapi
+                        idReceitaApi = dto.idreceitaapi,
+                        nome = dto.nome,
+                        image = dto.image,
+                        calories = dto.calories,
+                        carbsPct = dto.carbsPct,
+                        proteinPct = dto.proteinPct,
+                        fatPct = dto.fatPct,
+                        description = dto.description
                     )
                 )
             }
@@ -193,10 +265,21 @@ class DietaRepository @Inject constructor(
         fatPct: Int? = 0,
         description: String? = ""
     ) {
-        remote.addReceitaFavorita(userId, recipeApiId)
-        // Salvamos logo localmente para ter os dados, o ID pode vir a 0 se o backend não devolver
-        // Mas o refresh seguinte vai tentar sincronizar.
+        val response = remote.addReceitaFavorita(
+            userId = userId,
+            recipeApiId = recipeApiId,
+            nome = nome,
+            image = image,
+            calories = calories,
+            carbsPct = carbsPct,
+            proteinPct = proteinPct,
+            fatPct = fatPct,
+            description = description
+        )
+        val serverId = response.id ?: 0
+
         val localEntity = ReceitaFavoritaLocal(
+            id = serverId,
             idUser = userId,
             idReceitaApi = recipeApiId,
             nome = nome,

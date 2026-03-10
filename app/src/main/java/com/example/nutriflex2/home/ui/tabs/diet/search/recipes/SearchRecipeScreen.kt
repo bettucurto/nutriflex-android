@@ -29,7 +29,6 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.ArrowBack
 import androidx.compose.material.icons.filled.ExpandLess
 import androidx.compose.material.icons.filled.ExpandMore
-import androidx.compose.material.icons.filled.Favorite
 import androidx.compose.material.icons.filled.PhotoCamera
 import androidx.compose.material.icons.filled.Search
 import androidx.compose.material3.CircularProgressIndicator
@@ -78,8 +77,8 @@ import coil.request.ImageRequest
 import com.example.dieta.domain.FatSecretRecipeSummary
 import com.example.dieta.domain.ReceitaFavorita
 import com.example.nutriflex2.R
-import com.example.nutriflex2.diet.search.CalorieChip
-import com.example.nutriflex2.diet.search.MacroItem
+import com.example.nutriflex2.home.ui.tabs.diet.search.meals.CalorieChip
+import com.example.nutriflex2.home.ui.tabs.diet.search.meals.MacroItem
 import components.CalorieRangeFilter
 import components.LeftTitleText
 import kotlinx.coroutines.launch
@@ -184,12 +183,12 @@ fun SearchRecipeScreen(
                     Tab(
                         selected = pagerState.currentPage == 0,
                         onClick = { scope.launch { pagerState.animateScrollToPage(0) } },
-                        text = { Text("General", fontWeight = if(pagerState.currentPage == 0) FontWeight.Bold else FontWeight.Normal) }
+                        text = { Text("General", fontSize = 16.sp, fontWeight = if(pagerState.currentPage == 0) FontWeight.Bold else FontWeight.Normal) }
                     )
                     Tab(
                         selected = pagerState.currentPage == 1,
                         onClick = { scope.launch { pagerState.animateScrollToPage(1) } },
-                        text = { Text("Favorites", fontWeight = if(pagerState.currentPage == 1) FontWeight.Bold else FontWeight.Normal) }
+                        text = { Text("Favorites", fontSize = 16.sp, fontWeight = if(pagerState.currentPage == 1) FontWeight.Bold else FontWeight.Normal) }
                     )
                 }
 

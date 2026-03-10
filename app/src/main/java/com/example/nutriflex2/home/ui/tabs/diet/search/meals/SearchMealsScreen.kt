@@ -1,4 +1,4 @@
-package com.example.nutriflex2.diet.search
+package com.example.nutriflex2.home.ui.tabs.diet.search.meals
 
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.expandVertically
@@ -69,6 +69,7 @@ import androidx.compose.ui.draw.shadow
 import androidx.compose.ui.focus.FocusRequester
 import androidx.compose.ui.focus.focusRequester
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.RectangleShape
 import androidx.compose.ui.graphics.StrokeCap
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
@@ -190,19 +191,20 @@ fun SearchMealsScreen(
                 }
                 Spacer(modifier = Modifier.height(16.dp))
 
-                // --- Photo + Favorites Buttons -> Agora apenas Create Meal e Tabs ---
                 Row(
                     modifier = Modifier.fillMaxWidth(),
                     horizontalArrangement = Arrangement.Center
                 ) {
                     ElevatedButton(
                         onClick = onOpenCreateMeal,
-                        modifier = Modifier.fillMaxWidth(0.7f),
+                        modifier = Modifier
+                            .fillMaxWidth(0.95f)
+                            .shadow(16.dp, RectangleShape),
                         shape = RoundedCornerShape(12.dp)
                     ) {
                         Icon(Icons.Default.Add, contentDescription = null, tint = colorScheme.primary)
                         Spacer(Modifier.width(8.dp))
-                        Text("Create Meal", color = colorScheme.onSurface)
+                        Text("Create Meal", color = colorScheme.primary, fontSize = 16.sp)
                     }
                 }
 
@@ -224,12 +226,12 @@ fun SearchMealsScreen(
                     Tab(
                         selected = pagerState.currentPage == 0,
                         onClick = { scope.launch { pagerState.animateScrollToPage(0) } },
-                        text = { Text("General", fontWeight = if(pagerState.currentPage == 0) FontWeight.Bold else FontWeight.Normal) }
+                        text = { Text("General", fontSize = 16.sp, fontWeight = if(pagerState.currentPage == 0) FontWeight.Bold else FontWeight.Normal) }
                     )
                     Tab(
                         selected = pagerState.currentPage == 1,
                         onClick = { scope.launch { pagerState.animateScrollToPage(1) } },
-                        text = { Text("Favorites", fontWeight = if(pagerState.currentPage == 1) FontWeight.Bold else FontWeight.Normal) }
+                        text = { Text("Favorites", fontSize = 16.sp, fontWeight = if(pagerState.currentPage == 1) FontWeight.Bold else FontWeight.Normal) }
                     )
                 }
 

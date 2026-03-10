@@ -1,4 +1,4 @@
-package com.example.nutriflex2.diet.search
+package com.example.nutriflex2.home.ui.tabs.diet.search.meals
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
@@ -13,7 +13,7 @@ import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.launch
 import javax.inject.Inject
-
+import kotlinx.coroutines.flow.update
 import com.example.dieta.domain.Refeicao
 import local.UserLocalRepository
 import kotlinx.coroutines.flow.collectLatest
@@ -38,6 +38,7 @@ data class SearchMealsUiState(
 )
 
 
+
 @HiltViewModel
 class SearchMealsViewModel @Inject constructor(
     private val dietaRepository: DietaRepository,
@@ -52,11 +53,13 @@ class SearchMealsViewModel @Inject constructor(
     init {
         viewModelScope.launch {
             userLocalRepository.getUserLocal().collectLatest { user ->
+                android.util.Log.d("SearchMealsVM", "User observed: ${user?.userId}")
                 user?.let {
-                    // Carregar favoritos do utilizador
+                    // Carregar favoritos do utilizador da base de dados local apenas
                     launch {
                         dietaRepository.observeMeals(it.userId).collect { meals ->
-                            _uiState.value = _uiState.value.copy(favoriteMeals = meals)
+                            android.util.Log.d("SearchMealsVM", "Observed ${meals.size} meals for user ${it.userId}")
+                            _uiState.update { it.copy(favoriteMeals = meals) }
                         }
                     }
                 }
@@ -66,21 +69,21 @@ class SearchMealsViewModel @Inject constructor(
         viewModelScope.launch {
             // podes trocar "chicken" por algo mais neutro, tipo "apple"
             val defaultQuery = "Apple"
-            _uiState.value = _uiState.value.copy(query = defaultQuery)
+            _uiState.update { it.copy(query = defaultQuery) }
             searchFoods(defaultQuery)
         }
     }
 
     fun onQueryChange(newQuery: String) {
-        _uiState.value = _uiState.value.copy(query = newQuery, autocompleteSuggestions = emptyList())
+        _uiState.update { it.copy(query = newQuery, autocompleteSuggestions = emptyList()) }
 
         searchJob?.cancel()
         if (newQuery.isBlank()) {
-            _uiState.value = _uiState.value.copy(
+            _uiState.update { it.copy(
                 suggestions = emptyList(),
                 rawResults = emptyList(),
                 autocompleteSuggestions = emptyList()
-            )
+            ) }
             return
         }
 
@@ -89,7 +92,7 @@ class SearchMealsViewModel @Inject constructor(
             viewModelScope.launch {
                 try {
                     val suggestions = dietaRepository.searchAutocomplete(newQuery)
-                    _uiState.value = _uiState.value.copy(autocompleteSuggestions = suggestions)
+                    _uiState.update { it.copy(autocompleteSuggestions = suggestions) }
                 } catch (e: Exception) {
                     // ignora erro de autocomplete
                 }
@@ -104,72 +107,72 @@ class SearchMealsViewModel @Inject constructor(
     }
 
     private suspend fun searchFoods(query: String) {
-        _uiState.value = _uiState.value.copy(isLoading = true, errorMessage = null)
+        _uiState.update { it.copy(isLoading = true, errorMessage = null) }
         try {
             val foods = dietaRepository.searchFoods(query)
-            _uiState.value = _uiState.value.copy(
+            _uiState.update { it.copy(
                 isLoading = false,
                 rawResults = foods
-            )
+            ) }
             applyFilters()
         } catch (e: Exception) {
-            _uiState.value = _uiState.value.copy(
+            _uiState.update { it.copy(
                 isLoading = false,
                 errorMessage = e.message ?: "Error searching foods",
                 rawResults = emptyList(),
                 suggestions = emptyList()
-            )
+            ) }
         }
     }
 
     // --------- Filters API (called from UI) ---------
 
     fun onCalorieRangeSelected(range: CalorieRangeFilter) {
-        _uiState.value = _uiState.value.copy(calorieRange = range)
+        _uiState.update { it.copy(calorieRange = range) }
         applyFilters()
     }
 
     fun onCarbsRangeChanged(min: Int, max: Int) {
-        _uiState.value = _uiState.value.copy(
+        _uiState.update { it.copy(
             carbsMin = min.coerceIn(0, 100),
             carbsMax = max.coerceIn(0, 100)
-        )
+        ) }
         applyFilters()
     }
 
     fun onProteinRangeChanged(min: Int, max: Int) {
-        _uiState.value = _uiState.value.copy(
+        _uiState.update { it.copy(
             proteinMin = min.coerceIn(0, 100),
             proteinMax = max.coerceIn(0, 100)
-        )
+        ) }
         applyFilters()
     }
 
     fun onFatRangeChanged(min: Int, max: Int) {
-        _uiState.value = _uiState.value.copy(
+        _uiState.update { it.copy(
             fatMin = min.coerceIn(0, 100),
             fatMax = max.coerceIn(0, 100)
-        )
+        ) }
         applyFilters()
     }
 
     // --------- Filtering logic ---------
 
     private fun applyFilters() {
-        val state = _uiState.value
-        val filtered = state.rawResults.filter { food ->
-            val calories = parseCalories(food)
-            val carbsPct = parseMacroPct(food, "carbs")
-            val proteinPct = parseMacroPct(food, "protein")
-            val fatPct = parseMacroPct(food, "fat")
+        _uiState.update { state ->
+            val filtered = state.rawResults.filter { food ->
+                val calories = parseCalories(food)
+                val carbsPct = parseMacroPct(food, "carbs")
+                val proteinPct = parseMacroPct(food, "protein")
+                val fatPct = parseMacroPct(food, "fat")
 
-            matchesCalorieRange(calories, state.calorieRange) &&
-                    carbsPct in state.carbsMin..state.carbsMax &&
-                    proteinPct in state.proteinMin..state.proteinMax &&
-                    fatPct in state.fatMin..state.fatMax
+                matchesCalorieRange(calories, state.calorieRange) &&
+                        carbsPct in state.carbsMin..state.carbsMax &&
+                        proteinPct in state.proteinMin..state.proteinMax &&
+                        fatPct in state.fatMin..state.fatMax
+            }
+            state.copy(suggestions = filtered)
         }
-
-        _uiState.value = state.copy(suggestions = filtered)
     }
 
     private fun parseCalories(food: FatSecretFood): Int =

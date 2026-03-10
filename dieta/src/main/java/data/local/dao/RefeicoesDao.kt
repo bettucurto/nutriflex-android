@@ -57,4 +57,7 @@ interface RefeicoesDao {
     @Query("DELETE FROM refeicao_ingredientes WHERE id = :id")
     suspend fun deleteIngredienteById(id: Int)
 
+    @Query("DELETE FROM refeicao_ingredientes WHERE id_refeicao = :idRefeicao")
+    suspend fun deleteIngredientesByRefeicao(idRefeicao: Int)
+
 }

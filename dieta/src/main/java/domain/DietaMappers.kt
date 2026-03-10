@@ -39,6 +39,12 @@ fun RefeicaoDto.toDomain(): Refeicao =
         id = id,
         nome = nome,
         userId = iduser,
+        calories = calories,
+        image = image,
+        carbsPct = carbsPct,
+        proteinPct = proteinPct,
+        fatPct = fatPct,
+        description = description
     )
 
 fun Refeicao.toLocal(): RefeicaoFavoritaLocal =
@@ -60,6 +66,7 @@ fun IngredienteRefeicaoLocal.toDomain(): IngredienteRefeicao =
     IngredienteRefeicao(
         id = id,
         alimentoApiId = alimentoApiId,
+        nomeAlimento = nomeAlimento,
         tipoPorcao = tipoPorcao,
         quantidadePorcoes = quantidadePorcoes,
         refeicaoId = idRefeicao,
@@ -69,6 +76,7 @@ fun IngredienteDto.toDomain(): IngredienteRefeicao =
     IngredienteRefeicao(
         id = id,
         alimentoApiId = alimentoapiid,
+        nomeAlimento = nomealimento,
         tipoPorcao = tipoporcao,
         quantidadePorcoes = quantidadeporcoes,
         refeicaoId = idrefeicao ?: 0,
@@ -78,6 +86,7 @@ fun IngredienteRefeicao.toLocal(): IngredienteRefeicaoLocal =
     IngredienteRefeicaoLocal(
         id = id,
         alimentoApiId = alimentoApiId,
+        nomeAlimento = nomeAlimento,
         tipoPorcao = tipoPorcao,
         quantidadePorcoes = quantidadePorcoes,
         idRefeicao = refeicaoId,
@@ -104,6 +113,13 @@ fun ReceitaFavoritaDto.toDomain(): ReceitaFavorita =
         id = id,
         userId = iduser,
         receitaApiId = idreceitaapi,
+        nome = nome,
+        image = image,
+        calories = calories,
+        carbsPct = carbsPct,
+        proteinPct = proteinPct,
+        fatPct = fatPct,
+        description = description
     )
 
 fun ReceitaFavorita.toLocal(): ReceitaFavoritaLocal =
@@ -147,6 +163,7 @@ fun FatSecretServingDto.toDomain(): FatSecretServing =
     FatSecretServing(
         id = servingid,
         description = servingdescription,
+        measurementDescription = measurementdescription,
         metricAmount = metricservingamount,
         metricUnit = metricservingunit,
         numberOfUnits = numberofunits,
