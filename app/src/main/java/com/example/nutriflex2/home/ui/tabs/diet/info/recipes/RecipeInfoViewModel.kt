@@ -12,6 +12,7 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.firstOrNull
+import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import local.UserLocalRepository
 import javax.inject.Inject
@@ -65,31 +66,35 @@ class RecipeInfoViewModel @Inject constructor(
         val user = userLocalRepository.getUserLocal().firstOrNull() ?: return
         repository.observeFavoriteRecipes(user.userId).collect { favorites ->
             val isFav = favorites.any { it.receitaApiId == recipeId }
-            _uiState.value = _uiState.value.copy(isFavorite = isFav)
+            _uiState.update { it.copy(isFavorite = isFav) }
         }
     }
 
     private suspend fun loadRecipeDetails(recipeId: String) {
-        _uiState.value = _uiState.value.copy(isLoading = true)
+        _uiState.update { it.copy(isLoading = true) }
         try {
             val details = repository.getRecipeDetails(recipeId)
 
-            _uiState.value = RecipeInfoUiState(
-                isLoading = false,
-                recipe = details,
-                portionCount = 1.0
-            ).recalculate()
+            _uiState.update { currentState ->
+                currentState.copy(
+                    isLoading = false,
+                    recipe = details,
+                    portionCount = 1.0
+                ).recalculate()
+            }
 
         } catch (e: Exception) {
-            _uiState.value = _uiState.value.copy(
-                isLoading = false,
-                error = "Erro: ${e.message}"
-            )
+            _uiState.update { 
+                it.copy(
+                    isLoading = false,
+                    error = "Erro: ${e.message}"
+                )
+            }
         }
     }
 
     fun onPortionCountChange(newCount: Double) {
-        _uiState.value = _uiState.value.copy(portionCount = newCount).recalculate()
+        _uiState.update { it.copy(portionCount = newCount).recalculate() }
     }
 
     private fun RecipeInfoUiState.recalculate(): RecipeInfoUiState {

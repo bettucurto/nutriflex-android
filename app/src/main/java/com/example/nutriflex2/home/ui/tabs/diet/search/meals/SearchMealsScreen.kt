@@ -31,14 +31,17 @@ import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.ArrowBack
 import androidx.compose.material.icons.filled.ExpandLess
 import androidx.compose.material.icons.filled.ExpandMore
+import androidx.compose.material.icons.filled.Favorite
+import androidx.compose.material.icons.filled.FavoriteBorder
+import androidx.compose.material.icons.filled.PhotoCamera
 import androidx.compose.material.icons.filled.Search
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.DropdownMenu
 import androidx.compose.material3.DropdownMenuItem
-import androidx.compose.material3.ElevatedButton
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.FilterChip
 import androidx.compose.material3.FilterChipDefaults
+import androidx.compose.material3.FloatingActionButton
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.LinearProgressIndicator
@@ -69,7 +72,6 @@ import androidx.compose.ui.draw.shadow
 import androidx.compose.ui.focus.FocusRequester
 import androidx.compose.ui.focus.focusRequester
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.graphics.RectangleShape
 import androidx.compose.ui.graphics.StrokeCap
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
@@ -96,7 +98,7 @@ import kotlinx.coroutines.launch
 fun SearchMealsScreen(
     navController: NavController,
     onBack: () -> Unit,
-    onOpenFavorites: () -> Unit, // Mantido por compatibilidade de assinatura se necessário, mas não será usado
+    onOpenPhoto: () -> Unit,
     onOpenCreateMeal: () -> Unit,
     onFoodClick: ((String) -> Unit)? = null,
     viewModel: SearchMealsViewModel = hiltViewModel(),
@@ -123,8 +125,24 @@ fun SearchMealsScreen(
                             contentDescription = "Back"
                         )
                     }
+                },
+                actions = {
+                    IconButton(onClick = onOpenCreateMeal) {
+                        Icon(Icons.Default.Add, contentDescription = "Create Meal", tint = colorScheme.primary, modifier = Modifier.size(24.dp))
+                    }
                 }
             )
+        },
+        floatingActionButton = {
+            FloatingActionButton(
+                onClick = onOpenPhoto,
+                containerColor = colorScheme.primary,
+                contentColor = colorScheme.onPrimary,
+                shape = CircleShape,
+                modifier = Modifier.padding(16.dp)
+            ) {
+                Icon(Icons.Default.PhotoCamera, contentDescription = "Take Photo")
+            }
         }
     ) { padding ->
         Column(
@@ -189,26 +207,8 @@ fun SearchMealsScreen(
                         }
                     }
                 }
+                
                 Spacer(modifier = Modifier.height(16.dp))
-
-                Row(
-                    modifier = Modifier.fillMaxWidth(),
-                    horizontalArrangement = Arrangement.Center
-                ) {
-                    ElevatedButton(
-                        onClick = onOpenCreateMeal,
-                        modifier = Modifier
-                            .fillMaxWidth(0.95f)
-                            .shadow(16.dp, RectangleShape),
-                        shape = RoundedCornerShape(12.dp)
-                    ) {
-                        Icon(Icons.Default.Add, contentDescription = null, tint = colorScheme.primary)
-                        Spacer(Modifier.width(8.dp))
-                        Text("Create Meal", color = colorScheme.primary, fontSize = 16.sp)
-                    }
-                }
-
-                Spacer(modifier = Modifier.height(8.dp))
 
                 // --- Tabs para alternar entre Geral e Favoritos ---
                 TabRow(
@@ -226,12 +226,26 @@ fun SearchMealsScreen(
                     Tab(
                         selected = pagerState.currentPage == 0,
                         onClick = { scope.launch { pagerState.animateScrollToPage(0) } },
-                        text = { Text("General", fontSize = 16.sp, fontWeight = if(pagerState.currentPage == 0) FontWeight.Bold else FontWeight.Normal) }
+                        text = { Text("General", fontSize = 16.sp, fontWeight = if(pagerState.currentPage == 0) FontWeight.Bold else FontWeight.Normal) },
+                        icon = {
+                            Icon(
+                                imageVector = Icons.Default.Search,
+                                contentDescription = null,
+                                tint = if (pagerState.currentPage == 0) colorScheme.primary else colorScheme.onSurfaceVariant
+                            )
+                        }
                     )
                     Tab(
                         selected = pagerState.currentPage == 1,
                         onClick = { scope.launch { pagerState.animateScrollToPage(1) } },
-                        text = { Text("Favorites", fontSize = 16.sp, fontWeight = if(pagerState.currentPage == 1) FontWeight.Bold else FontWeight.Normal) }
+                        text = { Text("Favorites", fontSize = 16.sp, fontWeight = if(pagerState.currentPage == 1) FontWeight.Bold else FontWeight.Normal) },
+                        icon = {
+                            Icon(
+                                imageVector = if (pagerState.currentPage == 1) Icons.Default.Favorite else Icons.Default.FavoriteBorder,
+                                contentDescription = null,
+                                tint = if (pagerState.currentPage == 1) colorScheme.primary else colorScheme.onSurfaceVariant
+                            )
+                        }
                     )
                 }
 

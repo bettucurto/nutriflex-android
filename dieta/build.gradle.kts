@@ -43,20 +43,19 @@ kotlin {
 }
 
 dependencies {
+    implementation(project(":core"))
+
     // Core Kotlin / AndroidX base
     implementation(libs.androidx.core.ktx)
 
-    // SQLite KTX (opcional, mas ok usar)
-    // Garante que a versão em libs.versions.toml é 2.6.2, que é a recomendada com Room 2.8.4
-    implementation(libs.androidx.sqlite.ktx) // ou implementation("androidx.sqlite:sqlite-ktx:2.6.2") [web:3][web:6]
+    // SQLite KTX
+    implementation(libs.androidx.sqlite.ktx)
 
-    // Room (apenas os artefactos Android)
+    // Room
     val roomVersion = "2.8.4"
-    implementation("androidx.room:room-runtime:$roomVersion")   // núcleo Room [web:2]
-    implementation("androidx.room:room-ktx:$roomVersion")       // coroutines/ktx [web:3]
+    implementation("androidx.room:room-runtime:$roomVersion")
+    implementation("androidx.room:room-ktx:$roomVersion")
     ksp("androidx.room:room-compiler:$roomVersion")
-
-    // NÃO usar libs.androidx.room.runtime.jvm aqui (remove essa linha)
 
     // Retrofit + OkHttp
     implementation("com.squareup.retrofit2:retrofit:2.11.0")

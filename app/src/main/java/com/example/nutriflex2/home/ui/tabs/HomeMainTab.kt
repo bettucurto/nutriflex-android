@@ -55,7 +55,7 @@ fun HomeMainTab(
     onRangeChange: (WeightRange) -> Unit,
     onNavigateToSearchMeals: () -> Unit,
     onNavigateToSearchRecipes: () -> Unit,
-    onNavigateToTreino: () -> Unit,
+    onNavigateToTraining: () -> Unit,
     onChangeCurrentWeight: (Float) -> Unit,
     onChangeGoalWeight: (Float) -> Unit,
     onRequestScrollToBottom: () -> Unit,
@@ -133,7 +133,7 @@ fun HomeMainTab(
         NextWorkoutCard(
             workoutName = state.nextWorkoutName,
             exerciseCount = state.nextWorkoutExercises,
-            onStartClick = { onNavigateToTreino() }
+            onStartClick = { onNavigateToTraining() }
         )
 
         Spacer(modifier = Modifier.height(AppTheme.dimens.largePadding))
@@ -179,7 +179,6 @@ fun HomeMainTab(
         ) {
             LogMealSheetContent(
                 onPhotoClick = { /* TODO */ },
-                onFavoritesClick = { /* TODO */ },
                 onSearchMealsClick = {
                     showSheet = false
                     scope.launch { sheetState.hide() }

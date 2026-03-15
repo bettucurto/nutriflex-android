@@ -31,9 +31,9 @@ fun TitleText(value: String){
         text = value,
         modifier = Modifier.fillMaxWidth().heightIn(),
         style = TextStyle(
-            fontSize = 30.sp,
+            fontSize = 45.sp,
             fontWeight = FontWeight.Bold,
-            fontFamily = FontFamily(Font(R.font.audiowide)),
+            fontFamily = FontFamily(Font(R.font.gtwalsheimcondensedmedium)),
             textAlign = TextAlign.Center,
             color = colorScheme.secondary
         )
@@ -79,8 +79,9 @@ fun LeftHeadingTextComponent(value: String, modifier: Modifier = Modifier, textS
         style = TextStyle(
             fontSize = textSize,
             fontWeight = FontWeight.Normal,
-            fontFamily = FontFamily(Font(R.font.audiowide)),
-            color = colorScheme.secondary
+            fontFamily = FontFamily(Font(R.font.gtwalsheimcondensedmedium)),
+            color = colorScheme.secondary,
+            letterSpacing = TextUnit(1.2f, type = TextUnitType.Sp)
         )
     )
 }

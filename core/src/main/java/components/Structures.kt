@@ -14,14 +14,14 @@ import androidx.compose.ui.graphics.vector.ImageVector
 @Composable
 fun NFBottomBar(
     selectedIndex: Int,
-    onTreinoClick: () -> Unit,
+    onTrainingClick: () -> Unit,
     onPerfilClick: () -> Unit,
     onDietaClick: () -> Unit
 ) {
     NavigationBar {
         NavigationBarItem(
-            selected = selectedIndex == 0, // Treino
-            onClick = onTreinoClick,
+            selected = selectedIndex == 0, // Training
+            onClick = onTrainingClick,
             icon = { Icon(Icons.Default.FitnessCenter, contentDescription = "Exercise") },
         )
         NavigationBarItem(

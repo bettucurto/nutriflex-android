@@ -44,6 +44,9 @@ import com.example.nutriflex2.home.ui.tabs.diet.info.meals.MealInfoScreen
 import com.example.nutriflex2.home.ui.tabs.diet.info.recipes.RecipeInfoScreen
 import com.example.nutriflex2.home.ui.tabs.diet.search.meals.SearchMealsScreen
 import com.example.nutriflex2.home.ui.tabs.diet.search.recipes.SearchRecipeScreen
+import com.example.nutriflex2.home.ui.tabs.training.CreateSessionScreen
+import com.example.nutriflex2.home.ui.tabs.training.ExerciseInfoScreen
+import com.example.nutriflex2.home.ui.tabs.training.SearchExerciseScreen
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import ui.WelcomeScreen
@@ -105,11 +108,45 @@ fun AppNavGraph(
             }
 
             HomeScreen(
-                onNavigateToTreino = { /* ... */ },
+                navController = navController,
+                onNavigateToTraining = { navController.navigate("training_flow") },
                 onNavigateToSearchMeals = { navController.navigate("searchMealsScreen") },
                 onNavigateToSearchRecipes = { navController.navigate("searchRecipeScreen") },
                 onNavigateToAccount = { navController.navigate("accountScreen") }
             )
+        }
+
+        // --- Fluxo de Treino (Training) ---
+        navigation(
+            startDestination = "trainingTab",
+            route = "training_flow"
+        ) {
+            composable("trainingTab") {
+                // TrainingTabScreen já é instanciado dentro do HomeScreen Pager
+            }
+            
+            composable(
+                route = "create_session/{folderId}",
+                arguments = listOf(navArgument("folderId") { type = NavType.IntType })
+            ) {
+                CreateSessionScreen(
+                    onBack = { navController.popBackStack() },
+                    navController = navController
+                )
+            }
+
+            composable("search_exercise") {
+                SearchExerciseScreen(navController = navController)
+            }
+
+            composable(
+                route = "exercise_info/{exerciseId}",
+                arguments = listOf(navArgument("exerciseId") { type = NavType.StringType })
+            ) {
+                ExerciseInfoScreen(
+                    onBack = { navController.popBackStack() }
+                )
+            }
         }
 
         // --- Fluxo de Pesquisa Diária (Log normal) ---
@@ -117,7 +154,7 @@ fun AppNavGraph(
             SearchMealsScreen(
                 navController = navController,
                 onBack = { navController.popBackStack() },
-                onOpenFavorites = { /* TODO */ },
+                onOpenPhoto = { /* TODO */ },
 
                 // Ao clicar em Create Meal, iniciamos o FLUXO ANINHADO
                 onOpenCreateMeal = { navController.navigate("create_meal_flow") },
@@ -246,7 +283,7 @@ fun AppNavGraph(
                 SearchMealsScreen(
                     navController = navController,
                     onBack = { navController.popBackStack() },
-                    onOpenFavorites = { },
+                    onOpenPhoto = { },
                     onOpenCreateMeal = { },
                     onFoodClick = { foodId ->
                         navController.navigate("meal_creation_detail/$foodId")

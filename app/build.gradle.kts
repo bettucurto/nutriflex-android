@@ -61,11 +61,13 @@ dependencies {
     implementation(libs.androidx.compose.ui.graphics)
     implementation(libs.androidx.compose.ui.tooling.preview)
     implementation(libs.androidx.compose.material3)
+    implementation("androidx.compose.runtime:runtime-livedata")
     implementation("androidx.compose.animation:animation:1.7.0")
 
     implementation(project(":auth"))
     implementation(project(":core"))
     implementation(project(":dieta"))
+    implementation(project(":treino"))
     implementation(libs.androidx.compose.ui.ui)
     implementation(libs.androidx.foundation.layout)
 

@@ -29,6 +29,8 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.ArrowBack
 import androidx.compose.material.icons.filled.ExpandLess
 import androidx.compose.material.icons.filled.ExpandMore
+import androidx.compose.material.icons.filled.Favorite
+import androidx.compose.material.icons.filled.FavoriteBorder
 import androidx.compose.material.icons.filled.PhotoCamera
 import androidx.compose.material.icons.filled.Search
 import androidx.compose.material3.CircularProgressIndicator
@@ -83,6 +85,8 @@ import components.CalorieRangeFilter
 import components.LeftTitleText
 import kotlinx.coroutines.launch
 
+import androidx.compose.material3.FloatingActionButton
+
 @OptIn(ExperimentalMaterial3Api::class, androidx.compose.foundation.ExperimentalFoundationApi::class)
 @Composable
 fun SearchRecipeScreen(
@@ -111,6 +115,17 @@ fun SearchRecipeScreen(
                     }
                 }
             )
+        },
+        floatingActionButton = {
+            FloatingActionButton(
+                onClick = onOpenPhoto,
+                containerColor = colorScheme.primary,
+                contentColor = colorScheme.onPrimary,
+                shape = CircleShape,
+                modifier = Modifier.padding(16.dp)
+            ) {
+                Icon(Icons.Default.PhotoCamera, contentDescription = "Take Photo")
+            }
         }
     ) { padding ->
         Column(
@@ -149,24 +164,6 @@ fun SearchRecipeScreen(
 
                 Spacer(modifier = Modifier.height(16.dp))
 
-                // --- Photo Button -> Agora apenas Photo e Tabs ---
-                Row(
-                    modifier = Modifier.fillMaxWidth(),
-                    horizontalArrangement = Arrangement.Center
-                ) {
-                    ElevatedButton(
-                        onClick = onOpenPhoto,
-                        modifier = Modifier.fillMaxWidth(0.7f),
-                        shape = RoundedCornerShape(12.dp)
-                    ) {
-                        Icon(Icons.Default.PhotoCamera, contentDescription = null, tint = colorScheme.primary)
-                        Spacer(Modifier.width(8.dp))
-                        Text("Photo", color = colorScheme.onSurface)
-                    }
-                }
-
-                Spacer(modifier = Modifier.height(8.dp))
-
                 // --- Tabs ---
                 TabRow(
                     selectedTabIndex = pagerState.currentPage,
@@ -183,12 +180,26 @@ fun SearchRecipeScreen(
                     Tab(
                         selected = pagerState.currentPage == 0,
                         onClick = { scope.launch { pagerState.animateScrollToPage(0) } },
-                        text = { Text("General", fontSize = 16.sp, fontWeight = if(pagerState.currentPage == 0) FontWeight.Bold else FontWeight.Normal) }
+                        text = { Text("General", fontSize = 16.sp, fontWeight = if(pagerState.currentPage == 0) FontWeight.Bold else FontWeight.Normal) },
+                        icon = {
+                            Icon(
+                                imageVector = Icons.Default.Search,
+                                contentDescription = null,
+                                tint = if (pagerState.currentPage == 0) colorScheme.primary else colorScheme.onSurfaceVariant
+                            )
+                        }
                     )
                     Tab(
                         selected = pagerState.currentPage == 1,
                         onClick = { scope.launch { pagerState.animateScrollToPage(1) } },
-                        text = { Text("Favorites", fontSize = 16.sp, fontWeight = if(pagerState.currentPage == 1) FontWeight.Bold else FontWeight.Normal) }
+                        text = { Text("Favorites", fontSize = 16.sp, fontWeight = if(pagerState.currentPage == 1) FontWeight.Bold else FontWeight.Normal) },
+                        icon = {
+                            Icon(
+                                imageVector = if (pagerState.currentPage == 1) Icons.Default.Favorite else Icons.Default.FavoriteBorder,
+                                contentDescription = null,
+                                tint = if (pagerState.currentPage == 1) colorScheme.primary else colorScheme.onSurfaceVariant
+                            )
+                        }
                     )
                 }
 

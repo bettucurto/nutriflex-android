@@ -3,6 +3,7 @@ package com.example.nutriflex2.home.ui
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.example.dieta.domain.DietaRepository
+import com.example.treino.domain.repository.TreinoRepository
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asStateFlow
@@ -14,6 +15,7 @@ import javax.inject.Inject
 @HiltViewModel
 class SyncViewModel @Inject constructor(
     private val dietaRepository: DietaRepository,
+    private val treinoRepository: TreinoRepository,
     private val userLocalRepository: UserLocalRepository
 ) : ViewModel() {
 
@@ -36,6 +38,9 @@ class SyncViewModel @Inject constructor(
                     }
                     launch {
                         dietaRepository.refreshFavoriteRecipesFromRemote(it.userId)
+                    }
+                    launch {
+                        treinoRepository.refreshPastas(it.userId)
                     }
                     hasSyncedInThisSession = true
                 }

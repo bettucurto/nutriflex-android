@@ -66,7 +66,8 @@ import theme.AppTheme
 @OptIn(ExperimentalFoundationApi::class)
 @Composable
 fun HomeScreen(
-    onNavigateToTreino: () -> Unit,
+    navController: androidx.navigation.NavHostController,
+    onNavigateToTraining: () -> Unit,
     onNavigateToSearchMeals: () -> Unit,
     onNavigateToSearchRecipes: () -> Unit,
     onNavigateToAccount: () -> Unit,
@@ -240,7 +241,7 @@ fun HomeScreen(
                 bottomBar = {
                     NFBottomBar(
                         selectedIndex = pagerState.currentPage,
-                        onTreinoClick = {
+                        onTrainingClick = {
                             scope.launch { pagerState.animateScrollToPage(0) }
                         },
                         onPerfilClick = {
@@ -265,7 +266,9 @@ fun HomeScreen(
                     ) { page ->
                         when (page) {
                             0 -> TrainingTabScreen(
-                                onNavigateToTreino = onNavigateToTreino
+                                scrollState = rememberScrollState(),
+                                onOpenDrawer = { scope.launch { drawerState.open() } },
+                                navController = navController
                             )
 
                             1 -> {
@@ -281,7 +284,7 @@ fun HomeScreen(
                                         }
                                     },
                                     onNavigateToSearchMeals = onNavigateToSearchMeals,
-                                    onNavigateToTreino = onNavigateToTreino,
+                                    onNavigateToTraining = onNavigateToTraining,
                                     onChangeCurrentWeight = { new ->
                                         viewModel.onChangeCurrentWeight(new, selectedRange)
                                     },
