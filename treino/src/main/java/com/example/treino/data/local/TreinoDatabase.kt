@@ -15,7 +15,7 @@ import com.example.treino.data.local.tables.SetEntity
         ExercicioEntity::class,
         SetEntity::class
     ],
-    version = 2,
+    version = 3,
     exportSchema = false
 )
 abstract class TreinoDatabase : RoomDatabase() {
@@ -26,6 +26,12 @@ abstract class TreinoDatabase : RoomDatabase() {
             override fun migrate(db: androidx.sqlite.db.SupportSQLiteDatabase) {
                 db.execSQL("ALTER TABLE pastas_treinos ADD COLUMN visibilidade TEXT NOT NULL DEFAULT 'privada'")
                 db.execSQL("ALTER TABLE pastas_treinos ADD COLUMN isDeletable INTEGER NOT NULL DEFAULT 1")
+            }
+        }
+
+        val MIGRATION_2_3 = object : androidx.room.migration.Migration(2, 3) {
+            override fun migrate(db: androidx.sqlite.db.SupportSQLiteDatabase) {
+                db.execSQL("ALTER TABLE sessao_exercicios ADD COLUMN nome TEXT NOT NULL DEFAULT 'Exercise'")
             }
         }
     }

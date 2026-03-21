@@ -103,6 +103,7 @@ fun HomeScreen(
     val drawerState = rememberDrawerState(initialValue = DrawerValue.Closed)
     val scope = rememberCoroutineScope()
     val context = LocalContext.current
+    val snackbarHostState = remember { androidx.compose.material3.SnackbarHostState() }
 
     var selectedDrawerItemIndex by remember { mutableIntStateOf(0) }
 
@@ -125,6 +126,9 @@ fun HomeScreen(
             when (event) {
                 is HomeUiEvent.ShowToast -> {
                     Toast.makeText(context, event.message, Toast.LENGTH_SHORT).show()
+                }
+                is HomeUiEvent.ShowSnackbar -> {
+                    snackbarHostState.showSnackbar(event.message)
                 }
             }
         }
@@ -238,6 +242,7 @@ fun HomeScreen(
             }
         ) {
             Scaffold(
+                snackbarHost = { androidx.compose.material3.SnackbarHost(snackbarHostState) },
                 bottomBar = {
                     NFBottomBar(
                         selectedIndex = pagerState.currentPage,
@@ -285,6 +290,9 @@ fun HomeScreen(
                                     },
                                     onNavigateToSearchMeals = onNavigateToSearchMeals,
                                     onNavigateToTraining = onNavigateToTraining,
+                                    onNavigateToTrainingTab = {
+                                        scope.launch { pagerState.animateScrollToPage(0) }
+                                    },
                                     onChangeCurrentWeight = { new ->
                                         viewModel.onChangeCurrentWeight(new, selectedRange)
                                     },

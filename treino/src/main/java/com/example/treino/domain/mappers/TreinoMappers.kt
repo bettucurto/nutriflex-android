@@ -6,6 +6,7 @@ import com.example.treino.data.local.tables.SessaoEntity
 import com.example.treino.data.local.tables.SetEntity
 import com.example.treino.data.remote.ExercicioDto
 import com.example.treino.data.remote.ExercicioSetDto
+import com.example.treino.data.remote.ExerciseWithSetsDto
 import com.example.treino.data.remote.PastaDto
 import com.example.treino.data.remote.SessaoDto
 import com.example.treino.domain.models.Exercicio
@@ -49,6 +50,7 @@ fun SessaoEntity.toDomain() = Sessao(
 fun ExercicioDto.toEntity() = ExercicioEntity(
     id = id,
     exercicioApiId = exercicioApiId,
+    nome = nome,
     notas = notas,
     idSessao = idSessao,
     ordem = ordem,
@@ -59,6 +61,29 @@ fun ExercicioDto.toEntity() = ExercicioEntity(
 fun ExercicioEntity.toDomain() = Exercicio(
     id = id,
     exercicioApiId = exercicioApiId,
+    nome = nome,
+    notas = notas,
+    idSessao = idSessao,
+    ordem = ordem,
+    imagem = imagem,
+    bodypart = bodypart
+)
+
+fun Exercicio.toEntity() = ExercicioEntity(
+    id = id,
+    exercicioApiId = exercicioApiId,
+    nome = nome,
+    notas = notas,
+    idSessao = idSessao,
+    ordem = ordem,
+    imagem = imagem,
+    bodypart = bodypart
+)
+
+fun ExerciseWithSetsDto.toDomain(idSessao: Int) = Exercicio(
+    id = id,
+    exercicioApiId = exercicioApiId,
+    nome = nome ?: "Exercise",
     notas = notas,
     idSessao = idSessao,
     ordem = ordem,

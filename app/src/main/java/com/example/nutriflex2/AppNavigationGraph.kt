@@ -45,6 +45,7 @@ import com.example.nutriflex2.home.ui.tabs.diet.info.recipes.RecipeInfoScreen
 import com.example.nutriflex2.home.ui.tabs.diet.search.meals.SearchMealsScreen
 import com.example.nutriflex2.home.ui.tabs.diet.search.recipes.SearchRecipeScreen
 import com.example.nutriflex2.home.ui.tabs.training.CreateSessionScreen
+import com.example.nutriflex2.home.ui.tabs.training.EditSessionScreen
 import com.example.nutriflex2.home.ui.tabs.training.ExerciseInfoScreen
 import com.example.nutriflex2.home.ui.tabs.training.SearchExerciseScreen
 import kotlinx.coroutines.delay
@@ -140,11 +141,48 @@ fun AppNavGraph(
             }
 
             composable(
-                route = "exercise_info/{exerciseId}",
-                arguments = listOf(navArgument("exerciseId") { type = NavType.StringType })
-            ) {
+                route = "exercise_info/{exerciseId}?isAddingMode={isAddingMode}",
+                arguments = listOf(
+                    navArgument("exerciseId") { type = NavType.StringType },
+                    navArgument("isAddingMode") { 
+                        type = NavType.BoolType
+                        defaultValue = false
+                    }
+                )
+            ) { backStackEntry ->
+                val isAddingMode = backStackEntry.arguments?.getBoolean("isAddingMode") ?: false
                 ExerciseInfoScreen(
-                    onBack = { navController.popBackStack() }
+                    onBack = { navController.popBackStack() },
+                    isAddingMode = isAddingMode,
+                    navController = navController,
+                    onAddExercise = { data ->
+                        val routes = listOf("create_session/{folderId}", "edit_session/{sessionId}")
+                        var foundEntry: NavBackStackEntry? = null
+                        for (route in routes) {
+                            try {
+                                foundEntry = navController.getBackStackEntry(route)
+                                break
+                            } catch (e: Exception) { }
+                        }
+
+                        if (foundEntry != null) {
+                            foundEntry.savedStateHandle.set("selected_exercise_data", data)
+                            navController.popBackStack(foundEntry.destination.id, inclusive = false)
+                        } else {
+                            navController.previousBackStackEntry?.savedStateHandle?.set("selected_exercise_data", data)
+                            navController.popBackStack()
+                        }
+                    }
+                )
+            }
+
+            composable(
+                route = "edit_session/{sessionId}",
+                arguments = listOf(navArgument("sessionId") { type = NavType.IntType })
+            ) {
+                EditSessionScreen(
+                    onBack = { navController.popBackStack() },
+                    navController = navController
                 )
             }
         }

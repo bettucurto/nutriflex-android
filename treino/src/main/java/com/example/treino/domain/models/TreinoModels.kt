@@ -18,6 +18,7 @@ data class Sessao(
 data class Exercicio(
     val id: Int,
     val exercicioApiId: String,
+    val nome: String,
     val notas: String,
     val idSessao: Int,
     val ordem: Int,

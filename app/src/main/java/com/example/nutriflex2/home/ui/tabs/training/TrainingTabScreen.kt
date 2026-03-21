@@ -131,33 +131,44 @@ fun TrainingTabScreen(
                 Spacer(modifier = Modifier.height(260.dp))
 
                 // Lista de Pastas e Sessões
-                LazyColumn(
-                    state = listState,
-                    modifier = Modifier
-                        .fillMaxSize()
-                        .offset(y = (-40).dp) // Sobreposição com o background convexo
-                        .padding(horizontal = 16.dp),
-                    verticalArrangement = Arrangement.spacedBy(16.dp),
-                    contentPadding = PaddingValues(top = 12.dp, bottom = 100.dp)
-                ) {
-                    items(state.pastas, key = { it.id }) { pasta ->
-                        val isEditing = state.editingFolderId == pasta.id
-                        WorkoutFolderItem(
-                            pasta = pasta,
-                            isExpanded = state.expandedPastas.contains(pasta.id),
-                            sessoes = state.sessoesPorPasta[pasta.id] ?: emptyList(),
-                            onToggle = { if (!isEditing) viewModel.togglePasta(pasta.id) },
-                            onSessionMenuClick = { viewModel.onSessionMenuClick(it) },
-                            onAddSessionClick = { 
-                                navController?.navigate("create_session/${pasta.id}")
-                            },
-                            onFolderMenuClick = { viewModel.onPastaMenuClick(pasta) },
-                            isEditing = isEditing,
-                            editNameInput = state.editFolderNameInput,
-                            onNameChange = { viewModel.onFolderNameChange(it) },
-                            onSaveName = { viewModel.onSaveFolderName() },
-                            onCancelEdit = { viewModel.onCancelEditingFolderName() }
-                        )
+                if (state.isLoading && state.pastas.isEmpty()) {
+                    Box(
+                        modifier = Modifier
+                            .fillMaxSize()
+                            .padding(bottom = 100.dp),
+                        contentAlignment = Alignment.Center
+                    ) {
+                        androidx.compose.material3.CircularProgressIndicator(color = colorScheme.primary)
+                    }
+                } else {
+                    LazyColumn(
+                        state = listState,
+                        modifier = Modifier
+                            .fillMaxSize()
+                            .offset(y = (-40).dp) // Sobreposição com o background convexo
+                            .padding(horizontal = 16.dp),
+                        verticalArrangement = Arrangement.spacedBy(16.dp),
+                        contentPadding = PaddingValues(top = 12.dp, bottom = 100.dp)
+                    ) {
+                        items(state.pastas, key = { it.id }) { pasta ->
+                            val isEditing = state.editingFolderId == pasta.id
+                            WorkoutFolderItem(
+                                pasta = pasta,
+                                isExpanded = state.expandedPastas.contains(pasta.id),
+                                sessoes = state.sessoesPorPasta[pasta.id] ?: emptyList(),
+                                onToggle = { if (!isEditing) viewModel.togglePasta(pasta.id) },
+                                onSessionMenuClick = { viewModel.onSessionMenuClick(it) },
+                                onAddSessionClick = { 
+                                    navController?.navigate("create_session/${pasta.id}")
+                                },
+                                onFolderMenuClick = { viewModel.onPastaMenuClick(pasta) },
+                                isEditing = isEditing,
+                                editNameInput = state.editFolderNameInput,
+                                onNameChange = { viewModel.onFolderNameChange(it) },
+                                onSaveName = { viewModel.onSaveFolderName() },
+                                onCancelEdit = { viewModel.onCancelEditingFolderName() }
+                            )
+                        }
                     }
                 }
             }
@@ -168,7 +179,8 @@ fun TrainingTabScreen(
     TrainingOverlays(
         state = state,
         viewModel = viewModel,
-        sheetState = sheetState
+        sheetState = sheetState,
+        navController = navController
     )
 }
 
@@ -427,18 +439,22 @@ fun SessionItem(
 private fun TrainingOverlays(
     state: TrainingTabUiState,
     viewModel: TrainingTabViewModel,
-    sheetState: androidx.compose.material3.SheetState
+    sheetState: androidx.compose.material3.SheetState,
+    navController: androidx.navigation.NavController?
 ) {
     // Bottom Sheet de Opções da Sessão
-    if (state.showSessionMenu) {
+    if (state.showSessionMenu && state.selectedSessao != null) {
         ModalBottomSheet(
             onDismissRequest = { viewModel.dismissSessionMenu() },
             sheetState = sheetState
         ) {
             SessionMenuContent(
                 onDelete = { viewModel.onDeleteSessionClick() },
-                onEdit = { /* TODO */ },
-                onDuplicate = { /* TODO */ }
+                onEdit = { 
+                    viewModel.dismissSessionMenu()
+                    navController?.navigate("edit_session/${state.selectedSessao!!.id}")
+                },
+                onDuplicate = { viewModel.onDuplicateSessionClick() }
             )
         }
     }

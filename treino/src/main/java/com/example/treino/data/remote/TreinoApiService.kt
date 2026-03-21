@@ -31,6 +31,26 @@ data class DuplicatePastaRequest(
 )
 
 // --- SESSOES ---
+data class SessionWithDetailsDto(
+    val id: Int,
+    val nome: String,
+    @SerializedName("id_pasta")
+    val idPasta: Int,
+    val exercicios: List<ExerciseWithSetsDto> = emptyList()
+)
+
+data class ExerciseWithSetsDto(
+    val id: Int,
+    @SerializedName("exercicio_api_id")
+    val exercicioApiId: String,
+    val nome: String?,
+    val notas: String,
+    val ordem: Int,
+    val imagem: String?,
+    val bodypart: String?,
+    val sets: List<ExercicioSetDto> = emptyList()
+)
+
 data class SessaoDto(
     val id: Int,
     val nome: String,
@@ -43,7 +63,30 @@ data class SessaoDto(
 data class CreateSessaoRequest(
     val nome: String,
     @SerializedName("id_pasta")
-    val idPasta: Int
+    val idPasta: Int,
+    val exercicios: List<SessionExerciseRequest> = emptyList()
+)
+
+data class SessionExerciseRequest(
+    @SerializedName("id_exercicio")
+    val idExercicio: String,
+    val nome: String,
+    val notas: String,
+    val ordem: Int,
+    val imagem: String?,
+    val bodypart: String?,
+    val sets: List<SessionSetRequest> = emptyList()
+)
+
+data class SessionSetRequest(
+    @SerializedName("tipo_set")
+    val tipoSet: String,
+    val peso: Double,
+    @SerializedName("repeticoes_min")
+    val repeticoesMin: Int,
+    @SerializedName("repeticoes_max")
+    val repeticoesMax: Int,
+    val ordem: Int
 )
 
 // --- EXERCICIOS ---
@@ -51,6 +94,7 @@ data class ExercicioDto(
     val id: Int,
     @SerializedName("exercicio_api_id")
     val exercicioApiId: String,
+    val nome: String,
     val notas: String,
     @SerializedName("id_sessao")
     val idSessao: Int,
@@ -136,12 +180,20 @@ data class ExerciseDbSummaryDto(
     val gifUrl: String?,
     @SerializedName("imageUrl")
     val imageUrl: String?,
+    @SerializedName("videoUrl")
+    val videoUrl: String? = null,
+    @SerializedName("overview")
+    val overview: String? = null,
     @SerializedName("target")
     val target: String?,
+    @SerializedName("targetMuscles")
+    val targetMuscles: List<String>? = emptyList(),
     @SerializedName("secondaryMuscles")
     val secondaryMuscles: List<String>? = emptyList(),
     @SerializedName("instructions")
     val instructions: List<String>? = emptyList(),
+    @SerializedName("variations")
+    val variations: List<String>? = emptyList(),
     @SerializedName("exerciseType")
     val exerciseType: String? = null
 )
@@ -182,12 +234,19 @@ interface TreinoApiService {
     @GET("treinos/sessoes/{id_pasta}")
     suspend fun getSessoesByPasta(@Path("id_pasta") idPasta: Int): List<SessaoDto>
 
+    @GET("treinos/sessao/details/{id}")
+    suspend fun getSessaoById(@Path("id") id: Int): SessionWithDetailsDto
+
     @POST("treinos/sessao")
     suspend fun createSessao(@Body body: CreateSessaoRequest): SimpleMessageResponse
 
     @PUT("treinos/sessao/{id}")
-    suspend fun updateSessao(@Path("id") id: Int, @Body body: Map<String, String>): SimpleMessageResponse 
+    suspend fun updateSessao(@Path("id") id: Int, @Body body: CreateSessaoRequest): SimpleMessageResponse 
 
+    @PUT("treinos/sessao/{id}")
+    suspend fun updateSessaoName(@Path("id") id: Int, @Body body: Map<String, String>): SimpleMessageResponse
+
+// --- Exercicios ---
     @DELETE("treinos/sessao/{id}")
     suspend fun deleteSessao(@Path("id") id: Int): SimpleMessageResponse
 

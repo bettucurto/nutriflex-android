@@ -50,10 +50,10 @@ import components.LeftTitleText
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun CreateSessionScreen(
+fun EditSessionScreen(
     onBack: () -> Unit,
     navController: NavController? = null,
-    viewModel: CreateSessionViewModel = hiltViewModel()
+    viewModel: EditSessionViewModel = hiltViewModel()
 ) {
     val state by viewModel.uiState.collectAsState()
     val context = LocalContext.current
@@ -79,7 +79,7 @@ fun CreateSessionScreen(
     Scaffold(
         topBar = {
             TopAppBar(
-                title = { LeftTitleText("Create Session") },
+                title = { LeftTitleText("Edit Session") },
                 navigationIcon = {
                     IconButton(onClick = onBack) {
                         Icon(Icons.Default.ArrowBack, contentDescription = "Back")
@@ -93,10 +93,11 @@ fun CreateSessionScreen(
                     if (state.workoutName.isBlank()) {
                         Toast.makeText(context, "Please fill in the session name", Toast.LENGTH_SHORT).show()
                     } else {
-                        viewModel.saveWorkout()
+                        viewModel.updateSession()
                     }
                 },
-                visible = state.exercises.isNotEmpty()
+                visible = state.exercises.isNotEmpty(),
+                text = "Save Changes"
             )
         },
         floatingActionButtonPosition = FabPosition.Center,

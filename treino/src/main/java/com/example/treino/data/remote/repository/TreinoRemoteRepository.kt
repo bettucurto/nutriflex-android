@@ -1,6 +1,11 @@
 package com.example.treino.data.remote.repository
 
-import com.example.treino.data.remote.*
+import com.example.treino.data.remote.CreateExercicioRequest
+import com.example.treino.data.remote.CreatePastaRequest
+import com.example.treino.data.remote.CreateSessaoRequest
+import com.example.treino.data.remote.CreateSetRequest
+import com.example.treino.data.remote.DuplicatePastaRequest
+import com.example.treino.data.remote.TreinoApiService
 import javax.inject.Inject
 
 class TreinoRemoteRepository @Inject constructor(
@@ -19,12 +24,16 @@ class TreinoRemoteRepository @Inject constructor(
 
     // --- Sessoes ---
     suspend fun getSessoesByPasta(idPasta: Int) = api.getSessoesByPasta(idPasta)
-    suspend fun createSessao(nome: String, idPasta: Int) = 
-        api.createSessao(CreateSessaoRequest(nome, idPasta))
-    suspend fun updateSessao(id: Int, nome: String) = 
-        api.updateSessao(id, mapOf("nome" to nome))
-    suspend fun deleteSessao(id: Int) = api.deleteSessao(id)
+    suspend fun getSessaoById(id: Int) = api.getSessaoById(id)
+    suspend fun createSessao(request: CreateSessaoRequest) =
+        api.createSessao(request)
+    suspend fun updateSessao(id: Int, request: CreateSessaoRequest) = 
+        api.updateSessao(id, request)
 
+    suspend fun updateSessaoName(id: Int, nome: String) = 
+        api.updateSessaoName(id, mapOf("nome" to nome))
+
+    suspend fun deleteSessao(id: Int) = api.deleteSessao(id)
     // --- Exercicios ---
     suspend fun getExerciciosBySessao(idSessao: Int) = api.getExerciciosBySessao(idSessao)
     suspend fun createExercicio(exercicioApiId: String, notas: String, idSessao: Int) = 

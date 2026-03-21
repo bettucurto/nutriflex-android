@@ -114,6 +114,7 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.Density
 import androidx.compose.ui.unit.IntSize
+import androidx.compose.ui.unit.TextUnit
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.compose.ui.window.Dialog
@@ -873,7 +874,11 @@ fun NextWorkoutCard(
     workoutName: String,
     exerciseCount: Int,
     onStartClick: () -> Unit,
-    modifier: Modifier = Modifier
+    modifier: Modifier = Modifier,
+    label: String = "Next Workout:",
+    buttonText: String = "Start Workout",
+    showMetadata: Boolean = true,
+    lineHeight: TextUnit = TextUnit.Unspecified
 ) {
     // Gradiente do botão (Azul para Verde)
     val buttonGradient = Brush.horizontalGradient(
@@ -898,45 +903,51 @@ fun NextWorkoutCard(
                 contentScale = ContentScale.Crop,
                 modifier = Modifier
                     .fillMaxSize()
-                    .blur(radius = 4.dp) // Adiciona o efeito de desfoque
+                    .blur(radius = 4.dp)
             )
 
             // 2. Overlay Escuro (Scrim)
-            // Aumentei ligeiramente a opacidade (0.6f) para contrastar melhor com o blur
             Box(
                 modifier = Modifier
                     .fillMaxSize()
                     .background(Color.Black.copy(alpha = 0.6f))
             )
 
-            // 3. Conteúdo de Texto
+            // 3. Conteúdo de Texto (Mantém a posição original: TopStart)
             Column(
                 modifier = Modifier
                     .align(Alignment.TopStart)
                     .padding(24.dp)
             ) {
-                Text(
-                    text = "Next Workout:",
-                    color = Color.White,
-                    fontSize = 18.sp,
-                    fontWeight = FontWeight.SemiBold
-                )
+                if (showMetadata) {
+                    Text(
+                        text = label,
+                        color = Color.White,
+                        fontSize = 18.sp,
+                        fontWeight = FontWeight.SemiBold
+                    )
+                }
+                
                 Text(
                     text = workoutName,
                     color = Color.White,
                     fontSize = 32.sp,
-                    fontWeight = FontWeight.Bold
+                    fontWeight = FontWeight.Bold,
+                    lineHeight = lineHeight
                 )
-                Spacer(modifier = Modifier.height(4.dp))
-                Text(
-                    text = "$exerciseCount exercises",
-                    color = Color.White.copy(alpha = 0.8f),
-                    fontSize = 16.sp,
-                    fontWeight = FontWeight.Normal
-                )
+                
+                if (showMetadata) {
+                    Spacer(modifier = Modifier.height(4.dp))
+                    Text(
+                        text = "$exerciseCount exercises",
+                        color = Color.White.copy(alpha = 0.8f),
+                        fontSize = 16.sp,
+                        fontWeight = FontWeight.Normal
+                    )
+                }
             }
 
-            // 4. Botão "Start Workout" com Ícone
+            // 4. Botão de Ação (Mantém a posição original: BottomCenter)
             Button(
                 onClick = onStartClick,
                 colors = ButtonDefaults.buttonColors(containerColor = Color.Transparent),
@@ -945,24 +956,23 @@ fun NextWorkoutCard(
                     .align(Alignment.BottomCenter)
                     .padding(16.dp)
                     .fillMaxWidth()
-                    .height(56.dp) // Um pouco mais alto para acomodar bem o ícone
+                    .height(56.dp)
                     .background(brush = buttonGradient, shape = CircleShape)
                     .clip(CircleShape)
             ) {
-                // Row para alinhar Ícone + Texto no centro
                 Row(
                     verticalAlignment = Alignment.CenterVertically,
                     horizontalArrangement = Arrangement.Center
                 ) {
                     Icon(
-                        imageVector = Icons.Outlined.PlayCircleOutline, // Ícone similar à imagem
+                        imageVector = Icons.Outlined.PlayCircleOutline,
                         contentDescription = null,
                         tint = Color.White,
                         modifier = Modifier.size(28.dp)
                     )
                     Spacer(modifier = Modifier.width(8.dp))
                     Text(
-                        text = "Start Workout",
+                        text = buttonText,
                         color = Color.White,
                         fontWeight = FontWeight.Bold,
                         fontSize = 18.sp

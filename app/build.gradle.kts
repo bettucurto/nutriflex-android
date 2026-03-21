@@ -111,4 +111,8 @@ dependencies {
     kapt("androidx.room:room-compiler-processing:2.8.4")
 
     implementation("androidx.navigation:navigation-compose:$nav_version")
+
+    val media3_version = "1.5.1"
+    implementation("androidx.media3:media3-exoplayer:$media3_version")
+    implementation("androidx.media3:media3-ui:$media3_version")
 }

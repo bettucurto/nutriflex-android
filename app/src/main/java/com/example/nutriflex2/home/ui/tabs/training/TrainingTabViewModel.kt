@@ -2,6 +2,9 @@ package com.example.nutriflex2.home.ui.tabs.training
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.example.treino.data.remote.CreateSessaoRequest
+import com.example.treino.data.remote.SessionExerciseRequest
+import com.example.treino.data.remote.SessionSetRequest
 import com.example.treino.domain.models.Pasta
 import com.example.treino.domain.models.Sessao
 import com.example.treino.domain.repository.TreinoRepository
@@ -44,10 +47,50 @@ class TrainingTabViewModel @Inject constructor(
                     treinoRepository.observePastas(user.userId)
                 }
                 .onEach { pastas ->
-                    _uiState.update { it.copy(pastas = pastas) }
+                    _uiState.update { it.copy(pastas = pastas, isLoading = false) }
                     refreshSessoesForExpandedPastas(pastas)
                 }
                 .collect()
+        }
+    }
+
+    fun onDuplicateSessionClick() {
+        val sessao = _uiState.value.selectedSessao ?: return
+        _uiState.update { it.copy(showSessionMenu = false, isLoading = true) }
+        viewModelScope.launch {
+            try {
+                val details = treinoRepository.getSessaoWithDetails(sessao.id)
+
+                val request = CreateSessaoRequest(
+                    nome = "${details.nome} (Copy)",
+                    idPasta = details.idPasta,
+                    exercicios = details.exercicios.map { ex ->
+                        SessionExerciseRequest(
+                            idExercicio = ex.exercicioApiId,
+                            nome = ex.nome ?: "Exercise",
+                            notas = ex.notas,
+                            ordem = ex.ordem,
+                            imagem = ex.imagem,
+                            bodypart = ex.bodypart,
+                            sets = ex.sets.map { set ->
+                                SessionSetRequest(
+                                    tipoSet = set.tipoSet,
+                                    peso = set.peso,
+                                    repeticoesMin = set.repeticoesMin,
+                                    repeticoesMax = set.repeticoesMax,
+                                    ordem = set.ordem
+                                )
+                            }
+                        )
+                    }
+                )
+
+                treinoRepository.createSessao(request)
+                treinoRepository.refreshSessoes(details.idPasta)
+                _uiState.update { it.copy(isLoading = false, selectedSessao = null) }
+            } catch (e: Exception) {
+                _uiState.update { it.copy(isLoading = false, error = "Error duplicating session") }
+            }
         }
     }
 

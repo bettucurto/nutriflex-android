@@ -56,6 +56,7 @@ fun HomeMainTab(
     onNavigateToSearchMeals: () -> Unit,
     onNavigateToSearchRecipes: () -> Unit,
     onNavigateToTraining: () -> Unit,
+    onNavigateToTrainingTab: () -> Unit,
     onChangeCurrentWeight: (Float) -> Unit,
     onChangeGoalWeight: (Float) -> Unit,
     onRequestScrollToBottom: () -> Unit,
@@ -130,11 +131,23 @@ fun HomeMainTab(
 
         Spacer(modifier = Modifier.height(AppTheme.dimens.largePadding))
 
-        NextWorkoutCard(
-            workoutName = state.nextWorkoutName,
-            exerciseCount = state.nextWorkoutExercises,
-            onStartClick = { onNavigateToTraining() }
-        )
+        if (state.nextWorkoutId != null) {
+            NextWorkoutCard(
+                workoutName = state.nextWorkoutName,
+                exerciseCount = state.nextWorkoutExercises,
+                onStartClick = { onNavigateToTraining() } // TODO: Passar nextWorkoutId se o destino suportar
+            )
+        } else {
+            // Empty State Card - Estrutura idêntica ao estado populado
+            NextWorkoutCard(
+                workoutName = "Ready for a\nworkout?",
+                exerciseCount = 0,
+                showMetadata = false,
+                buttonText = "Go to Training",
+                lineHeight = 28.sp,
+                onStartClick = onNavigateToTrainingTab
+            )
+        }
 
         Spacer(modifier = Modifier.height(AppTheme.dimens.largePadding))
 

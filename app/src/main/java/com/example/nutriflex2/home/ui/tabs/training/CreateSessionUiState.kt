@@ -11,7 +11,7 @@ data class CreateSessionUiState(
 )
 
 data class ExerciseUiModel(
-    val id: Int = 0, // 0 para novos
+    val id: String = "", // Agora String para suportar IDs da API
     val name: String = "",
     val muscleGroup: String = "",
     val imageUrl: String? = null,
@@ -19,10 +19,15 @@ data class ExerciseUiModel(
     val sets: List<SetUiModel> = emptyList()
 )
 
+enum class SetType {
+    REGULAR, WARMUP
+}
+
 data class SetUiModel(
     val id: Int = 0,
     val repsMin: Int = 0,
     val repsMax: Int = 0,
     val weightKg: Double = 0.0,
-    val isActive: Boolean = false
+    val isActive: Boolean = false,
+    val type: SetType = SetType.REGULAR
 )

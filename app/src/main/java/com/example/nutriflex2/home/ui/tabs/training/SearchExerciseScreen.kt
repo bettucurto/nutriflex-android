@@ -217,7 +217,7 @@ fun SearchExerciseScreen(
                                 exercise = exercise,
                                 onExerciseClick = { id ->
                                     if (id.isNotBlank()) {
-                                        navController.navigate("exercise_info/$id")
+                                        navController.navigate("exercise_info/$id?isAddingMode=true")
                                     }
                                 },
                                 onAddClick = {

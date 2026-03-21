@@ -24,6 +24,7 @@ data class SessaoEntity(
 data class ExercicioEntity(
     @PrimaryKey val id: Int,
     val exercicioApiId: String,
+    val nome: String,
     val notas: String,
     val idSessao: Int,
     val ordem: Int,
