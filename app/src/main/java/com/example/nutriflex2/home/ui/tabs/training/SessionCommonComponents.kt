@@ -140,7 +140,7 @@ fun ExerciseDetailCard(
             .fillMaxWidth()
             .padding(16.dp),
         shape = RoundedCornerShape(16.dp),
-        color = Color.White,
+        color = MaterialTheme.colorScheme.surface,
         shadowElevation = 4.dp
     ) {
         Column {
@@ -187,13 +187,13 @@ fun ExerciseDetailCard(
 
             Column(modifier = Modifier.padding(16.dp)) {
                 Row(verticalAlignment = Alignment.CenterVertically) {
-                    Icon(Icons.Default.Notes, contentDescription = null, tint = Color.Gray, modifier = Modifier.size(16.dp))
+                    Icon(Icons.Default.Notes, contentDescription = null, tint = MaterialTheme.colorScheme.onSurfaceVariant, modifier = Modifier.size(16.dp))
                     Spacer(modifier = Modifier.width(8.dp))
                     Text(
                         "EXERCISE NOTES",
                         fontSize = 11.sp,
                         fontWeight = FontWeight.Bold,
-                        color = Color.Gray,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant,
                         letterSpacing = 0.5.sp
                     )
                 }
@@ -201,16 +201,16 @@ fun ExerciseDetailCard(
                 Surface(
                     modifier = Modifier.fillMaxWidth(),
                     shape = RoundedCornerShape(8.dp),
-                    color = Color(0xFFF8F9FA)
+                    color = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.5f)
                 ) {
                     BasicTextField(
                         value = exercise.notes,
                         onValueChange = onNotesChange,
                         modifier = Modifier.padding(12.dp).fillMaxWidth(),
-                        textStyle = LocalTextStyle.current.copy(fontSize = 14.sp, color = Color.DarkGray),
+                        textStyle = LocalTextStyle.current.copy(fontSize = 14.sp, color = MaterialTheme.colorScheme.onSurface),
                         decorationBox = { innerTextField ->
                             if (exercise.notes.isEmpty()) {
-                                Text("Add coaching tips or session focus...", color = Color.LightGray, fontSize = 14.sp)
+                                Text("Add coaching tips or session focus...", color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.6f), fontSize = 14.sp)
                             }
                             innerTextField()
                         }
@@ -230,8 +230,8 @@ fun ExerciseDetailCard(
                     .fillMaxWidth()
                     .padding(16.dp),
                 colors = ButtonDefaults.buttonColors(
-                    containerColor = Color(0xFFE8F5E9),
-                    contentColor = Color(0xFF4CAF50)
+                    containerColor = MaterialTheme.colorScheme.secondaryContainer,
+                    contentColor = MaterialTheme.colorScheme.onSecondaryContainer
                 ),
                 shape = RoundedCornerShape(8.dp),
                 contentPadding = PaddingValues(vertical = 12.dp)
@@ -252,14 +252,14 @@ fun WorkoutSetTable(
     onUpdateSet: (Int, Double?, Int?, Int?) -> Unit,
     onSetClick: (Int) -> Unit
 ) {
-    val secondaryColor = Color(0xFF03A9F4)
+    val headerColor = MaterialTheme.colorScheme.primary
 
     Column(modifier = Modifier.fillMaxWidth().padding(horizontal = 16.dp)) {
         Row(modifier = Modifier.fillMaxWidth().padding(vertical = 8.dp)) {
-            Text("SET", modifier = Modifier.weight(0.15f), textAlign = TextAlign.Center, fontSize = 10.sp, fontWeight = FontWeight.Bold, color = secondaryColor)
-            Text("WEIGHT", modifier = Modifier.weight(0.25f), textAlign = TextAlign.Center, fontSize = 10.sp, fontWeight = FontWeight.Bold, color = secondaryColor)
-            Text("MIN (REPS)", modifier = Modifier.weight(0.3f), textAlign = TextAlign.Center, fontSize = 10.sp, fontWeight = FontWeight.Bold, color = secondaryColor)
-            Text("MAX (REPS)", modifier = Modifier.weight(0.3f), textAlign = TextAlign.Center, fontSize = 10.sp, fontWeight = FontWeight.Bold, color = secondaryColor)
+            Text("SET", modifier = Modifier.weight(0.15f), textAlign = TextAlign.Center, fontSize = 10.sp, fontWeight = FontWeight.Bold, color = headerColor)
+            Text("WEIGHT", modifier = Modifier.weight(0.25f), textAlign = TextAlign.Center, fontSize = 10.sp, fontWeight = FontWeight.Bold, color = headerColor)
+            Text("MIN (REPS)", modifier = Modifier.weight(0.3f), textAlign = TextAlign.Center, fontSize = 10.sp, fontWeight = FontWeight.Bold, color = headerColor)
+            Text("MAX (REPS)", modifier = Modifier.weight(0.3f), textAlign = TextAlign.Center, fontSize = 10.sp, fontWeight = FontWeight.Bold, color = headerColor)
         }
 
         sets.forEachIndexed { index, set ->
@@ -283,7 +283,8 @@ fun WorkoutSetRow(
     onUpdateSet: (Int, Double?, Int?, Int?) -> Unit,
     onSetClick: () -> Unit
 ) {
-    val secondaryColor = Color(0xFF03A9F4)
+    val primaryColor = MaterialTheme.colorScheme.primary
+    val secondaryColor = MaterialTheme.colorScheme.secondary
 
     Row(
         modifier = Modifier
@@ -291,7 +292,7 @@ fun WorkoutSetRow(
             .padding(vertical = 4.dp)
             .border(
                 width = if (index == 0) 1.dp else 0.dp,
-                brush = if (index == 0) Brush.horizontalGradient(listOf(Color(0xFF4CAF50), Color(0xFF03A9F4))) else Brush.linearGradient(listOf(Color.Transparent, Color.Transparent)),
+                brush = if (index == 0) Brush.horizontalGradient(listOf(primaryColor, secondaryColor)) else Brush.linearGradient(listOf(Color.Transparent, Color.Transparent)),
                 shape = RoundedCornerShape(8.dp)
             )
             .padding(vertical = 4.dp),
@@ -309,7 +310,7 @@ fun WorkoutSetRow(
                 text = setDisplayText,
                 textAlign = TextAlign.Center,
                 fontWeight = FontWeight.Bold,
-                color = if (setDisplayText == "W") secondaryColor else if (index == 0) Color(0xFF4CAF50) else Color.Gray,
+                color = if (setDisplayText == "W") secondaryColor else if (index == 0) primaryColor else MaterialTheme.colorScheme.onSurfaceVariant,
                 fontSize = 16.sp
             )
         }
@@ -338,7 +339,7 @@ fun WorkoutSetRow(
 fun SetInputField(value: String, onValueChange: (String) -> Unit, modifier: Modifier) {
     Surface(
         modifier = modifier.padding(horizontal = 4.dp),
-        color = Color(0xFFF1F3F5),
+        color = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.5f),
         shape = RoundedCornerShape(6.dp)
     ) {
         BasicTextField(
@@ -349,13 +350,13 @@ fun SetInputField(value: String, onValueChange: (String) -> Unit, modifier: Modi
                 textAlign = TextAlign.Center,
                 fontWeight = FontWeight.Bold,
                 fontSize = 14.sp,
-                color = Color.DarkGray
+                color = MaterialTheme.colorScheme.onSurface
             ),
             keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
             singleLine = true,
             decorationBox = { innerTextField ->
                 if (value.isEmpty()) {
-                    Text("0", color = Color.LightGray, textAlign = TextAlign.Center, modifier = Modifier.fillMaxWidth(), fontSize = 14.sp)
+                    Text("0", color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.5f), textAlign = TextAlign.Center, modifier = Modifier.fillMaxWidth(), fontSize = 14.sp)
                 }
                 innerTextField()
             }
@@ -366,6 +367,9 @@ fun SetInputField(value: String, onValueChange: (String) -> Unit, modifier: Modi
 @Composable
 fun FinishWorkoutButton(onClick: () -> Unit, visible: Boolean, text: String = "Finish Workout") {
     if (!visible) return
+    val primaryColor = MaterialTheme.colorScheme.primary
+    val secondaryColor = MaterialTheme.colorScheme.secondary
+    
     Box(
         modifier = Modifier
             .fillMaxWidth()
@@ -373,18 +377,18 @@ fun FinishWorkoutButton(onClick: () -> Unit, visible: Boolean, text: String = "F
             .height(56.dp)
             .shadow(8.dp, RoundedCornerShape(28.dp))
             .background(
-                brush = Brush.horizontalGradient(listOf(Color(0xFF4CAF50), Color(0xFF2196F3))),
+                brush = Brush.horizontalGradient(listOf(primaryColor, secondaryColor)),
                 shape = RoundedCornerShape(28.dp)
             )
             .clickable { onClick() },
         contentAlignment = Alignment.Center
     ) {
         Row(verticalAlignment = Alignment.CenterVertically) {
-            Icon(Icons.Default.CheckCircle, contentDescription = null, tint = Color.White)
+            Icon(Icons.Default.CheckCircle, contentDescription = null, tint = MaterialTheme.colorScheme.onPrimary)
             Spacer(modifier = Modifier.width(12.dp))
             Text(
                 text,
-                color = Color.White,
+                color = MaterialTheme.colorScheme.onPrimary,
                 fontWeight = FontWeight.Bold,
                 fontSize = 18.sp
             )
@@ -394,28 +398,28 @@ fun FinishWorkoutButton(onClick: () -> Unit, visible: Boolean, text: String = "F
 
 @Composable
 fun EmptySessionContent(onAddFirstExercise: () -> Unit) {
-    val primaryGreen = Color(0xFF4CAF50)
+    val primaryColor = MaterialTheme.colorScheme.primary
     Column(
         modifier = Modifier.fillMaxWidth().padding(vertical = 48.dp),
         horizontalAlignment = Alignment.CenterHorizontally,
         verticalArrangement = Arrangement.Center
     ) {
         Box(
-            modifier = Modifier.size(160.dp).background(Brush.radialGradient(colors = listOf(primaryGreen.copy(alpha = 0.15f), Color.Transparent))),
+            modifier = Modifier.size(160.dp).background(Brush.radialGradient(colors = listOf(primaryColor.copy(alpha = 0.15f), Color.Transparent))),
             contentAlignment = Alignment.Center
         ) {
-            Surface(modifier = Modifier.size(100.dp), shape = CircleShape, color = Color.White, shadowElevation = 8.dp) {
+            Surface(modifier = Modifier.size(100.dp), shape = CircleShape, color = MaterialTheme.colorScheme.surface, shadowElevation = 8.dp) {
                 Box(contentAlignment = Alignment.Center) {
-                    Icon(imageVector = Icons.Default.FitnessCenter, contentDescription = null, modifier = Modifier.size(48.dp), tint = primaryGreen)
+                    Icon(imageVector = Icons.Default.FitnessCenter, contentDescription = null, modifier = Modifier.size(48.dp), tint = primaryColor)
                 }
             }
         }
         Spacer(modifier = Modifier.height(32.dp))
-        Text("Your session is empty", fontSize = 22.sp, fontWeight = FontWeight.Bold, color = Color(0xFF333333))
+        Text("Your session is empty", fontSize = 22.sp, fontWeight = FontWeight.Bold, color = MaterialTheme.colorScheme.onSurface)
         Spacer(modifier = Modifier.height(12.dp))
-        Text("Ready to crush it? Add your first exercise to start building your custom routine.", fontSize = 15.sp, color = Color.Gray, textAlign = TextAlign.Center, modifier = Modifier.padding(horizontal = 32.dp))
+        Text("Ready to crush it? Add your first exercise to start building your custom routine.", fontSize = 15.sp, color = MaterialTheme.colorScheme.onSurfaceVariant, textAlign = TextAlign.Center, modifier = Modifier.padding(horizontal = 32.dp))
         Spacer(modifier = Modifier.height(40.dp))
-        Button(onClick = onAddFirstExercise, modifier = Modifier.height(56.dp).fillMaxWidth(0.85f), shape = RoundedCornerShape(28.dp), colors = ButtonDefaults.buttonColors(containerColor = primaryGreen)) {
+        Button(onClick = onAddFirstExercise, modifier = Modifier.height(56.dp).fillMaxWidth(0.85f), shape = RoundedCornerShape(28.dp), colors = ButtonDefaults.buttonColors(containerColor = primaryColor)) {
             Row(verticalAlignment = Alignment.CenterVertically) {
                 Icon(Icons.Default.Add, contentDescription = null)
                 Spacer(modifier = Modifier.width(8.dp))

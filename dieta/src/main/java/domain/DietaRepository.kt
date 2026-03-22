@@ -326,4 +326,14 @@ class DietaRepository @Inject constructor(
 
     suspend fun getRecipeDetails(id: String): FatSecretRecipe =
         remote.getReceitaById(id).toDomain()
+
+    suspend fun recognizeMeal(image: java.io.File): String? {
+        return try {
+            val responseBody = remote.recognizeMeal(image)
+            responseBody.string() // Retorna o JSON como string por enquanto
+        } catch (e: Exception) {
+            e.printStackTrace()
+            null
+        }
+    }
 }

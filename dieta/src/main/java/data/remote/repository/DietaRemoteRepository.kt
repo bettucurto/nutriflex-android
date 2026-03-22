@@ -1,6 +1,7 @@
 // dieta/src/main/java/com/example/dieta/remote/DietaRemoteRepository.kt
 package com.example.dieta.remote
 
+import okhttp3.MediaType.Companion.toMediaTypeOrNull
 import javax.inject.Inject
 
 class DietaRemoteRepository @Inject constructor(
@@ -168,4 +169,10 @@ class DietaRemoteRepository @Inject constructor(
 
     suspend fun getReceitaById(id: String): FatSecretRecipeDetailsDto =
         api.getReceitaById(id).receita
+
+    suspend fun recognizeMeal(image: java.io.File): okhttp3.ResponseBody {
+        val requestFile = okhttp3.RequestBody.create("image/*".toMediaTypeOrNull(), image)
+        val body = okhttp3.MultipartBody.Part.createFormData("image", image.name, requestFile)
+        return api.recognizeMeal(body)
+    }
 }

@@ -424,4 +424,10 @@ interface DietaApiService {
     suspend fun getReceitaById(
         @Path("id") id: String,
     ): FatSecretRecipeDetailsResponse
+
+    @retrofit2.http.Multipart
+    @POST("refeicoes/image")
+    suspend fun recognizeMeal(
+        @retrofit2.http.Part image: okhttp3.MultipartBody.Part
+    ): okhttp3.ResponseBody
 }

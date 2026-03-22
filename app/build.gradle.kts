@@ -115,4 +115,11 @@ dependencies {
     val media3_version = "1.5.1"
     implementation("androidx.media3:media3-exoplayer:$media3_version")
     implementation("androidx.media3:media3-ui:$media3_version")
+
+    // CameraX
+    val camerax_version = "1.5.0-alpha01"
+    implementation("androidx.camera:camera-camera2:$camerax_version")
+    implementation("androidx.camera:camera-lifecycle:$camerax_version")
+    implementation("androidx.camera:camera-view:$camerax_version")
+    implementation("androidx.camera:camera-extensions:$camerax_version")
 }

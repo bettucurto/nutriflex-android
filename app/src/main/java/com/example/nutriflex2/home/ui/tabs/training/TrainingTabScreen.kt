@@ -162,6 +162,9 @@ fun TrainingTabScreen(
                                     navController?.navigate("create_session/${pasta.id}")
                                 },
                                 onFolderMenuClick = { viewModel.onPastaMenuClick(pasta) },
+                                onStartWorkout = { sessionId ->
+                                    navController?.navigate("active_workout/$sessionId")
+                                },
                                 isEditing = isEditing,
                                 editNameInput = state.editFolderNameInput,
                                 onNameChange = { viewModel.onFolderNameChange(it) },
@@ -292,6 +295,7 @@ fun WorkoutFolderItem(
     onSessionMenuClick: (Sessao) -> Unit,
     onAddSessionClick: () -> Unit,
     onFolderMenuClick: () -> Unit,
+    onStartWorkout: (Int) -> Unit,
     isEditing: Boolean = false,
     editNameInput: String = "",
     onNameChange: (String) -> Unit = {},
@@ -384,7 +388,8 @@ fun WorkoutFolderItem(
                         sessoes.forEach { sessao ->
                             SessionItem(
                                 sessao = sessao,
-                                onMenuClick = { onSessionMenuClick(sessao) }
+                                onMenuClick = { onSessionMenuClick(sessao) },
+                                onStartClick = { onStartWorkout(sessao.id) }
                             )
                         }
                     }
@@ -397,7 +402,8 @@ fun WorkoutFolderItem(
 @Composable
 fun SessionItem(
     sessao: Sessao,
-    onMenuClick: () -> Unit
+    onMenuClick: () -> Unit,
+    onStartClick: () -> Unit
 ) {
     Surface(
         modifier = Modifier.fillMaxWidth(),
@@ -419,7 +425,7 @@ fun SessionItem(
             }
             
             Button(
-                onClick = { /* TODO: Start Workout */ },
+                onClick = onStartClick,
                 contentPadding = PaddingValues(horizontal = 16.dp, vertical = 4.dp),
                 modifier = Modifier.height(32.dp),
                 shape = RoundedCornerShape(16.dp)

@@ -55,6 +55,7 @@ fun HomeMainTab(
     onRangeChange: (WeightRange) -> Unit,
     onNavigateToSearchMeals: () -> Unit,
     onNavigateToSearchRecipes: () -> Unit,
+    onNavigateToScanMeal: () -> Unit,
     onNavigateToTraining: () -> Unit,
     onNavigateToTrainingTab: () -> Unit,
     onChangeCurrentWeight: (Float) -> Unit,
@@ -191,7 +192,11 @@ fun HomeMainTab(
             sheetState = sheetState
         ) {
             LogMealSheetContent(
-                onPhotoClick = { /* TODO */ },
+                onPhotoClick = {
+                    showSheet = false
+                    scope.launch { sheetState.hide() }
+                    onNavigateToScanMeal()
+                },
                 onSearchMealsClick = {
                     showSheet = false
                     scope.launch { sheetState.hide() }

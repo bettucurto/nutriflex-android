@@ -70,6 +70,7 @@ import theme.AppTheme
 fun DietTabScreen(
     onNavigateToSearchMeals: () -> Unit,
     onNavigateToSearchRecipes: () -> Unit,
+    onNavigateToScanMeal: () -> Unit,
     scrollState: ScrollState,
     viewModel: DietTabViewModel = hiltViewModel(),
     onOpenDrawer: () -> Unit
@@ -212,7 +213,11 @@ fun DietTabScreen(
             sheetState = sheetState
         ) {
             LogMealSheetContent(
-                onPhotoClick = { /* TODO: navigate to photo capture */ },
+                onPhotoClick = {
+                    showSheet = false
+                    scope.launch { sheetState.hide() }
+                    onNavigateToScanMeal()
+                },
                 onSearchMealsClick = {
                     showSheet = false
                     scope.launch { sheetState.hide() }

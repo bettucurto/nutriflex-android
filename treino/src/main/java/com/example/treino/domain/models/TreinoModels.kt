@@ -35,5 +35,6 @@ data class ExercicioSet(
     val pesoUltimaVez: Double,
     val repeticoesUltimaVez: Int,
     val idExercicio: Int,
-    val ordem: Int
+    val ordem: Int,
+    val isChecked: Boolean = false
 )

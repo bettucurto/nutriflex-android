@@ -301,6 +301,7 @@ fun HomeScreen(
                                     },
                                     onRequestScrollToBottom = { pendingScroll = true },
                                     onNavigateToSearchRecipes = onNavigateToSearchRecipes,
+                                    onNavigateToScanMeal = { navController.navigate("scan_meal") },
                                     onOpenDrawer = { scope.launch { drawerState.open() } }
                                 )
                             }
@@ -310,6 +311,7 @@ fun HomeScreen(
                                 DietTabScreen(
                                     onNavigateToSearchMeals = onNavigateToSearchMeals,
                                     onNavigateToSearchRecipes = onNavigateToSearchRecipes,
+                                    onNavigateToScanMeal = { navController.navigate("scan_meal") },
                                     viewModel = dietVm,
                                     scrollState = dietScrollState,
                                     onOpenDrawer = { scope.launch { drawerState.open() } }

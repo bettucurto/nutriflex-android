@@ -37,6 +37,7 @@ import androidx.navigation.navArgument
 import com.example.nutriflex2.home.account.AccountScreen
 import com.example.nutriflex2.home.ui.HomeScreen
 import com.example.nutriflex2.home.ui.SyncViewModel
+import com.example.nutriflex2.home.ui.tabs.diet.ScanMealScreen
 import com.example.nutriflex2.home.ui.tabs.diet.favorites.FavoriteMealEditorScreen
 import com.example.nutriflex2.home.ui.tabs.diet.favorites.FavoriteMealEditorViewModel
 import com.example.nutriflex2.home.ui.tabs.diet.info.favorites.FavoriteMealInfoScreen
@@ -44,10 +45,13 @@ import com.example.nutriflex2.home.ui.tabs.diet.info.meals.MealInfoScreen
 import com.example.nutriflex2.home.ui.tabs.diet.info.recipes.RecipeInfoScreen
 import com.example.nutriflex2.home.ui.tabs.diet.search.meals.SearchMealsScreen
 import com.example.nutriflex2.home.ui.tabs.diet.search.recipes.SearchRecipeScreen
+import com.example.nutriflex2.home.ui.tabs.training.ActiveWorkoutScreen
 import com.example.nutriflex2.home.ui.tabs.training.CreateSessionScreen
 import com.example.nutriflex2.home.ui.tabs.training.EditSessionScreen
 import com.example.nutriflex2.home.ui.tabs.training.ExerciseInfoScreen
 import com.example.nutriflex2.home.ui.tabs.training.SearchExerciseScreen
+import com.example.nutriflex2.home.ui.tabs.training.WorkoutSummary
+import com.example.nutriflex2.home.ui.tabs.training.WorkoutSummaryScreen
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import ui.WelcomeScreen
@@ -185,6 +189,40 @@ fun AppNavGraph(
                     navController = navController
                 )
             }
+
+            composable(
+                route = "active_workout/{sessionId}",
+                arguments = listOf(navArgument("sessionId") { type = NavType.IntType })
+            ) {
+                ActiveWorkoutScreen(
+                    onBack = { navController.popBackStack() },
+                    onFinish = { summary ->
+                        // Pass summary as json or via savedStateHandle. For simplicity, we can use a shared state or just serialize.
+                        // But since it's a small object, let's navigate to summary.
+                        navController.navigate("workout_summary/${summary.duration}/${summary.totalVolume}/${summary.completedSets}") {
+                            popUpTo("trainingTab") { inclusive = false }
+                        }
+                    }
+                )
+            }
+
+            composable(
+                route = "workout_summary/{duration}/{volume}/{sets}",
+                arguments = listOf(
+                    navArgument("duration") { type = NavType.StringType },
+                    navArgument("volume") { type = NavType.FloatType },
+                    navArgument("sets") { type = NavType.IntType }
+                )
+            ) { backStackEntry ->
+                val duration = backStackEntry.arguments?.getString("duration") ?: ""
+                val volume = backStackEntry.arguments?.getFloat("volume")?.toDouble() ?: 0.0
+                val sets = backStackEntry.arguments?.getInt("sets") ?: 0
+                
+                WorkoutSummaryScreen(
+                    summary = WorkoutSummary(duration, volume, sets),
+                    navController = navController
+                )
+            }
         }
 
         // --- Fluxo de Pesquisa Diária (Log normal) ---
@@ -192,7 +230,7 @@ fun AppNavGraph(
             SearchMealsScreen(
                 navController = navController,
                 onBack = { navController.popBackStack() },
-                onOpenPhoto = { /* TODO */ },
+                onOpenPhoto = { navController.navigate("scan_meal") },
 
                 // Ao clicar em Create Meal, iniciamos o FLUXO ANINHADO
                 onOpenCreateMeal = { navController.navigate("create_meal_flow") },
@@ -208,7 +246,7 @@ fun AppNavGraph(
             SearchRecipeScreen(
                 onBack = { navController.popBackStack() },
                 onOpenFavorites = { /* TODO */ },
-                onOpenPhoto = { /* TODO */ },
+                onOpenPhoto = { navController.navigate("scan_meal") },
                 navController = navController,
             )
         }
@@ -354,6 +392,8 @@ fun AppNavGraph(
             }
         }
 
+
+
         composable("accountScreen") {
             AccountScreen(
                 onBack = { navController.navigate("homeScreen")},
@@ -365,10 +405,17 @@ fun AppNavGraph(
             )
         }
 
+        composable("scan_meal") {
+            ScanMealScreen(
+                onNavigateBack = { navController.popBackStack() }
+            )
+        }
+
         navigation(
             startDestination = "registrationScreen1",
             route = "registrationFlow"
         ) {
+// ...
             composable("registrationScreen1") { backStackEntry ->
                 val parentEntry = remember(backStackEntry) {
                     navController.getBackStackEntry("registrationFlow")

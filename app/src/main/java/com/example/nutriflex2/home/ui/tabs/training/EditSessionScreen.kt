@@ -101,7 +101,7 @@ fun EditSessionScreen(
             )
         },
         floatingActionButtonPosition = FabPosition.Center,
-        containerColor = Color(0xFFF8F9FA)
+        containerColor = MaterialTheme.colorScheme.background
     ) { padding ->
         LazyColumn(
             modifier = Modifier.fillMaxSize().padding(padding),
@@ -109,16 +109,16 @@ fun EditSessionScreen(
         ) {
             item {
                 Column(modifier = Modifier.padding(16.dp)) {
-                    Text("WORKOUT NAME", fontSize = 12.sp, fontWeight = FontWeight.Bold, color = Color.Gray, letterSpacing = 1.sp)
+                    Text("WORKOUT NAME", fontSize = 12.sp, fontWeight = FontWeight.Bold, color = MaterialTheme.colorScheme.onSurfaceVariant, letterSpacing = 1.sp)
                     Spacer(modifier = Modifier.height(8.dp))
-                    Surface(modifier = Modifier.fillMaxWidth(), shape = RoundedCornerShape(12.dp), color = Color.White, shadowElevation = 2.dp) {
+                    Surface(modifier = Modifier.fillMaxWidth(), shape = RoundedCornerShape(12.dp), color = MaterialTheme.colorScheme.surface, shadowElevation = 2.dp) {
                         BasicTextField(
                             value = state.workoutName,
                             onValueChange = viewModel::onWorkoutNameChange,
                             modifier = Modifier.padding(16.dp),
-                            textStyle = LocalTextStyle.current.copy(fontSize = 18.sp, fontWeight = FontWeight.Bold, color = Color(0xFF1A1C1E)),
+                            textStyle = LocalTextStyle.current.copy(fontSize = 18.sp, fontWeight = FontWeight.Bold, color = MaterialTheme.colorScheme.onSurface),
                             decorationBox = { innerTextField ->
-                                if (state.workoutName.isEmpty()) Text("Morning Power Session", color = Color.LightGray, fontSize = 18.sp)
+                                if (state.workoutName.isEmpty()) Text("Morning Power Session", color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.5f), fontSize = 18.sp)
                                 innerTextField()
                             }
                         )
@@ -129,7 +129,7 @@ fun EditSessionScreen(
             if (state.exercises.isNotEmpty()) {
                 item {
                     Column(modifier = Modifier.padding(vertical = 8.dp)) {
-                        Text("SESSION EXERCISES", modifier = Modifier.padding(horizontal = 16.dp), fontSize = 12.sp, fontWeight = FontWeight.Bold, color = Color.Gray, letterSpacing = 1.sp)
+                        Text("SESSION EXERCISES", modifier = Modifier.padding(horizontal = 16.dp), fontSize = 12.sp, fontWeight = FontWeight.Bold, color = MaterialTheme.colorScheme.onSurfaceVariant, letterSpacing = 1.sp)
                         Spacer(modifier = Modifier.height(12.dp))
                         SessionExercisesRow(
                             exercises = state.exercises,
