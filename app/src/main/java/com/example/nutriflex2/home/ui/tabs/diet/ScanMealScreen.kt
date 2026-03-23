@@ -14,11 +14,17 @@ import androidx.camera.core.ImageCaptureException
 import androidx.camera.core.Preview
 import androidx.camera.lifecycle.ProcessCameraProvider
 import androidx.camera.view.PreviewView
+import androidx.compose.animation.AnimatedVisibility
+import androidx.compose.animation.core.FastOutSlowInEasing
+import androidx.compose.animation.core.animateDpAsState
+import androidx.compose.animation.core.animateFloatAsState
+import androidx.compose.animation.core.tween
 import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.gestures.detectVerticalDragGestures
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -76,6 +82,7 @@ import androidx.compose.ui.draw.drawWithContent
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.drawscope.clipRect
+import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.platform.LocalContext
@@ -108,15 +115,34 @@ fun ScanMealScreen(
     val screenHeightPx = with(density) { configuration.screenHeightDp.dp.toPx() }
 
     // --- ESTADO DO SCAFFOLD (WHATSAPP STYLE) ---
+    val sheetState = rememberStandardBottomSheetState(
+        initialValue = SheetValue.PartiallyExpanded,
+        skipHiddenState = true
+    )
     val scaffoldState = rememberBottomSheetScaffoldState(
-        bottomSheetState = rememberStandardBottomSheetState(
-            initialValue = SheetValue.PartiallyExpanded,
-            skipHiddenState = false
-        )
+        bottomSheetState = sheetState
     )
 
-    val peekHeight = 270.dp // Aumentado para subir a pega e as miniaturas
-    val buttonAreaHeight = 140.dp
+    val isExpanded = scaffoldState.bottomSheetState.targetValue == SheetValue.Expanded
+    val clipBottomOffset by animateDpAsState(targetValue = if (isExpanded) 0.dp else 170.dp) // 170.dp = Distância do fundo até ao topo do botão
+    val cameraButtonsAlpha by animateFloatAsState(targetValue = if (isExpanded) 0f else 1f)
+
+    val peekHeight = 250.dp // Estado Fechado (apenas pega visível)
+    val halfExpandedHeight = 330.dp // Referência para Meio-Termo
+    var targetPeekHeight by remember { mutableStateOf(halfExpandedHeight) }
+
+    LaunchedEffect(scaffoldState.bottomSheetState.currentValue) {
+        if (scaffoldState.bottomSheetState.currentValue == SheetValue.Expanded) {
+            targetPeekHeight = halfExpandedHeight
+        }
+    }
+
+    val animatedPeekHeight by animateDpAsState(
+        targetValue = targetPeekHeight,
+        animationSpec = tween(durationMillis = 300, easing = FastOutSlowInEasing),
+        label = "peekHeightAnimation"
+    )
+    val buttonAreaHeight = 130.dp
 
     // Cálculo do progresso entre PartiallyExpanded (0f) e Expanded (1f)
     val progress by remember {
@@ -147,7 +173,7 @@ fun ScanMealScreen(
             ContextCompat.checkSelfPermission(context, Manifest.permission.CAMERA) == PackageManager.PERMISSION_GRANTED
         )
     }
-    
+
     val permissionLauncher = rememberLauncherForActivityResult(
         ActivityResultContracts.RequestMultiplePermissions()
     ) { permissions ->
@@ -167,16 +193,17 @@ fun ScanMealScreen(
 
     // --- FASE 1: RESTRUTURAÇÃO DE CAMADAS (O TRUQUE DO BOX SOBREPOSTO) ---
     Box(modifier = Modifier.fillMaxSize().background(Color.Black)) {
-        
+
         BottomSheetScaffold(
             scaffoldState = scaffoldState,
-            sheetPeekHeight = peekHeight,
+            sheetPeekHeight = animatedPeekHeight,
             sheetContainerColor = Color.Transparent,
             sheetContentColor = Color.White,
             sheetShadowElevation = 0.dp,
             sheetTonalElevation = 0.dp,
             sheetDragHandle = {}, // DragHandle agora é gerido internamente no content para não ser cortado
             sheetContent = {
+                val isExpanded = scaffoldState.bottomSheetState.targetValue == SheetValue.Expanded
                 GallerySheetContent(
                     state = state,
                     onAlbumSelected = viewModel::onAlbumSelected,
@@ -185,7 +212,11 @@ fun ScanMealScreen(
                     sheetOffset = sheetOffset,
                     screenHeightPx = screenHeightPx,
                     buttonAreaHeightPx = with(density) { buttonAreaHeight.toPx() },
-                    handleHeightPx = with(density) { 32.dp.toPx() }
+                    handleHeightPx = with(density) { 32.dp.toPx() },
+                    onPeekHeightChange = { newHeight -> targetPeekHeight = newHeight },
+                    isExpanded = isExpanded,
+                    scaffoldState = scaffoldState,
+                    clipBottomOffset = clipBottomOffset
                 )
             }
         ) { paddingValues ->
@@ -254,12 +285,14 @@ fun ScanMealScreen(
             Row(
                 modifier = Modifier
                     .fillMaxSize()
-                    .padding(horizontal = 32.dp),
+                    .padding(horizontal = 32.dp)
+                    .padding(bottom = 40.dp)
+                    .alpha(cameraButtonsAlpha),
                 horizontalArrangement = Arrangement.SpaceBetween,
                 verticalAlignment = Alignment.CenterVertically
             ) {
                 IconButton(onClick = { /* Galeria */ }) { Icon(Icons.Default.PhotoLibrary, "Gallery", tint = Color.White, modifier = Modifier.size(28.dp)) }
-                
+
                 Box(modifier = Modifier
                     .size(80.dp)
                     .border(4.dp, Color.White, CircleShape)
@@ -270,7 +303,7 @@ fun ScanMealScreen(
                         takePhoto(context, imageCapture, cameraExecutor, onImageCaptured = { uri -> viewModel.onImageCaptured(uri, context) }, onError = { })
                     }
                 )
-                
+
                 IconButton(onClick = { lensFacing = if (lensFacing == CameraSelector.LENS_FACING_BACK) CameraSelector.LENS_FACING_FRONT else CameraSelector.LENS_FACING_BACK }) {
                     Icon(Icons.Default.Cameraswitch, "Flip", tint = Color.White, modifier = Modifier.size(28.dp))
                 }
@@ -289,6 +322,7 @@ fun ScanMealScreen(
     }
 }
 
+@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun GallerySheetContent(
     state: ScanMealUiState,
@@ -298,17 +332,30 @@ fun GallerySheetContent(
     sheetOffset: Float,
     screenHeightPx: Float,
     buttonAreaHeightPx: Float,
-    handleHeightPx: Float
+    handleHeightPx: Float,
+    onPeekHeightChange: (androidx.compose.ui.unit.Dp) -> Unit,
+    isExpanded: Boolean,
+    scaffoldState: androidx.compose.material3.BottomSheetScaffoldState,
+    clipBottomOffset: androidx.compose.ui.unit.Dp
 ) {
-    val backgroundColor = Color.Black.copy(alpha = (progress * 0.95f).coerceIn(0f, 0.95f))
+    val backgroundColor = if (isExpanded) Color.Black.copy(alpha = (progress * 0.95f).coerceIn(0f, 0.95f)) else Color.Transparent
 
-    Column(modifier = Modifier.fillMaxSize()) {
+    Column(modifier = Modifier.fillMaxSize().padding(top = 48.dp)) {
         // 1. DragHandle (Sempre visível no topo da gaveta)
         Box(
             modifier = Modifier
                 .fillMaxWidth()
                 .height(32.dp)
-                .background(backgroundColor),
+                .background(backgroundColor)
+                .pointerInput(Unit) {
+                    detectVerticalDragGestures { _, dragAmount ->
+                        if (dragAmount > 10) {
+                            onPeekHeightChange(250.dp)
+                        } else if (dragAmount < -10) {
+                            onPeekHeightChange(330.dp)
+                        }
+                    }
+                },
             contentAlignment = Alignment.Center
         ) {
             Box(
@@ -325,27 +372,33 @@ fun GallerySheetContent(
                 .fillMaxSize()
                 .background(backgroundColor)
                 .drawWithContent {
-                    // O ponto de corte é o topo da zona de botões (ScreenHeight - ButtonArea)
-                    // Convertido para o espaço local desta Column (subtraindo o offset e o handle)
-                    val clipY = (screenHeightPx - buttonAreaHeightPx) - sheetOffset - handleHeightPx
-                    clipRect(bottom = clipY) {
+                    // try-catch garante que não há crash no 1º frame antes de o Compose calcular os tamanhos
+                    val offset = try { scaffoldState.bottomSheetState.requireOffset() } catch (e: Exception) { 0f }
+                    
+                    // Fórmula mágica: AlturaTotal - DeslocamentoGaveta - AlturaDoBotão
+                    // Isto ancora a linha de corte exatamente no ecrã do telemóvel, imune à altura da gaveta!
+                    val clipTop = size.height - offset - clipBottomOffset.toPx()
+                    
+                    clipRect(bottom = clipTop) {
                         this@drawWithContent.drawContent()
                     }
                 }
         ) {
             // Imagens Recentes
-            LazyRow(
-                modifier = Modifier.fillMaxWidth().height(85.dp),
-                contentPadding = PaddingValues(horizontal = 16.dp),
-                horizontalArrangement = Arrangement.spacedBy(8.dp)
-            ) {
-                items(state.recentImages) { uri ->
-                    Image(
-                        painter = rememberAsyncImagePainter(uri), 
-                        null, 
-                        modifier = Modifier.size(72.dp).clip(RoundedCornerShape(8.dp)).clickable { onImageSelected(uri) }, 
-                        contentScale = ContentScale.Crop
-                    )
+            AnimatedVisibility(visible = !isExpanded) {
+                LazyRow(
+                    modifier = Modifier.fillMaxWidth().height(85.dp),
+                    contentPadding = PaddingValues(horizontal = 16.dp),
+                    horizontalArrangement = Arrangement.spacedBy(8.dp)
+                ) {
+                    items(state.recentImages) { uri ->
+                        Image(
+                            painter = rememberAsyncImagePainter(uri),
+                            null,
+                            modifier = Modifier.size(72.dp).clip(RoundedCornerShape(8.dp)).clickable { onImageSelected(uri) },
+                            contentScale = ContentScale.Crop
+                        )
+                    }
                 }
             }
 
@@ -377,17 +430,14 @@ fun GallerySheetContent(
                 ) {
                     items(images) { uri ->
                         Image(
-                            painter = rememberAsyncImagePainter(uri), 
-                            null, 
-                            modifier = Modifier.aspectRatio(1f).clickable(enabled = progress > 0.8f) { onImageSelected(uri) }, 
+                            painter = rememberAsyncImagePainter(uri),
+                            null,
+                            modifier = Modifier.aspectRatio(1f).clickable(enabled = progress > 0.8f) { onImageSelected(uri) },
                             contentScale = ContentScale.Crop
                         )
                     }
                 }
             }
-
-            // Spacer de compensação
-            Spacer(modifier = Modifier.height(280.dp).navigationBarsPadding())
         }
     }
 }
