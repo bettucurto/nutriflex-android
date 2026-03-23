@@ -293,6 +293,9 @@ fun HomeScreen(
                                     onNavigateToTrainingTab = {
                                         scope.launch { pagerState.animateScrollToPage(0) }
                                     },
+                                    onNavigateToActiveWorkout = { id ->
+                                        navController.navigate("active_workout/$id")
+                                    },
                                     onChangeCurrentWeight = { new ->
                                         viewModel.onChangeCurrentWeight(new, selectedRange)
                                     },

@@ -64,4 +64,7 @@ interface TreinoDao {
 
     @Query("DELETE FROM exercicio_sets WHERE id = :id")
     suspend fun deleteSetById(id: Int)
+
+    @Query("UPDATE exercicio_sets SET pesoUltimaVez = :peso, repeticoesUltimaVez = :reps WHERE id = :setId")
+    suspend fun updateSetHistory(setId: Int, peso: Double, reps: Int)
 }

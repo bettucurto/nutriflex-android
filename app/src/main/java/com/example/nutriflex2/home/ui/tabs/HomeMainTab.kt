@@ -58,6 +58,7 @@ fun HomeMainTab(
     onNavigateToScanMeal: () -> Unit,
     onNavigateToTraining: () -> Unit,
     onNavigateToTrainingTab: () -> Unit,
+    onNavigateToActiveWorkout: (Int) -> Unit,
     onChangeCurrentWeight: (Float) -> Unit,
     onChangeGoalWeight: (Float) -> Unit,
     onRequestScrollToBottom: () -> Unit,
@@ -136,7 +137,7 @@ fun HomeMainTab(
             NextWorkoutCard(
                 workoutName = state.nextWorkoutName,
                 exerciseCount = state.nextWorkoutExercises,
-                onStartClick = { onNavigateToTraining() } // TODO: Passar nextWorkoutId se o destino suportar
+                onStartClick = { onNavigateToActiveWorkout(state.nextWorkoutId) }
             )
         } else {
             // Empty State Card - Estrutura idêntica ao estado populado

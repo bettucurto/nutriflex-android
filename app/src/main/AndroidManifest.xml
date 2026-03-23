@@ -35,11 +35,11 @@
         </activity>
 
         <service
-            android:name=".home.ui.tabs.training.RestTimerService"
+            android:name=".home.ui.tabs.training.WorkoutForegroundService"
             android:enabled="true"
             android:exported="false"
             android:foregroundServiceType="specialUse">
-            <property android:name="android.app.property.FOREGROUND_SERVICE_TYPE_SPECIAL_USE" android:value="Explaining to the user that this service is used to maintain a rest timer between sets in a workout application."/>
+            <property android:name="android.app.property.FOREGROUND_SERVICE_TYPE_SPECIAL_USE" android:value="This service maintains the workout state and rest timers, ensuring the session remains active and providing quick controls via notifications."/>
         </service>
 
     </application>

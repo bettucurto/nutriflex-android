@@ -1,6 +1,5 @@
 package com.example.nutriflex2.home.ui.tabs.training
 
-import android.util.Log
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.animateContentSize
 import androidx.compose.animation.core.LinearEasing
@@ -43,8 +42,6 @@ import androidx.compose.material.icons.filled.Menu
 import androidx.compose.material.icons.filled.MoreVert
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
-import androidx.compose.material3.CardDefaults
-import androidx.compose.material3.ElevatedCard
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
@@ -63,7 +60,6 @@ import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
-import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -74,6 +70,7 @@ import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.TileMode
 import androidx.compose.ui.graphics.vector.ImageVector
+import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.text.font.Font
 import androidx.compose.ui.text.font.FontFamily
@@ -269,19 +266,29 @@ private fun TrainingHeaderSection(
                     )
                 }
             }
+            val configuration = LocalConfiguration.current
 
-            // Title
-            Text(
-                text = "WORKOUT",
-                fontWeight = FontWeight.Bold,
-                fontFamily = FontFamily(Font(R.font.formulacondensedbold)),
-                fontSize = 115.sp,
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(top = 8.dp),
-                color = Color.White,
-                textAlign = TextAlign.Center
-            )
+            val screenWidth = configuration.screenWidthDp
+            // Com Formula Condensed, 0.18f da largura do ecrã aproxima-se de 90% da width.
+            val dynamicFontSize = (screenWidth * 0.28f).sp
+
+            Row(
+                horizontalArrangement = Arrangement.Center,
+                modifier = Modifier.fillMaxWidth()
+            ) {
+                // Title
+                Text(
+                    text = "WORKOUT",
+                    fontWeight = FontWeight.Bold,
+                    fontFamily = FontFamily(Font(R.font.formulacondensedbold)),
+                    fontSize = dynamicFontSize,
+                    color = Color.White,
+                    textAlign = TextAlign.Center,
+                    modifier = Modifier
+                        .fillMaxWidth(0.9f)
+                        .padding(top = AppTheme.dimens.smallPadding)
+                )
+            }
         }
     }
 }

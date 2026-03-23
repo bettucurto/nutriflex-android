@@ -41,6 +41,7 @@ interface TreinoRepository {
     suspend fun createSet(request: CreateSetRequest): Int
     suspend fun updateSet(id: Int, request: CreateSetRequest)
     suspend fun deleteSet(id: Int, idExercicio: Int)
+    suspend fun updateSetHistory(setId: Int, peso: Double, reps: Int)
 
     // --- ExerciseDB ---
     suspend fun searchExercises(

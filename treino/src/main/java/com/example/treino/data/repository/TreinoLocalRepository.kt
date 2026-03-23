@@ -33,4 +33,5 @@ class TreinoLocalRepository @Inject constructor(
     suspend fun saveSets(sets: List<SetEntity>) = dao.insertSets(sets)
     suspend fun deleteSetsByExercicio(idExercicio: Int) = dao.deleteSetsByExercicio(idExercicio)
     suspend fun deleteSetById(id: Int) = dao.deleteSetById(id)
+    suspend fun updateSetHistory(setId: Int, peso: Double, reps: Int) = dao.updateSetHistory(setId, peso, reps)
 }

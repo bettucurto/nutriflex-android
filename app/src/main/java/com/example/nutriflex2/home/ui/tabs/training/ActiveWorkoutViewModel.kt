@@ -45,6 +45,7 @@ data class WorkoutSummary(
 @HiltViewModel
 class ActiveWorkoutViewModel @Inject constructor(
     private val treinoRepository: TreinoRepository,
+    @dagger.hilt.android.qualifiers.ApplicationContext private val context: android.content.Context,
     savedStateHandle: SavedStateHandle
 ) : ViewModel() {
 
@@ -59,6 +60,19 @@ class ActiveWorkoutViewModel @Inject constructor(
     init {
         loadSession()
         startTimer()
+        sendServiceCommand(WorkoutForegroundService.ACTION_START_WORKOUT)
+    }
+
+    private fun sendServiceCommand(action: String, extras: (android.content.Intent.() -> Unit)? = null) {
+        val intent = android.content.Intent(context, WorkoutForegroundService::class.java).apply {
+            this.action = action
+            extras?.invoke(this)
+        }
+        if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.O) {
+            context.startForegroundService(intent)
+        } else {
+            context.startService(intent)
+        }
     }
 
     private fun loadSession() {
@@ -123,6 +137,17 @@ class ActiveWorkoutViewModel @Inject constructor(
         restTimerJob?.cancel()
         _uiState.update { it.copy(isResting = true, restTimeLeft = seconds, initialRestTime = seconds) }
         
+        // Obter o nome do próximo exercício para a notificação
+        val currentExerciseIndex = _uiState.value.exercises.indexOfFirst { ex -> ex.sets.any { !it.isChecked } }
+        val nextExerciseName = if (currentExerciseIndex != -1) {
+            _uiState.value.exercises[currentExerciseIndex].exercicio.nome
+        } else "Finishing Workout"
+
+        sendServiceCommand(WorkoutForegroundService.ACTION_START_REST) {
+            putExtra(WorkoutForegroundService.EXTRA_REST_SECONDS, seconds)
+            putExtra(WorkoutForegroundService.EXTRA_NEXT_EXERCISE_NAME, nextExerciseName)
+        }
+
         restTimerJob = viewModelScope.launch {
             while (_uiState.value.restTimeLeft > 0) {
                 delay(1000)
@@ -135,10 +160,16 @@ class ActiveWorkoutViewModel @Inject constructor(
     fun skipRest() {
         restTimerJob?.cancel()
         _uiState.update { it.copy(isResting = false, restTimeLeft = 0) }
+        sendServiceCommand(WorkoutForegroundService.ACTION_SKIP_REST)
     }
 
     fun addRestTime(seconds: Int) {
         _uiState.update { it.copy(restTimeLeft = it.restTimeLeft + seconds) }
+        if (seconds > 0) {
+            sendServiceCommand(WorkoutForegroundService.ACTION_ADD_TIME)
+        } else {
+            sendServiceCommand(WorkoutForegroundService.ACTION_SUBTRACT_TIME)
+        }
     }
 
     fun subtractRestTime(seconds: Int) {
@@ -146,6 +177,7 @@ class ActiveWorkoutViewModel @Inject constructor(
             val newTime = (it.restTimeLeft - seconds).coerceAtLeast(0)
             it.copy(restTimeLeft = newTime)
         }
+        sendServiceCommand(WorkoutForegroundService.ACTION_SUBTRACT_TIME)
     }
 
     // --- EXERCISE & SET MANAGEMENT (ISOLATED STATE) ---
@@ -164,6 +196,8 @@ class ActiveWorkoutViewModel @Inject constructor(
             // Trigger rest timer if checked
             if (newChecked) {
                 startRestTimer(state.initialRestTime)
+            } else {
+                sendServiceCommand(WorkoutForegroundService.ACTION_STOP_REST)
             }
             
             state.copy(exercises = updatedExercises)
@@ -268,28 +302,33 @@ class ActiveWorkoutViewModel @Inject constructor(
     fun finishWorkout() {
         timerJob?.cancel()
         restTimerJob?.cancel()
+        sendServiceCommand(WorkoutForegroundService.ACTION_STOP_WORKOUT)
         val state = _uiState.value
         
         val durationFormatted = formatTime(state.timerSeconds)
         var totalVolume = 0.0
         var completedSets = 0
         
-        state.exercises.forEach { ex ->
-            ex.sets.forEach { set ->
-                if (set.isChecked) {
-                    totalVolume += (set.peso * set.repeticoesMin)
-                    completedSets++
+        viewModelScope.launch {
+            state.exercises.forEach { ex ->
+                ex.sets.forEach { set ->
+                    if (set.isChecked) {
+                        totalVolume += (set.peso * set.repeticoesMin)
+                        completedSets++
+                        // Atualizar histórico na DB local
+                        treinoRepository.updateSetHistory(set.id, set.peso, set.repeticoesMin)
+                    }
                 }
             }
+            
+            val summary = WorkoutSummary(
+                duration = durationFormatted,
+                totalVolume = totalVolume,
+                completedSets = completedSets
+            )
+            
+            _uiState.update { it.copy(isFinished = true, summary = summary, isResting = false) }
         }
-        
-        val summary = WorkoutSummary(
-            duration = durationFormatted,
-            totalVolume = totalVolume,
-            completedSets = completedSets
-        )
-        
-        _uiState.update { it.copy(isFinished = true, summary = summary, isResting = false) }
     }
 
     fun formatTime(seconds: Long): String {

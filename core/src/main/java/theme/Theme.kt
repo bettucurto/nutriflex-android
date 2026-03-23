@@ -6,10 +6,10 @@ import androidx.compose.material3.darkColorScheme
 import androidx.compose.material3.lightColorScheme
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
+import androidx.compose.runtime.ReadOnlyComposable
 import androidx.compose.ui.platform.LocalConfiguration
 
 private val lightColorScheme = lightColorScheme(
-// ... (I'll keep the full body in the actual call)
     primary = Primary,
     onPrimary = OnPrimary,
     primaryContainer = PrimaryContainer,
@@ -68,16 +68,17 @@ fun AppTheme(
 ) {
     val configuration = LocalConfiguration.current
     val screenWidth = configuration.screenWidthDp
+    val screenHeight = configuration.screenHeightDp
 
-    val dimens = when {
-        screenWidth < 360 -> SmallDimens
-        screenWidth > 600 -> TabletDimens
-        else -> DefaultDimens
-    }
+    val dimens = calculateDimens(screenWidth, screenHeight)
+    val dynamicTypography = calculateTypography(screenWidth)
 
     val colorsScheme = if (isDarkTheme) darkColorScheme else lightColorScheme
 
-    CompositionLocalProvider(LocalDimens provides dimens) {
+    CompositionLocalProvider(
+        LocalDimens provides dimens,
+        LocalDynamicTypography provides dynamicTypography
+    ) {
         MaterialTheme(
             colorScheme = colorsScheme,
             typography = AppTypography,
@@ -85,4 +86,16 @@ fun AppTheme(
             content = content
         )
     }
+}
+
+object AppTheme {
+    val dimens: Dimens
+        @Composable
+        @ReadOnlyComposable
+        get() = LocalDimens.current
+
+    val typography: DynamicTypography
+        @Composable
+        @ReadOnlyComposable
+        get() = LocalDynamicTypography.current
 }

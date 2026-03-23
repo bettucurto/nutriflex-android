@@ -163,6 +163,10 @@ class TreinoRepositoryImpl @Inject constructor(
         local.deleteSetById(id)
     }
 
+    override suspend fun updateSetHistory(setId: Int, peso: Double, reps: Int) {
+        local.updateSetHistory(setId, peso, reps)
+    }
+
     // --- ExerciseDB ---
     override suspend fun searchExercises(
         name: String?,

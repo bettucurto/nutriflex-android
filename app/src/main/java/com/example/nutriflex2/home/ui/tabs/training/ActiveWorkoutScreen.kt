@@ -1,5 +1,10 @@
 package com.example.nutriflex2.home.ui.tabs.training
 
+import android.Manifest
+import android.content.pm.PackageManager
+import android.os.Build
+import androidx.activity.compose.rememberLauncherForActivityResult
+import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.animation.*
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
@@ -21,14 +26,17 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.core.content.ContextCompat
 import androidx.hilt.navigation.compose.hiltViewModel
 import coil.compose.AsyncImage
 import com.example.treino.domain.models.ExercicioSet
+import components.LeftTitleText
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -38,6 +46,22 @@ fun ActiveWorkoutScreen(
     viewModel: ActiveWorkoutViewModel = hiltViewModel()
 ) {
     val uiState by viewModel.uiState.collectAsState()
+    val context = LocalContext.current
+
+    // Request Notification Permission for Android 13+
+    val permissionLauncher = rememberLauncherForActivityResult(
+        ActivityResultContracts.RequestPermission()
+    ) { isGranted ->
+        // Permission result handled, service will start anyway but notification might be hidden
+    }
+
+    LaunchedEffect(Unit) {
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+            if (ContextCompat.checkSelfPermission(context, Manifest.permission.POST_NOTIFICATIONS) != PackageManager.PERMISSION_GRANTED) {
+                permissionLauncher.launch(Manifest.permission.POST_NOTIFICATIONS)
+            }
+        }
+    }
 
     LaunchedEffect(uiState.isFinished) {
         if (uiState.isFinished && uiState.summary != null) {
@@ -47,15 +71,8 @@ fun ActiveWorkoutScreen(
 
     Scaffold(
         topBar = {
-            CenterAlignedTopAppBar(
-                title = { 
-                    Text(
-                        text = uiState.sessionName, 
-                        fontWeight = FontWeight.Bold,
-                        style = MaterialTheme.typography.titleMedium,
-                        color = MaterialTheme.colorScheme.onSurface
-                    ) 
-                },
+            TopAppBar(
+                title = { LeftTitleText(uiState.sessionName) },
                 navigationIcon = {
                     IconButton(onClick = onBack) {
                         Icon(Icons.Default.ArrowBack, contentDescription = "Back", tint = MaterialTheme.colorScheme.onSurface)
@@ -69,10 +86,7 @@ fun ActiveWorkoutScreen(
                         color = MaterialTheme.colorScheme.primary,
                         fontSize = 18.sp
                     )
-                },
-                colors = TopAppBarDefaults.centerAlignedTopAppBarColors(
-                    containerColor = MaterialTheme.colorScheme.surface
-                )
+                }
             )
         },
         containerColor = MaterialTheme.colorScheme.background
@@ -162,7 +176,7 @@ fun ActiveWorkoutExerciseCard(
             Box(
                 modifier = Modifier
                     .fillMaxWidth()
-                    .height(180.dp)
+                    .aspectRatio(16/9f)
             ) {
                 AsyncImage(
                     model = activeEx.exercicio.imagem ?: "https://via.placeholder.com/150",
@@ -316,6 +330,7 @@ fun ActiveWorkoutSetTable(
     }
 }
 
+@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun ActiveWorkoutSetRow(
     index: Int,
@@ -377,19 +392,21 @@ fun ActiveWorkoutSetRow(
             modifier = Modifier.weight(0.15f).fillMaxHeight(),
             contentAlignment = Alignment.Center
         ) {
-            IconButton(
-                onClick = onToggleCheck,
-                modifier = Modifier
-                    .size(30.dp)
-                    .clip(RoundedCornerShape(6.dp))
-                    .background(if (isChecked) primaryColor else MaterialTheme.colorScheme.surfaceVariant)
-            ) {
-                Icon(
-                    Icons.Default.Check,
-                    contentDescription = null,
-                    tint = if (isChecked) MaterialTheme.colorScheme.onPrimary else Color.Transparent,
-                    modifier = Modifier.size(18.dp)
-                )
+            CompositionLocalProvider(LocalMinimumInteractiveComponentSize provides 0.dp) {
+                IconButton(
+                    onClick = onToggleCheck,
+                    modifier = Modifier
+                        .size(26.dp)
+                        .clip(RoundedCornerShape(6.dp))
+                        .background(if (isChecked) primaryColor else MaterialTheme.colorScheme.surfaceVariant)
+                ) {
+                    Icon(
+                        Icons.Default.Check,
+                        contentDescription = null,
+                        tint = if (isChecked) MaterialTheme.colorScheme.onPrimary else Color.Transparent,
+                        modifier = Modifier.size(16.dp)
+                    )
+                }
             }
         }
     }
@@ -403,7 +420,7 @@ fun ActiveSetInputField(
     isEnabled: Boolean
 ) {
     Surface(
-        modifier = modifier.padding(horizontal = 4.dp).height(32.dp),
+        modifier = modifier.padding(horizontal = 4.dp).heightIn(min = 32.dp).wrapContentHeight(),
         color = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.5f),
         shape = RoundedCornerShape(6.dp)
     ) {

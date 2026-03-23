@@ -51,6 +51,7 @@ import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.TileMode
 import androidx.compose.ui.graphics.vector.ImageVector
+import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.text.font.Font
 import androidx.compose.ui.text.font.FontFamily
@@ -167,15 +168,23 @@ fun DietTabScreen(
                     }
                 }
 
-                Text(text = "NUTRITION",
+                val configuration = LocalConfiguration.current
+
+                val screenWidth = configuration.screenWidthDp
+                // Com Formula Condensed, 0.18f da largura do ecrã aproxima-se de 90% da width.
+                val dynamicFontSize = (screenWidth * 0.28f).sp
+
+                // Title
+                Text(
+                    text = "NUTRITION",
                     fontWeight = FontWeight.Bold,
                     fontFamily = FontFamily(Font(R.font.formulacondensedbold)),
-                    fontSize = 115.sp,
-                    modifier = Modifier.fillMaxWidth()
-                        .padding(top = 8.dp),
+                    fontSize = dynamicFontSize,
                     color = Color.White,
                     textAlign = TextAlign.Center,
-
+                    modifier = Modifier
+                        .fillMaxWidth(0.95f)
+                        .padding(top = AppTheme.dimens.smallPadding)
                 )
 
 

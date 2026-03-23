@@ -166,24 +166,24 @@ class HomeViewModel @Inject constructor(
             
             treinoRepository.observePastas(user.userId).collect { pastas ->
                 val allSessions = mutableListOf<Sessao>()
-                pastas.forEach { pasta ->
+                for (pasta in pastas) {
                     val sessions = treinoRepository.observeSessoes(pasta.id).firstOrNull() ?: emptyList()
                     allSessions.addAll(sessions)
                 }
 
                 if (allSessions.isEmpty()) {
                     _uiState.value = _uiState.value.copy(nextWorkoutId = null)
-                    return@collect
+                } else {
+                    val nextWorkout = allSessions.first()
+                    // Usamos collect de forma pontual ou transformamos em flow se quisermos reatividade total
+                    treinoRepository.observeExercicios(nextWorkout.id).collect { exercises ->
+                        _uiState.value = _uiState.value.copy(
+                            nextWorkoutId = nextWorkout.id,
+                            nextWorkoutName = nextWorkout.nome,
+                            nextWorkoutExercises = exercises.size
+                        )
+                    }
                 }
-                
-                val nextWorkout = allSessions.first()
-                val exercises = treinoRepository.observeExercicios(nextWorkout.id).firstOrNull() ?: emptyList()
-
-                _uiState.value = _uiState.value.copy(
-                    nextWorkoutId = nextWorkout.id,
-                    nextWorkoutName = nextWorkout.nome,
-                    nextWorkoutExercises = exercises.size
-                )
             }
         }
     }
