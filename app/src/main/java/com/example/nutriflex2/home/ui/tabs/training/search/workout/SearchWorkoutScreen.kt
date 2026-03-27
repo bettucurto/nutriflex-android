@@ -1,4 +1,4 @@
-package com.example.nutriflex2.home.ui.tabs.training
+package com.example.nutriflex2.home.ui.tabs.training.search.workout
 
 import android.widget.Toast
 import androidx.compose.foundation.clickable
@@ -32,6 +32,7 @@ import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBar
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
@@ -136,7 +137,7 @@ fun SearchWorkoutScreen(
                     CircularProgressIndicator()
                 }
             } else {
-                androidx.compose.runtime.LaunchedEffect(state.actionFinished) {
+                LaunchedEffect(state.actionFinished) {
                     if (state.actionFinished) {
                         Toast.makeText(context, "Workout Saved!", Toast.LENGTH_SHORT).show()
                         navController.popBackStack()

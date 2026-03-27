@@ -1,4 +1,4 @@
-package com.example.nutriflex2.home.ui.tabs.training
+package com.example.nutriflex2.home.ui.tabs.training.edit
 
 data class CreateSessionUiState(
     val folderId: Int = 0,

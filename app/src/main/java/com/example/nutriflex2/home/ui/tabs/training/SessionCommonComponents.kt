@@ -59,6 +59,9 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import coil.compose.AsyncImage
+import com.example.nutriflex2.home.ui.tabs.training.edit.ExerciseUiModel
+import com.example.nutriflex2.home.ui.tabs.training.edit.SetType
+import com.example.nutriflex2.home.ui.tabs.training.edit.SetUiModel
 
 @Composable
 fun SessionExercisesRow(

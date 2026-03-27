@@ -1,11 +1,20 @@
-package com.example.nutriflex2.home.ui.tabs.training
+package com.example.nutriflex2.home.ui.tabs.training.active
 
-import android.app.*
-import android.content.Context
+import android.app.Notification
+import android.app.NotificationChannel
+import android.app.NotificationManager
+import android.app.PendingIntent
+import android.app.Service
 import android.content.Intent
 import android.content.pm.ServiceInfo
 import android.graphics.Bitmap
-import android.os.*
+import android.graphics.drawable.BitmapDrawable
+import android.os.Build
+import android.os.CountDownTimer
+import android.os.Handler
+import android.os.IBinder
+import android.os.Looper
+import android.os.SystemClock
 import androidx.core.app.NotificationCompat
 import coil.ImageLoader
 import coil.request.ImageRequest
@@ -151,7 +160,7 @@ class WorkoutForegroundService : Service() {
             val request = ImageRequest.Builder(this@WorkoutForegroundService).data(url).build()
             val result = loader.execute(request)
             if (result is SuccessResult) {
-                exerciseIconBitmap = (result.drawable as android.graphics.drawable.BitmapDrawable).bitmap
+                exerciseIconBitmap = (result.drawable as BitmapDrawable).bitmap
                 updateNotification()
             }
         }
@@ -241,7 +250,7 @@ class WorkoutForegroundService : Service() {
     }
 
     private fun updateNotification() {
-        val manager = getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager
+        val manager = getSystemService(NOTIFICATION_SERVICE) as NotificationManager
         manager.notify(notificationId, createNotification())
     }
 

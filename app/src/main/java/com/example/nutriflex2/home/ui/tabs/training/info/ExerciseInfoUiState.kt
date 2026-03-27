@@ -1,4 +1,4 @@
-package com.example.nutriflex2.home.ui.tabs.training
+package com.example.nutriflex2.home.ui.tabs.training.info
 
 import com.example.treino.data.remote.ExerciseDbSummaryDto
 

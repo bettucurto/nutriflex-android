@@ -1,4 +1,4 @@
-package com.example.nutriflex2.home.ui.tabs.training
+package com.example.nutriflex2.home.ui.tabs.training.search.exercise
 
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background

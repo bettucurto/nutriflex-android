@@ -1,4 +1,4 @@
-package com.example.nutriflex2.home.ui.tabs.diet
+package com.example.nutriflex2.home.ui.tabs.diet.search.scan
 
 import android.Manifest
 import android.content.Context
@@ -55,6 +55,7 @@ import androidx.compose.material.icons.filled.FlashOff
 import androidx.compose.material.icons.filled.FlashOn
 import androidx.compose.material.icons.filled.PhotoLibrary
 import androidx.compose.material3.BottomSheetScaffold
+import androidx.compose.material3.BottomSheetScaffoldState
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.DropdownMenu
 import androidx.compose.material3.DropdownMenuItem
@@ -90,6 +91,7 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.platform.LocalLifecycleOwner
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.compose.ui.viewinterop.AndroidView
@@ -99,6 +101,7 @@ import androidx.navigation.NavController
 import coil.compose.rememberAsyncImagePainter
 import kotlinx.coroutines.launch
 import java.io.File
+import java.net.URLEncoder
 import java.util.concurrent.ExecutorService
 import java.util.concurrent.Executors
 
@@ -123,7 +126,7 @@ fun ScanMealScreen(
     LaunchedEffect(state.detectedIngredients) {
         state.detectedIngredients?.let { ingredients ->
             val uriStr = state.capturedImageUri?.toString() ?: ""
-            val encodedUri = java.net.URLEncoder.encode(uriStr, "UTF-8")
+            val encodedUri = URLEncoder.encode(uriStr, "UTF-8")
             
             navController.currentBackStackEntry?.savedStateHandle?.set("detected_ingredients", ingredients)
             navController.navigate("scanConfirm?imageUri=$encodedUri")
@@ -359,10 +362,10 @@ fun GallerySheetContent(
     screenHeightPx: Float,
     buttonAreaHeightPx: Float,
     handleHeightPx: Float,
-    onPeekHeightChange: (androidx.compose.ui.unit.Dp) -> Unit,
+    onPeekHeightChange: (Dp) -> Unit,
     isExpanded: Boolean,
-    scaffoldState: androidx.compose.material3.BottomSheetScaffoldState,
-    clipBottomOffset: androidx.compose.ui.unit.Dp
+    scaffoldState: BottomSheetScaffoldState,
+    clipBottomOffset: Dp
 ) {
     val backgroundColor = if (isExpanded) Color.Black.copy(alpha = (progress * 0.95f).coerceIn(0f, 0.95f)) else Color.Transparent
 

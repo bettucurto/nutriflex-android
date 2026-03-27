@@ -35,7 +35,7 @@
         </activity>
 
         <service
-            android:name=".home.ui.tabs.training.WorkoutForegroundService"
+            android:name=".home.ui.tabs.training.active.WorkoutForegroundService"
             android:enabled="true"
             android:exported="false"
             android:foregroundServiceType="specialUse">

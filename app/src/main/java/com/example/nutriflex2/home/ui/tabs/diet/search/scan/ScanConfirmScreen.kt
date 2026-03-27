@@ -1,4 +1,4 @@
-package com.example.nutriflex2.home.ui.tabs.diet
+package com.example.nutriflex2.home.ui.tabs.diet.search.scan
 
 import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.background
@@ -62,6 +62,7 @@ import androidx.compose.ui.unit.sp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.navigation.NavController
 import coil.compose.AsyncImage
+import com.example.dieta.domain.FatSecretIngredientSelection
 import com.example.dieta.domain.FoodRecognitionUseCase
 import com.example.nutriflex2.R
 import components.LeftTitleText
@@ -79,14 +80,14 @@ fun ScanConfirmScreen(
     val state by viewModel.uiState.collectAsState()
 
     val savedStateHandle = navController.currentBackStackEntry?.savedStateHandle
-    val addedFoodSelection by savedStateHandle?.getStateFlow<com.example.dieta.domain.FatSecretIngredientSelection?>(
+    val addedFoodSelection by savedStateHandle?.getStateFlow<FatSecretIngredientSelection?>(
         "added_food_selection", null
     )?.collectAsState() ?: remember { mutableStateOf(null) }
 
     LaunchedEffect(addedFoodSelection) {
         addedFoodSelection?.let { selection ->
             viewModel.addIngredientFromFatSecret(selection.food, selection.serving, selection.quantity)
-            savedStateHandle?.remove<com.example.dieta.domain.FatSecretIngredientSelection>("added_food_selection")
+            savedStateHandle?.remove<FatSecretIngredientSelection>("added_food_selection")
         }
     }
 

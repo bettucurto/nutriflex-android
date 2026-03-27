@@ -1,4 +1,4 @@
-package com.example.nutriflex2.home.ui.tabs.training
+package com.example.nutriflex2.home.ui.tabs.training.edit
 
 import androidx.lifecycle.SavedStateHandle
 import androidx.lifecycle.ViewModel
@@ -16,57 +16,15 @@ import kotlinx.coroutines.launch
 import javax.inject.Inject
 
 @HiltViewModel
-class EditSessionViewModel @Inject constructor(
+class CreateSessionViewModel @Inject constructor(
     private val treinoRepository: TreinoRepository,
     savedStateHandle: SavedStateHandle
 ) : ViewModel() {
 
-    private val sessionId: Int = checkNotNull(savedStateHandle["sessionId"])
+    private val folderId: Int = checkNotNull(savedStateHandle["folderId"])
     
-    private val _uiState = MutableStateFlow(CreateSessionUiState())
+    private val _uiState = MutableStateFlow(CreateSessionUiState(folderId = folderId))
     val uiState: StateFlow<CreateSessionUiState> = _uiState.asStateFlow()
-
-    init {
-        loadSessionData()
-    }
-
-    private fun loadSessionData() {
-        viewModelScope.launch {
-            _uiState.update { it.copy(isLoading = true) }
-            try {
-                val sessionDto = treinoRepository.getSessaoWithDetails(sessionId)
-                
-                val mappedExercises = sessionDto.exercicios.map { exDto ->
-                    ExerciseUiModel(
-                        id = exDto.exercicioApiId,
-                        name = exDto.nome ?: "Exercise",
-                        muscleGroup = exDto.bodypart ?: "",
-                        imageUrl = exDto.imagem,
-                        notes = exDto.notas,
-                        sets = exDto.sets.map { setDto ->
-                            SetUiModel(
-                                id = setDto.id,
-                                weightKg = setDto.peso,
-                                repsMin = setDto.repeticoesMin,
-                                repsMax = setDto.repeticoesMax,
-                                type = try { SetType.valueOf(setDto.tipoSet) } catch(e: Exception) { SetType.REGULAR },
-                                isActive = true
-                            )
-                        }
-                    )
-                }
-
-                _uiState.update { it.copy(
-                    isLoading = false,
-                    workoutName = sessionDto.nome,
-                    exercises = mappedExercises,
-                    folderId = sessionDto.idPasta
-                ) }
-            } catch (e: Exception) {
-                _uiState.update { it.copy(isLoading = false, error = e.message) }
-            }
-        }
-    }
 
     fun onWorkoutNameChange(name: String) {
         _uiState.update { it.copy(workoutName = name) }
@@ -95,13 +53,20 @@ class EditSessionViewModel @Inject constructor(
     fun onExerciseSelected(data: String) {
         val parts = data.split("|")
         if (parts.size < 4) return
-        addExercise(parts[0], parts[1], parts[2], parts[3])
+        val id = parts[0]
+        val name = parts[1]
+        val bodyPart = parts[2]
+        val imageUrl = parts[3]
+        
+        addExercise(id, name, bodyPart, imageUrl)
     }
 
     fun removeExercise(index: Int) {
         _uiState.update { state ->
             val newList = state.exercises.toMutableList()
-            if (index in newList.indices) newList.removeAt(index)
+            if (index in newList.indices) {
+                newList.removeAt(index)
+            }
             state.copy(
                 exercises = newList,
                 selectedExerciseIndex = if (state.selectedExerciseIndex >= newList.size) {
@@ -114,7 +79,9 @@ class EditSessionViewModel @Inject constructor(
     fun onExerciseNotesChange(index: Int, notes: String) {
         _uiState.update { state ->
             val newList = state.exercises.toMutableList()
-            if (index in newList.indices) newList[index] = newList[index].copy(notes = notes)
+            if (index in newList.indices) {
+                newList[index] = newList[index].copy(notes = notes)
+            }
             state.copy(exercises = newList)
         }
     }
@@ -123,8 +90,10 @@ class EditSessionViewModel @Inject constructor(
         _uiState.update { state ->
             val exerciseIndex = state.selectedExerciseIndex
             if (exerciseIndex !in state.exercises.indices) return@update state
+
             val currentExercises = state.exercises.toMutableList()
             val currentExercise = currentExercises[exerciseIndex]
+            
             val lastSet = currentExercise.sets.lastOrNull()
             val newSet = SetUiModel(
                 repsMin = lastSet?.repsMin ?: 8,
@@ -132,7 +101,10 @@ class EditSessionViewModel @Inject constructor(
                 weightKg = lastSet?.weightKg ?: 0.0,
                 isActive = true
             )
-            currentExercises[exerciseIndex] = currentExercise.copy(sets = currentExercise.sets + newSet)
+
+            currentExercises[exerciseIndex] = currentExercise.copy(
+                sets = currentExercise.sets + newSet
+            )
             state.copy(exercises = currentExercises)
         }
     }
@@ -141,9 +113,11 @@ class EditSessionViewModel @Inject constructor(
         _uiState.update { state ->
             val exerciseIndex = state.selectedExerciseIndex
             if (exerciseIndex !in state.exercises.indices) return@update state
+
             val currentExercises = state.exercises.toMutableList()
             val currentExercise = currentExercises[exerciseIndex]
             val currentSets = currentExercise.sets.toMutableList()
+            
             if (currentSets.size > 1 && setIndex in currentSets.indices) {
                 currentSets.removeAt(setIndex)
                 currentExercises[exerciseIndex] = currentExercise.copy(sets = currentSets)
@@ -158,11 +132,11 @@ class EditSessionViewModel @Inject constructor(
             if (exerciseIndex !in currentExercises.indices) return@update state
             val currentExercise = currentExercises[exerciseIndex]
             val currentSets = currentExercise.sets.toMutableList()
-            if (setIndex in currentSets.indices) {
-                currentSets[setIndex] = currentSets[setIndex].copy(weightKg = weight ?: 0.0)
-                currentExercises[exerciseIndex] = currentExercise.copy(sets = currentSets)
-                state.copy(exercises = currentExercises)
-            } else state
+            if (setIndex !in currentSets.indices) return@update state
+            
+            currentSets[setIndex] = currentSets[setIndex].copy(weightKg = weight ?: 0.0)
+            currentExercises[exerciseIndex] = currentExercise.copy(sets = currentSets)
+            state.copy(exercises = currentExercises)
         }
     }
 
@@ -172,11 +146,11 @@ class EditSessionViewModel @Inject constructor(
             if (exerciseIndex !in currentExercises.indices) return@update state
             val currentExercise = currentExercises[exerciseIndex]
             val currentSets = currentExercise.sets.toMutableList()
-            if (setIndex in currentSets.indices) {
-                currentSets[setIndex] = currentSets[setIndex].copy(repsMin = reps ?: 0)
-                currentExercises[exerciseIndex] = currentExercise.copy(sets = currentSets)
-                state.copy(exercises = currentExercises)
-            } else state
+            if (setIndex !in currentSets.indices) return@update state
+            
+            currentSets[setIndex] = currentSets[setIndex].copy(repsMin = reps ?: 0)
+            currentExercises[exerciseIndex] = currentExercise.copy(sets = currentSets)
+            state.copy(exercises = currentExercises)
         }
     }
 
@@ -186,30 +160,31 @@ class EditSessionViewModel @Inject constructor(
             if (exerciseIndex !in currentExercises.indices) return@update state
             val currentExercise = currentExercises[exerciseIndex]
             val currentSets = currentExercise.sets.toMutableList()
-            if (setIndex in currentSets.indices) {
-                currentSets[setIndex] = currentSets[setIndex].copy(repsMax = reps ?: 0)
-                currentExercises[exerciseIndex] = currentExercise.copy(sets = currentSets)
-                state.copy(exercises = currentExercises)
-            } else state
+            if (setIndex !in currentSets.indices) return@update state
+            
+            currentSets[setIndex] = currentSets[setIndex].copy(repsMax = reps ?: 0)
+            currentExercises[exerciseIndex] = currentExercise.copy(sets = currentSets)
+            state.copy(exercises = currentExercises)
         }
     }
 
     fun updateSetType(exerciseIndex: Int, setIndex: Int, newType: SetType) {
-        _uiState.update { state ->
-            val currentExercises = state.exercises.toMutableList()
-            if (exerciseIndex in currentExercises.indices) {
-                val targetExercise = currentExercises[exerciseIndex]
-                val updatedSets = targetExercise.sets.toMutableList()
-                if (setIndex in updatedSets.indices) {
-                    updatedSets[setIndex] = updatedSets[setIndex].copy(type = newType)
-                    currentExercises[exerciseIndex] = targetExercise.copy(sets = updatedSets)
-                    state.copy(exercises = currentExercises)
-                } else state
-            } else state
+        _uiState.update { currentState ->
+            val updatedExercises = currentState.exercises.toMutableList()
+            if (exerciseIndex !in updatedExercises.indices) return@update currentState
+            
+            val targetExercise = updatedExercises[exerciseIndex]
+            val updatedSets = targetExercise.sets.toMutableList()
+            if (setIndex !in updatedSets.indices) return@update currentState
+            
+            updatedSets[setIndex] = updatedSets[setIndex].copy(type = newType)
+            updatedExercises[exerciseIndex] = targetExercise.copy(sets = updatedSets)
+            
+            currentState.copy(exercises = updatedExercises)
         }
     }
 
-    fun updateSession() {
+    fun saveWorkout() {
         val state = _uiState.value
         if (state.workoutName.isBlank() || state.exercises.isEmpty()) return
 
@@ -219,7 +194,7 @@ class EditSessionViewModel @Inject constructor(
                 val exerciciosPayload = state.exercises.mapIndexed { index, exercise ->
                     SessionExerciseRequest(
                         idExercicio = exercise.id,
-                        nome = exercise.name, // Adicionado o nome
+                        nome = exercise.name, // Nome real do exercício
                         notas = exercise.notes,
                         ordem = index + 1,
                         imagem = exercise.imageUrl,
@@ -242,7 +217,8 @@ class EditSessionViewModel @Inject constructor(
                     exercicios = exerciciosPayload
                 )
 
-                treinoRepository.updateSessao(sessionId, request)
+                treinoRepository.createSessao(request)
+
                 _uiState.update { it.copy(isLoading = false, isSaved = true) }
             } catch (e: Exception) {
                 _uiState.update { it.copy(isLoading = false, error = e.message) }

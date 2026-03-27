@@ -1,4 +1,4 @@
-package com.example.nutriflex2.home.ui.tabs.training
+package com.example.nutriflex2.home.ui.tabs.training.search.exercise
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope

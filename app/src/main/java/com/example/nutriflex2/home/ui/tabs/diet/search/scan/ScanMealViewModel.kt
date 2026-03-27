@@ -1,4 +1,4 @@
-package com.example.nutriflex2.home.ui.tabs.diet
+package com.example.nutriflex2.home.ui.tabs.diet.search.scan
 
 import android.app.Application
 import android.content.ContentResolver
@@ -6,13 +6,11 @@ import android.content.Context
 import android.database.Cursor
 import android.net.Uri
 import android.provider.MediaStore
-import android.util.Log
 import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.viewModelScope
 import com.example.dieta.domain.DietaRepository
 import com.example.dieta.domain.FoodRecognitionUseCase
 import dagger.hilt.android.lifecycle.HiltViewModel
-import dagger.hilt.android.qualifiers.ApplicationContext
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow

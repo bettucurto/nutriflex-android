@@ -1,4 +1,4 @@
-package com.example.nutriflex2.home.ui.tabs.training
+package com.example.nutriflex2.home.ui.tabs.training.edit
 
 import android.widget.Toast
 import androidx.compose.foundation.clickable
@@ -46,6 +46,10 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.navigation.NavController
+import com.example.nutriflex2.home.ui.tabs.training.EmptySessionContent
+import com.example.nutriflex2.home.ui.tabs.training.ExerciseDetailCard
+import com.example.nutriflex2.home.ui.tabs.training.FinishWorkoutButton
+import com.example.nutriflex2.home.ui.tabs.training.SessionExercisesRow
 import components.LeftTitleText
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -89,9 +93,13 @@ fun CreateSessionScreen(
         },
         floatingActionButton = {
             FinishWorkoutButton(
-                onClick = { 
+                onClick = {
                     if (state.workoutName.isBlank()) {
-                        Toast.makeText(context, "Please fill in the session name", Toast.LENGTH_SHORT).show()
+                        Toast.makeText(
+                            context,
+                            "Please fill in the session name",
+                            Toast.LENGTH_SHORT
+                        ).show()
                     } else {
                         viewModel.saveWorkout()
                     }
@@ -142,12 +150,29 @@ fun CreateSessionScreen(
                     val selectedEx = state.exercises[state.selectedExerciseIndex]
                     ExerciseDetailCard(
                         exercise = selectedEx,
-                        onNotesChange = { viewModel.onExerciseNotesChange(state.selectedExerciseIndex, it) },
+                        onNotesChange = {
+                            viewModel.onExerciseNotesChange(
+                                state.selectedExerciseIndex,
+                                it
+                            )
+                        },
                         onAddSet = { viewModel.addSetToSelectedExercise() },
-                        onUpdateSet = { setIndex, w, rMin, rMax -> 
-                            if (w != null) viewModel.updateSetWeight(state.selectedExerciseIndex, setIndex, w)
-                            if (rMin != null) viewModel.updateSetRepsMin(state.selectedExerciseIndex, setIndex, rMin)
-                            if (rMax != null) viewModel.updateSetRepsMax(state.selectedExerciseIndex, setIndex, rMax)
+                        onUpdateSet = { setIndex, w, rMin, rMax ->
+                            if (w != null) viewModel.updateSetWeight(
+                                state.selectedExerciseIndex,
+                                setIndex,
+                                w
+                            )
+                            if (rMin != null) viewModel.updateSetRepsMin(
+                                state.selectedExerciseIndex,
+                                setIndex,
+                                rMin
+                            )
+                            if (rMax != null) viewModel.updateSetRepsMax(
+                                state.selectedExerciseIndex,
+                                setIndex,
+                                rMax
+                            )
                         },
                         onRemoveExercise = { viewModel.removeExercise(state.selectedExerciseIndex) },
                         onSetClick = { index ->

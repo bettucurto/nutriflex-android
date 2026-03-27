@@ -1,4 +1,4 @@
-package com.example.nutriflex2.home.ui.tabs.diet
+package com.example.nutriflex2.home.ui.tabs.diet.search.scan
 
 import android.net.Uri
 

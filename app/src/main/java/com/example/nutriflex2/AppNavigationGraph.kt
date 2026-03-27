@@ -38,8 +38,8 @@ import com.example.nutriflex2.home.about.AboutUsScreen
 import com.example.nutriflex2.home.settings.SettingsScreen
 import com.example.nutriflex2.home.ui.HomeScreen
 import com.example.nutriflex2.home.ui.SyncViewModel
-import com.example.nutriflex2.home.ui.tabs.diet.ScanConfirmScreen
-import com.example.nutriflex2.home.ui.tabs.diet.ScanMealScreen
+import com.example.nutriflex2.home.ui.tabs.diet.search.scan.ScanConfirmScreen
+import com.example.nutriflex2.home.ui.tabs.diet.search.scan.ScanMealScreen
 import com.example.nutriflex2.home.ui.tabs.diet.favorites.FavoriteMealEditorScreen
 import com.example.nutriflex2.home.ui.tabs.diet.favorites.FavoriteMealEditorViewModel
 import com.example.nutriflex2.home.ui.tabs.diet.info.favorites.FavoriteMealInfoScreen
@@ -47,14 +47,15 @@ import com.example.nutriflex2.home.ui.tabs.diet.info.meals.MealInfoScreen
 import com.example.nutriflex2.home.ui.tabs.diet.info.recipes.RecipeInfoScreen
 import com.example.nutriflex2.home.ui.tabs.diet.search.meals.SearchMealsScreen
 import com.example.nutriflex2.home.ui.tabs.diet.search.recipes.SearchRecipeScreen
-import com.example.nutriflex2.home.ui.tabs.training.ActiveWorkoutScreen
-import com.example.nutriflex2.home.ui.tabs.training.CreateSessionScreen
-import com.example.nutriflex2.home.ui.tabs.training.EditSessionScreen
-import com.example.nutriflex2.home.ui.tabs.training.ExerciseInfoScreen
-import com.example.nutriflex2.home.ui.tabs.training.SearchExerciseScreen
-import com.example.nutriflex2.home.ui.tabs.training.SearchWorkoutScreen
-import com.example.nutriflex2.home.ui.tabs.training.WorkoutSummary
-import com.example.nutriflex2.home.ui.tabs.training.WorkoutSummaryScreen
+import com.example.nutriflex2.home.ui.tabs.training.active.ActiveWorkoutScreen
+import com.example.nutriflex2.home.ui.tabs.training.edit.CreateSessionScreen
+import com.example.nutriflex2.home.ui.tabs.training.edit.EditSessionScreen
+import com.example.nutriflex2.home.ui.tabs.training.info.ExerciseInfoScreen
+import com.example.nutriflex2.home.ui.tabs.training.search.exercise.SearchExerciseScreen
+import com.example.nutriflex2.home.ui.tabs.training.search.workout.SearchWorkoutScreen
+import com.example.nutriflex2.home.ui.tabs.training.active.WorkoutSummary
+import com.example.nutriflex2.home.ui.tabs.training.active.WorkoutSummaryScreen
+import com.example.treino.domain.models.Exercicio
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import ui.WelcomeScreen
@@ -188,7 +189,7 @@ fun AppNavGraph(
                         if (isReplacement && exIndex != -1) {
                             val parts = data.split("|")
                             if (parts.size >= 4) {
-                                val replacedEx = com.example.treino.domain.models.Exercicio(
+                                val replacedEx = Exercicio(
                                     id = 0,
                                     exercicioApiId = parts[0],
                                     nome = parts[1],

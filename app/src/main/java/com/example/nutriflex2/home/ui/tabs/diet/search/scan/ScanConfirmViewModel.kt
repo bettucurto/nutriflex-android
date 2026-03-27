@@ -1,4 +1,4 @@
-package com.example.nutriflex2.home.ui.tabs.diet
+package com.example.nutriflex2.home.ui.tabs.diet.search.scan
 
 import android.app.Application
 import android.net.Uri
@@ -6,6 +6,9 @@ import android.util.Log
 import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.SavedStateHandle
 import androidx.lifecycle.viewModelScope
+import com.example.dieta.domain.DietaRepository
+import com.example.dieta.domain.FatSecretFoodDetails
+import com.example.dieta.domain.FatSecretServing
 import com.example.dieta.domain.FoodRecognitionUseCase
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -16,6 +19,7 @@ import kotlinx.coroutines.launch
 import local.UserLocalRepository
 import java.io.BufferedReader
 import java.io.InputStreamReader
+import java.util.UUID
 import javax.inject.Inject
 
 data class ScanConfirmIngredient(
@@ -26,7 +30,7 @@ data class ScanConfirmIngredient(
     val fat: Double,
     val carbs: Double,
     val imageUrl: String? = null,
-    val id: String = java.util.UUID.randomUUID().toString()
+    val id: String = UUID.randomUUID().toString()
 )
 
 data class ScanConfirmUiState(
@@ -41,7 +45,7 @@ class ScanConfirmViewModel @Inject constructor(
     application: Application,
     private val savedStateHandle: SavedStateHandle,
     private val userLocalRepository: UserLocalRepository,
-    private val dietaRepository: com.example.dieta.domain.DietaRepository
+    private val dietaRepository: DietaRepository
 ) : AndroidViewModel(application) {
 
     private val _uiState = MutableStateFlow(ScanConfirmUiState())
@@ -149,8 +153,8 @@ class ScanConfirmViewModel @Inject constructor(
     }
 
     fun addIngredientFromFatSecret(
-        food: com.example.dieta.domain.FatSecretFoodDetails,
-        serving: com.example.dieta.domain.FatSecretServing,
+        food: FatSecretFoodDetails,
+        serving: FatSecretServing,
         quantity: Double
     ) {
         val weight = (serving.metricAmount ?: 1.0) * quantity

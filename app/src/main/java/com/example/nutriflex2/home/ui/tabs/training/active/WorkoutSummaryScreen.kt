@@ -1,4 +1,4 @@
-package com.example.nutriflex2.home.ui.tabs.training
+package com.example.nutriflex2.home.ui.tabs.training.active
 
 import androidx.compose.animation.core.LinearEasing
 import androidx.compose.animation.core.RepeatMode
@@ -37,8 +37,10 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.navigation.NavController
 import kotlinx.coroutines.delay
 import theme.AppTheme
 import kotlin.random.Random
@@ -46,7 +48,7 @@ import kotlin.random.Random
 @Composable
 fun WorkoutSummaryScreen(
     summary: WorkoutSummary,
-    navController: androidx.navigation.NavController
+    navController: NavController
 ) {
     var showConfetti by remember { mutableStateOf(false) }
 
@@ -78,7 +80,7 @@ fun WorkoutSummaryScreen(
                 fontWeight = FontWeight.Bold,
                 color = MaterialTheme.colorScheme.onSurface,
                 maxLines = 1,
-                overflow = androidx.compose.ui.text.style.TextOverflow.Ellipsis
+                overflow = TextOverflow.Ellipsis
             )
             
             Text(

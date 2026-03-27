@@ -1,4 +1,4 @@
-package com.example.nutriflex2.home.ui.tabs.training
+package com.example.nutriflex2.home.ui.tabs.training.active
 
 import android.content.Context
 import android.content.Intent
@@ -19,6 +19,7 @@ import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.firstOrNull
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
+import local.UserLocalRepository
 import javax.inject.Inject
 
 data class ActiveWorkoutUiState(
@@ -49,7 +50,7 @@ data class WorkoutSummary(
 @HiltViewModel
 class ActiveWorkoutViewModel @Inject constructor(
     private val treinoRepository: TreinoRepository,
-    private val userLocalRepository: local.UserLocalRepository,
+    private val userLocalRepository: UserLocalRepository,
     @ApplicationContext private val context: Context,
     savedStateHandle: SavedStateHandle
 ) : ViewModel() {
@@ -343,7 +344,7 @@ class ActiveWorkoutViewModel @Inject constructor(
         }
     }
 
-    fun replaceExercise(index: Int, newExercise: com.example.treino.domain.models.Exercicio) {
+    fun replaceExercise(index: Int, newExercise: Exercicio) {
         _uiState.update { currentState ->
             val updatedExercises = currentState.exercises.toMutableList()
             if (index in updatedExercises.indices) {

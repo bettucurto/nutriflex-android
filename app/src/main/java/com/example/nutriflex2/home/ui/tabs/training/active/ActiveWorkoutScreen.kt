@@ -1,4 +1,4 @@
-package com.example.nutriflex2.home.ui.tabs.training
+package com.example.nutriflex2.home.ui.tabs.training.active
 
 import android.Manifest
 import android.content.BroadcastReceiver
@@ -87,6 +87,7 @@ import androidx.core.content.ContextCompat
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.navigation.NavController
 import coil.compose.AsyncImage
+import com.example.treino.domain.models.Exercicio
 import com.example.treino.domain.models.ExercicioSet
 import components.LeftTitleText
 
@@ -101,13 +102,13 @@ fun ActiveWorkoutScreen(
     val uiState by viewModel.uiState.collectAsState()
     val context = LocalContext.current
     
-    val replacedExercise = navController.currentBackStackEntry?.savedStateHandle?.get<com.example.treino.domain.models.Exercicio>("replaced_exercise")
+    val replacedExercise = navController.currentBackStackEntry?.savedStateHandle?.get<Exercicio>("replaced_exercise")
     val replaceIndex = navController.currentBackStackEntry?.savedStateHandle?.get<Int>("replace_index")
 
     LaunchedEffect(replacedExercise, replaceIndex) {
         if (replacedExercise != null && replaceIndex != null && replaceIndex != -1) {
             viewModel.replaceExercise(replaceIndex, replacedExercise)
-            navController.currentBackStackEntry?.savedStateHandle?.remove<com.example.treino.domain.models.Exercicio>("replaced_exercise")
+            navController.currentBackStackEntry?.savedStateHandle?.remove<Exercicio>("replaced_exercise")
             navController.currentBackStackEntry?.savedStateHandle?.remove<Int>("replace_index")
         }
     }
