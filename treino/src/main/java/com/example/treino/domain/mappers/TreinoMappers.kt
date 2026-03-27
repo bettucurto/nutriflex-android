@@ -23,6 +23,16 @@ fun PastaDto.toEntity() = PastaEntity(
     isDeletable = isDeletable == 1
 )
 
+fun PastaDto.toDomain() = Pasta(
+    id = id,
+    nome = nome,
+    idUser = idUser,
+    visibilidade = visibilidade,
+    isDeletable = isDeletable == 1,
+    frequency = frequency,
+    experience = experience
+)
+
 fun PastaEntity.toDomain() = Pasta(
     id = id,
     nome = nome,
@@ -98,8 +108,8 @@ fun ExercicioSetDto.toEntity() = SetEntity(
     peso = peso,
     repeticoesMin = repeticoesMin,
     repeticoesMax = repeticoesMax,
-    pesoUltimaVez = pesoUltimaVez,
-    repeticoesUltimaVez = repeticoesUltimaVez,
+    pesoUltimaVez = pesoUltimaVez ?: 0.0,
+    repeticoesUltimaVez = repeticoesUltimaVez ?: 0,
     idExercicio = idExercicio,
     ordem = ordem
 )

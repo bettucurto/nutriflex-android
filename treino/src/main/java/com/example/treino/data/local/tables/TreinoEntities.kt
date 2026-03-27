@@ -2,6 +2,8 @@ package com.example.treino.data.local.tables
 
 import androidx.room.Entity
 import androidx.room.PrimaryKey
+import androidx.room.Embedded
+import androidx.room.Relation
 
 @Entity(tableName = "pastas_treinos")
 data class PastaEntity(
@@ -18,6 +20,15 @@ data class SessaoEntity(
     val nome: String,
     val idPasta: Int,
     val idProximaSessao: Int
+)
+
+data class SessaoWithExercises(
+    @Embedded val sessao: SessaoEntity,
+    @Relation(
+        parentColumn = "id",
+        entityColumn = "idSessao"
+    )
+    val exercises: List<ExercicioEntity>
 )
 
 @Entity(tableName = "sessao_exercicios")

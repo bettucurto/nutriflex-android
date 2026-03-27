@@ -65,6 +65,16 @@ class TreinoRepositoryImpl @Inject constructor(
     override fun observeSessoes(idPasta: Int): Flow<List<Sessao>> =
         local.observeSessoes(idPasta).map { list -> list.map { it.toDomain() } }
 
+    override fun observeAllSessoesByUser(userId: Int): Flow<List<Sessao>> =
+        local.observeAllSessoesByUser(userId).map { list -> list.map { it.toDomain() } }
+
+    override fun observeNextSessaoWithExercises(userId: Int, nextWorkoutId: Int?): Flow<Pair<Sessao, List<Exercicio>>?> =
+        local.observeNextSessaoWithExercises(userId, nextWorkoutId).map { relation ->
+            relation?.let {
+                it.sessao.toDomain() to it.exercises.map { entity -> entity.toDomain() }
+            }
+        }
+
     override suspend fun refreshSessoes(idPasta: Int) {
         try {
             val sessoes = remote.getSessoesByPasta(idPasta)
@@ -165,6 +175,11 @@ class TreinoRepositoryImpl @Inject constructor(
 
     override suspend fun updateSetHistory(setId: Int, peso: Double, reps: Int) {
         local.updateSetHistory(setId, peso, reps)
+        try {
+            remote.updateSetHistory(setId, peso, reps)
+        } catch (e: Exception) {
+            e.printStackTrace()
+        }
     }
 
     // --- ExerciseDB ---
@@ -180,4 +195,9 @@ class TreinoRepositoryImpl @Inject constructor(
     ): ExerciseDbSearchResponse = remote.searchExercises(name, bodyParts, equipments, targetMuscles, exerciseType, limit, after, before)
 
     override suspend fun getExerciseDetails(id: String): ExerciseDbDetailsResponse = remote.getExerciseDetails(id)
+
+    override suspend fun getPublicWorkouts(frequency: Int?, experience: Int?): List<Pasta> {
+        return remote.getPublicWorkouts(frequency, experience).map { it.toDomain() }
+    }
 }
+

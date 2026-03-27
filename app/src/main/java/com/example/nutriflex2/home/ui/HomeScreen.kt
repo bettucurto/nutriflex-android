@@ -71,6 +71,7 @@ fun HomeScreen(
     onNavigateToSearchMeals: () -> Unit,
     onNavigateToSearchRecipes: () -> Unit,
     onNavigateToAccount: () -> Unit,
+    onNavigateToAbout: () -> Unit,
     viewModel: HomeViewModel = hiltViewModel()
 ) {
     // syncViewModel removido daqui
@@ -201,7 +202,7 @@ fun HomeScreen(
                         )
 
                         NavigationDrawerItem(
-                            label = { Text("Account") },
+                            label = { Text("Settings") },
                             selected = selectedDrawerItemIndex == 0,
                             onClick = {
                                 selectedDrawerItemIndex = 0
@@ -210,8 +211,8 @@ fun HomeScreen(
                             },
                             icon = {
                                 Icon(
-                                    imageVector = Icons.Filled.AccountCircle,
-                                    contentDescription = "Account"
+                                    imageVector = Icons.Filled.Settings,
+                                    contentDescription = "Settings"
                                 )
                             },
                             modifier = Modifier.padding(
@@ -220,17 +221,17 @@ fun HomeScreen(
                         )
 
                         NavigationDrawerItem(
-                            label = { Text("Settings") },
+                            label = { Text("About us") },
                             selected = selectedDrawerItemIndex == 1,
                             onClick = {
                                 selectedDrawerItemIndex = 1
                                 scope.launch { drawerState.close() }
-                                // TODO: abrir ecrã de definições
+                                onNavigateToAbout()
                             },
                             icon = {
                                 Icon(
-                                    imageVector = Icons.Filled.Settings,
-                                    contentDescription = "Settings"
+                                    imageVector = Icons.Filled.AccountCircle,
+                                    contentDescription = "About us"
                                 )
                             },
                             modifier = Modifier.padding(

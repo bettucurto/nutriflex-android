@@ -28,6 +28,7 @@ import androidx.compose.foundation.layout.IntrinsicSize
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.aspectRatio
 import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
@@ -61,6 +62,7 @@ import androidx.compose.material3.IconButton
 import androidx.compose.material3.LinearProgressIndicator
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.MaterialTheme.colorScheme
+import androidx.compose.material3.MaterialTheme.typography
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.OutlinedTextFieldDefaults
 import androidx.compose.material3.Surface
@@ -107,6 +109,8 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.TextMeasurer
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.drawText
+import androidx.compose.ui.text.font.Font
+import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.VisualTransformation
 import androidx.compose.ui.text.rememberTextMeasurer
@@ -367,11 +371,13 @@ fun CaloriesCard(
                 ) {
                     val strokeWidth = 12.dp
 
-                    Canvas(modifier = Modifier.size(140.dp)) {
-                        // Círculo "Glow" atrás do anel (agora branco ou surface, ou levemente verde)
-                        // Como já temos o fundo decorativo verde, este círculo pode ser
-                        // a cor do container para "limpar" a área ou um brilho extra.
-                        // Vamos usar um brilho branco/surface com alpha para destacar o gráfico do fundo decorativo
+                    // MUDANÇA AQUI: Trocamos o size(140.dp) por aspectRatio(1f)
+                    Canvas(
+                        modifier = Modifier
+                            .fillMaxWidth() // Usa a largura permitida pelo weight
+                            .aspectRatio(1f) // Força a ser um Quadrado Perfeito
+                            .padding(strokeWidth / 2) // Evita que a linha corte nas bordas
+                    ) {
                         drawCircle(
                             color = cardContainerColor.copy(alpha = 0.6f),
                             radius = size.minDimension / 2.0f,
@@ -398,10 +404,9 @@ fun CaloriesCard(
 
                     Column(horizontalAlignment = Alignment.CenterHorizontally) {
                         Text(
-                            text = "$remainingCalories",
+                            text = "${remainingCalories.coerceAtLeast(0)}",
                             fontSize = 28.sp,
                             fontWeight = FontWeight.Bold,
-                            // Usa Primary no light mode (geralmente azul/roxo) ou OnSurface no dark
                             color = MaterialTheme.colorScheme.primary
                         )
                         Text(
@@ -413,7 +418,7 @@ fun CaloriesCard(
                     }
                 }
 
-                Spacer(modifier = Modifier.width(16.dp))
+                Spacer(modifier = Modifier.width(6.dp))
 
                 // --- Lista de Macros (Direita) ---
                 Column(
@@ -564,7 +569,7 @@ fun NutrientCircle(
                 .size(70.dp)
         ) {
             // AQUI ESTÁ A CORREÇÃO:
-            Canvas(modifier = Modifier.fillMaxSize()) {
+            Canvas(modifier = Modifier.size(70.dp).aspectRatio(1f)) {
                 val strokeWidthPx = 6.dp.toPx()
 
                 // 1. Definimos o estilo EXATAMENTE igual para ambos
@@ -872,7 +877,6 @@ fun DietCaloriesCard(
 @Composable
 fun NextWorkoutCard(
     workoutName: String,
-    exerciseCount: Int,
     onStartClick: () -> Unit,
     modifier: Modifier = Modifier,
     label: String = "Next Workout:",
@@ -935,16 +939,6 @@ fun NextWorkoutCard(
                     fontWeight = FontWeight.Bold,
                     lineHeight = lineHeight
                 )
-                
-                if (showMetadata) {
-                    Spacer(modifier = Modifier.height(4.dp))
-                    Text(
-                        text = "$exerciseCount exercises",
-                        color = Color.White.copy(alpha = 0.8f),
-                        fontSize = 16.sp,
-                        fontWeight = FontWeight.Normal
-                    )
-                }
             }
 
             // 4. Botão de Ação (Mantém a posição original: BottomCenter)
@@ -2422,3 +2416,124 @@ fun MacroCard(
     }
 }
 
+@Composable
+fun FastingCard(
+    isFasting: Boolean,
+    startTime: String?,
+    endTime: String?,
+    fastingDuration: String,
+    remainingTime: String,
+    progress: Float,
+    onEditObjectiveClick: () -> Unit,
+    onToggleFasting: () -> Unit,
+    modifier: Modifier = Modifier
+) {
+    val cardShape = RoundedCornerShape(32.dp)
+
+    Surface(
+        shape = cardShape,
+        tonalElevation = 2.dp,
+        shadowElevation = 8.dp,
+        color = colorScheme.surface,
+        modifier = modifier
+            .fillMaxWidth(0.90f)
+            .wrapContentHeight()
+    ) {
+        Column(modifier = Modifier.padding(24.dp)) {
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.SpaceBetween,
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                Text(
+                    text = if (isFasting) "Fasting" else "Eating Window",
+                    style = typography.titleLarge,
+                    fontWeight = FontWeight.Normal,
+                    fontSize = 28.sp,
+                    fontFamily = FontFamily(Font(R.font.gtwalsheimcondensedmedium)),
+                    color = if (isFasting) colorScheme.primary else colorScheme.secondary
+                )
+
+                Text(
+                    text = "Edit Objective",
+                    style = typography.labelLarge,
+                    color = colorScheme.secondary,
+                    modifier = Modifier.clickable { onEditObjectiveClick() }
+                )
+            }
+
+            Spacer(modifier = Modifier.height(24.dp))
+
+            val outline = colorScheme.outlineVariant
+            val corprimary = colorScheme.primary
+            val corsecondary = colorScheme.secondary
+
+
+            Box(
+                contentAlignment = Alignment.Center,
+                modifier = Modifier.fillMaxWidth()
+            ) {
+                Box(
+                    modifier = Modifier
+                        .size(180.dp)
+                        .aspectRatio(1f),
+                    contentAlignment = Alignment.Center
+                ) {
+                    Canvas(modifier = Modifier.fillMaxSize()) {
+                        drawArc(
+                            color = outline,
+                            startAngle = 0f,
+                            sweepAngle = 360f,
+                            useCenter = false,
+                            style = Stroke(width = 12.dp.toPx(), cap = StrokeCap.Round)
+                        )
+                        drawArc(
+                            color = if (isFasting) corsecondary else corprimary,
+                            startAngle = -90f,
+                            sweepAngle = 360f * progress,
+                            useCenter = false,
+                            style = Stroke(width = 12.dp.toPx(), cap = StrokeCap.Round)
+                        )
+                    }
+                }
+
+                Column(horizontalAlignment = Alignment.CenterHorizontally) {                    Text(
+                        text = remainingTime,
+                        style = typography.headlineMedium,
+                        fontWeight = FontWeight.ExtraBold,
+                        color = if (isFasting) colorScheme.primary else colorScheme.secondary
+                    )
+                    Text(
+                        text = "remaining",
+                        style = typography.bodySmall,
+                        color = colorScheme.onSurfaceVariant
+                    )
+                }
+            }
+
+            Spacer(modifier = Modifier.height(24.dp))
+
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.SpaceEvenly
+            ) {
+                Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                    Text("Started", style = typography.labelSmall)
+                    Text(startTime ?: "--:--", style = typography.titleMedium, fontWeight = FontWeight.Bold)
+                }
+                Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                    Text("Target", style = typography.labelSmall)
+                    Text(fastingDuration, style = typography.titleMedium, fontWeight = FontWeight.Bold)
+                }
+            }
+
+            Spacer(modifier = Modifier.height(24.dp))
+
+            NFButton(
+                text = if (isFasting) "End Fasting" else "Start Fasting",
+                onButtonClicked = onToggleFasting,
+                modifier = Modifier.fillMaxWidth()
+            )
+        }
+    }
+}

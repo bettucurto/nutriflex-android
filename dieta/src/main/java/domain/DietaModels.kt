@@ -1,6 +1,9 @@
 // dieta/src/main/java/com/example/dieta/domain/DietaModels.kt
 package com.example.dieta.domain
 
+import android.os.Parcelable
+import kotlinx.parcelize.Parcelize
+
 /**
  * Modelos de domínio usados pela UI / use cases da feature de dieta.
  * Não expõem entidades Room nem DTOs de rede diretamente.
@@ -65,6 +68,7 @@ data class FatSecretFood(
 // Detalhes de um alimento específico
 
 
+@Parcelize
 data class FatSecretServing(
     val id: String,
     val description: String,
@@ -85,20 +89,23 @@ data class FatSecretServing(
     val vitaminc: Double,        // Premier
     val calcium: Double,         // Premier
     val iron: Double             // Premier
-)
+) : Parcelable
 
+@Parcelize
 data class FatSecretAllergen(
     val id: String,
     val name: String,
     val value: String
-)
+) : Parcelable
 
+@Parcelize
 data class FatSecretPreference(
     val id: String,
     val name: String,
     val value: String
-)
+) : Parcelable
 
+@Parcelize
 data class FatSecretFoodDetails(
     val id: String,
     val nomeEn: String,
@@ -111,7 +118,7 @@ data class FatSecretFoodDetails(
     val servings: List<FatSecretServing>,
     val allergens: List<FatSecretAllergen>,
     val preferences: List<FatSecretPreference>
-)
+) : Parcelable
 
 
 
@@ -140,6 +147,13 @@ data class FatSecretRecipeSearchResult(
     val encontrados: Int,
     val receitas: List<FatSecretRecipeSummary>,
 )
+
+@Parcelize
+data class FatSecretIngredientSelection(
+    val food: FatSecretFoodDetails,
+    val serving: FatSecretServing,
+    val quantity: Double
+) : Parcelable
 
 // --------- FatSecret: receita detalhada ---------
 

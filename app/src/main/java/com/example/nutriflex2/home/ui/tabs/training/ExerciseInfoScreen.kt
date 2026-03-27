@@ -73,6 +73,8 @@ import components.LeftTitleText
 fun ExerciseInfoScreen(
     onBack: () -> Unit,
     isAddingMode: Boolean = false,
+    isReplacement: Boolean = false,
+    exIndex: Int = -1,
     navController: NavController? = null,
     onAddExercise: (String) -> Unit = {},
     viewModel: ExerciseInfoViewModel = hiltViewModel()
@@ -98,11 +100,11 @@ fun ExerciseInfoScreen(
             )
         },
         floatingActionButton = {
-            if (isAddingMode && state is ExerciseInfoUiState.Success) {
+            if ((isAddingMode || isReplacement) && state is ExerciseInfoUiState.Success) {
                 val exercise = (state as ExerciseInfoUiState.Success).exercise
                 ExtendedFloatingActionButton(
-                    text = { Text("Add to Session", fontWeight = FontWeight.Bold) },
-                    icon = { Icon(Icons.Default.Add, contentDescription = "Add") },
+                    text = { Text(if (isReplacement) "Replace Exercise" else "Add to Session", fontWeight = FontWeight.Bold) },
+                    icon = { Icon(if (isReplacement) Icons.Default.Add else Icons.Default.Add, contentDescription = "Action") },
                     onClick = {
                         val data = "${exercise.id}|${exercise.name}|${exercise.bodyParts?.firstOrNull() ?: ""}|${exercise.imageUrl ?: exercise.gifUrl}"
                         onAddExercise(data)
@@ -200,15 +202,15 @@ fun ExerciseInfoScreen(
                             )
                             HighlightCard(
                                 modifier = Modifier.weight(1f),
-                                label = "TYPE",
-                                value = typeText,
-                                icon = Icons.Default.Layers
-                            )
-                            HighlightCard(
-                                modifier = Modifier.weight(1f),
                                 label = "EQUIPMENT",
                                 value = equipmentText,
                                 icon = Icons.Default.Handyman
+                            )
+                            HighlightCard(
+                                modifier = Modifier.weight(1f),
+                                label = "TYPE",
+                                value = typeText,
+                                icon = Icons.Default.Layers
                             )
                         }
                     }
@@ -217,7 +219,7 @@ fun ExerciseInfoScreen(
                     val overview = exercise.overview
                     if (!overview.isNullOrEmpty()) {
                         item {
-                            SectionHeader(icon = Icons.Default.Info, title = "About", color = secondaryColor)
+                            SectionHeader(icon = Icons.Default.Info, title = "About", color = MaterialTheme.colorScheme.secondary)
                             Spacer(modifier = Modifier.height(12.dp))
                             Text(
                                 text = overview,
@@ -232,7 +234,7 @@ fun ExerciseInfoScreen(
                     val instructions = exercise.instructions
                     if (!instructions.isNullOrEmpty()) {
                         item {
-                            SectionHeader(icon = Icons.Default.List, title = "How to perform", color = secondaryColor)
+                            SectionHeader(icon = Icons.Default.List, title = "How to perform", color = MaterialTheme.colorScheme.secondary)
                         }
                         itemsIndexed(instructions) { index, step ->
                             InstructionStep(number = index + 1, text = step)
@@ -243,10 +245,10 @@ fun ExerciseInfoScreen(
                     val variations = exercise.variations
                     if (!variations.isNullOrEmpty()) {
                         item {
-                            SectionHeader(icon = Icons.Default.AltRoute, title = "Variations", color = secondaryColor)
+                            SectionHeader(icon = Icons.Default.AltRoute, title = "Variations", color = MaterialTheme.colorScheme.secondary)
                         }
                         items(variations) { variation ->
-                            VariationItem(text = variation, color = secondaryColor)
+                            VariationItem(text = variation, color = MaterialTheme.colorScheme.primary)
                         }
                     }
 
@@ -295,8 +297,8 @@ private fun ExerciseVideoPlayer(player: Player) {
 
 @Composable
 fun HighlightCard(modifier: Modifier, label: String, value: String, icon: ImageVector) {
-    val secondaryColor = Color(0xFF03A9F4)
-    val containerColor = secondaryColor.copy(alpha = 0.1f)
+    val primaryColor = MaterialTheme.colorScheme.primary
+    val containerColor = primaryColor.copy(alpha = 0.1f)
 
     Card(
         modifier = modifier,
@@ -313,7 +315,7 @@ fun HighlightCard(modifier: Modifier, label: String, value: String, icon: ImageV
             Icon(
                 icon, 
                 contentDescription = null, 
-                tint = secondaryColor, 
+                tint = primaryColor, 
                 modifier = Modifier.size(24.dp)
             )
             Spacer(modifier = Modifier.height(8.dp))
@@ -321,7 +323,7 @@ fun HighlightCard(modifier: Modifier, label: String, value: String, icon: ImageV
                 text = label, 
                 style = MaterialTheme.typography.labelSmall,
                 fontWeight = FontWeight.Bold, 
-                color = secondaryColor.copy(alpha = 0.7f),
+                color = primaryColor.copy(alpha = 0.7f),
                 letterSpacing = 1.sp
             )
             Spacer(modifier = Modifier.height(4.dp))
@@ -330,7 +332,7 @@ fun HighlightCard(modifier: Modifier, label: String, value: String, icon: ImageV
                 style = MaterialTheme.typography.bodyMedium,
                 fontSize = 14.sp,
                 fontWeight = FontWeight.SemiBold,
-                color = secondaryColor,
+                color = primaryColor,
                 textAlign = TextAlign.Center,
                 maxLines = 2,
                 lineHeight = 18.sp

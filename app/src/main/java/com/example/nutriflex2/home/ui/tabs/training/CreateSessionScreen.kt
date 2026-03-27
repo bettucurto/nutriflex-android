@@ -134,7 +134,7 @@ fun CreateSessionScreen(
                             exercises = state.exercises,
                             selectedIndex = state.selectedExerciseIndex,
                             onSelect = viewModel::onSelectExercise,
-                            onAddNew = { navController?.navigate("search_exercise") }
+                            onAddNew = { navController?.navigate("search_exercise/-1?isReplacement=false") }
                         )
                     }
                 }
@@ -144,20 +144,27 @@ fun CreateSessionScreen(
                         exercise = selectedEx,
                         onNotesChange = { viewModel.onExerciseNotesChange(state.selectedExerciseIndex, it) },
                         onAddSet = { viewModel.addSetToSelectedExercise() },
-                        onUpdateSet = { setIndex, weight, min, max ->
-                            viewModel.updateSetValues(state.selectedExerciseIndex, setIndex, weight, min, max)
+                        onUpdateSet = { setIndex, w, rMin, rMax -> 
+                            if (w != null) viewModel.updateSetWeight(state.selectedExerciseIndex, setIndex, w)
+                            if (rMin != null) viewModel.updateSetRepsMin(state.selectedExerciseIndex, setIndex, rMin)
+                            if (rMax != null) viewModel.updateSetRepsMax(state.selectedExerciseIndex, setIndex, rMax)
                         },
                         onRemoveExercise = { viewModel.removeExercise(state.selectedExerciseIndex) },
                         onSetClick = { index ->
                             setIndexToEdit = index
                             showSetTypeSheet = true
-                        }
+                        },
+                        onRemoveSet = { index -> viewModel.removeSetFromSelectedExercise(index) },
+                        onExerciseClick = { navController?.navigate("exercise_info/${selectedEx.id}?isAddingMode=false") }
                     )
                 }
             } else {
                 item {
                     Box(modifier = Modifier.fillMaxWidth().padding(top = 40.dp), contentAlignment = Alignment.Center) {
-                        EmptySessionContent(onAddFirstExercise = { navController?.navigate("search_exercise") })
+                        EmptySessionContent(
+                            onAddFirstExercise = { navController?.navigate("search_exercise/-1?isReplacement=false") },
+                            onViewWorkouts = { navController?.navigate("workout_browser") }
+                        )
                     }
                 }
             }

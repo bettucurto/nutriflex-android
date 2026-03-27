@@ -99,6 +99,11 @@ fun TrainingTabScreen(
     // LazyListState para scroll automático
     val listState = androidx.compose.foundation.lazy.rememberLazyListState()
 
+    // Refresh data when screen is composed
+    LaunchedEffect(Unit) {
+        viewModel.refreshData()
+    }
+
     // Scroll automático quando uma nova pasta entra em modo de edição
     LaunchedEffect(state.editingFolderId, state.isNewFolderEditing) {
         if (state.editingFolderId != null && state.isNewFolderEditing) {

@@ -43,6 +43,7 @@ kotlin {
 dependencies {
     implementation(libs.ui.graphics)
     implementation(libs.androidx.compose.ui.ui2)
+    implementation(libs.foundation.layout)
     // Workaround metadata (Hilt + Room)
     kapt("androidx.room:room-compiler-processing:2.8.4")
 

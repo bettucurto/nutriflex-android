@@ -1,4 +1,4 @@
-package com.example.nutriflex2.home.account
+package com.example.nutriflex2.home.settings
 
 import android.os.Build
 import android.util.Log

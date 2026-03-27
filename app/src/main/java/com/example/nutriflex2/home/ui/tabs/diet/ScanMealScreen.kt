@@ -5,7 +5,6 @@ import android.content.Context
 import android.content.pm.PackageManager
 import android.net.Uri
 import android.util.Log
-import android.view.ViewGroup
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.camera.core.CameraSelector
@@ -36,6 +35,7 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.navigationBarsPadding
+import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.statusBarsPadding
@@ -73,6 +73,7 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -94,7 +95,9 @@ import androidx.compose.ui.unit.sp
 import androidx.compose.ui.viewinterop.AndroidView
 import androidx.core.content.ContextCompat
 import androidx.hilt.navigation.compose.hiltViewModel
+import androidx.navigation.NavController
 import coil.compose.rememberAsyncImagePainter
+import kotlinx.coroutines.launch
 import java.io.File
 import java.util.concurrent.ExecutorService
 import java.util.concurrent.Executors
@@ -104,6 +107,7 @@ enum class WhatsAppSheetValue { HandleOnly, Recents, Full }
 @OptIn(ExperimentalMaterial3Api::class, ExperimentalFoundationApi::class)
 @Composable
 fun ScanMealScreen(
+    navController: NavController,
     viewModel: ScanMealViewModel = hiltViewModel(),
     onNavigateBack: () -> Unit
 ) {
@@ -113,6 +117,19 @@ fun ScanMealScreen(
     val density = LocalDensity.current
     val configuration = LocalConfiguration.current
     val screenHeightPx = with(density) { configuration.screenHeightDp.dp.toPx() }
+    val scope = rememberCoroutineScope()
+
+    // Navegar para confirmação quando detetado
+    LaunchedEffect(state.detectedIngredients) {
+        state.detectedIngredients?.let { ingredients ->
+            val uriStr = state.capturedImageUri?.toString() ?: ""
+            val encodedUri = java.net.URLEncoder.encode(uriStr, "UTF-8")
+            
+            navController.currentBackStackEntry?.savedStateHandle?.set("detected_ingredients", ingredients)
+            navController.navigate("scanConfirm?imageUri=$encodedUri")
+            viewModel.clearDetectedIngredients()
+        }
+    }
 
     // --- ESTADO DO SCAFFOLD (WHATSAPP STYLE) ---
     val sheetState = rememberStandardBottomSheetState(
@@ -163,9 +180,27 @@ fun ScanMealScreen(
 
     // CameraX State
     var lensFacing by remember { mutableIntStateOf(CameraSelector.LENS_FACING_BACK) }
-    var flashMode by remember { mutableIntStateOf(ImageCapture.FLASH_MODE_OFF) }
-    val imageCapture = remember { ImageCapture.Builder().setFlashMode(flashMode).build() }
+    var isFlashEnabled by remember { mutableStateOf(false) }
+    val imageCapture = remember { ImageCapture.Builder().build() }
     val cameraExecutor = remember { Executors.newSingleThreadExecutor() }
+    val previewView = remember { PreviewView(context) }
+
+    LaunchedEffect(lensFacing) {
+        val cameraProviderFuture = ProcessCameraProvider.getInstance(context)
+        cameraProviderFuture.addListener({
+            val cameraProvider = cameraProviderFuture.get()
+            val preview = Preview.Builder().build().also { it.setSurfaceProvider(previewView.surfaceProvider) }
+            val cameraSelector = CameraSelector.Builder().requireLensFacing(lensFacing).build()
+            try {
+                cameraProvider.unbindAll()
+                cameraProvider.bindToLifecycle(lifecycleOwner, cameraSelector, preview, imageCapture)
+            } catch (exc: Exception) { Log.e("CameraX", "Binding failed", exc) }
+        }, ContextCompat.getMainExecutor(context))
+    }
+
+    LaunchedEffect(isFlashEnabled) {
+        imageCapture.flashMode = if (isFlashEnabled) ImageCapture.FLASH_MODE_ON else ImageCapture.FLASH_MODE_OFF
+    }
 
     // Permissions State
     var hasCameraPermission by remember {
@@ -223,29 +258,18 @@ fun ScanMealScreen(
             // --- CONTEÚDO BASE (CÂMARA) ---
             Box(modifier = Modifier.fillMaxSize()) {
                 AndroidView(
-                    factory = { ctx ->
-                        PreviewView(ctx).apply {
-                            layoutParams = ViewGroup.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.MATCH_PARENT)
-                            scaleType = PreviewView.ScaleType.FILL_CENTER
-                        }
-                    },
-                    modifier = Modifier.fillMaxSize(),
-                    update = { previewView ->
-                        val cameraProviderFuture = ProcessCameraProvider.getInstance(context)
-                        cameraProviderFuture.addListener({
-                            val cameraProvider = cameraProviderFuture.get()
-                            val preview = Preview.Builder().build().also { it.setSurfaceProvider(previewView.surfaceProvider) }
-                            val cameraSelector = CameraSelector.Builder().requireLensFacing(lensFacing).build()
-                            try {
-                                cameraProvider.unbindAll()
-                                cameraProvider.bindToLifecycle(lifecycleOwner, cameraSelector, preview, imageCapture)
-                            } catch (exc: Exception) { Log.e("CameraX", "Binding failed", exc) }
-                        }, ContextCompat.getMainExecutor(context))
-                    }
+                    factory = { previewView },
+                    modifier = Modifier.fillMaxSize()
                 )
 
                 // Overlay Frame
-                Box(modifier = Modifier.size(280.dp).align(Alignment.Center).border(2.dp, Color.Green.copy(alpha = 0.5f), RoundedCornerShape(12.dp)))
+                Box(
+                    modifier = Modifier
+                        .size(280.dp)
+                        .align(Alignment.Center)
+                        .offset(y = (-50).dp)
+                        .border(2.dp, Color.Green.copy(alpha = 0.5f), RoundedCornerShape(12.dp))
+                )
 
                 // TopBar
                 Row(
@@ -257,11 +281,11 @@ fun ScanMealScreen(
                         Icon(Icons.AutoMirrored.Filled.ArrowBack, "Back", tint = Color.White)
                     }
                     IconButton(
-                        onClick = { flashMode = if (flashMode == ImageCapture.FLASH_MODE_OFF) ImageCapture.FLASH_MODE_ON else ImageCapture.FLASH_MODE_OFF },
+                        onClick = { isFlashEnabled = !isFlashEnabled },
                         modifier = Modifier.background(Color.Black.copy(alpha = 0.3f), CircleShape)
                     ) {
-                        Icon(if (flashMode == ImageCapture.FLASH_MODE_ON) Icons.Default.FlashOn else Icons.Default.FlashOff, "Flash",
-                            tint = if (flashMode == ImageCapture.FLASH_MODE_ON) Color.Yellow else Color.White)
+                        Icon(if (isFlashEnabled) Icons.Default.FlashOn else Icons.Default.FlashOff, "Flash",
+                            tint = if (isFlashEnabled) Color.Yellow else Color.White)
                     }
                 }
             }
@@ -291,7 +315,9 @@ fun ScanMealScreen(
                 horizontalArrangement = Arrangement.SpaceBetween,
                 verticalAlignment = Alignment.CenterVertically
             ) {
-                IconButton(onClick = { /* Galeria */ }) { Icon(Icons.Default.PhotoLibrary, "Gallery", tint = Color.White, modifier = Modifier.size(28.dp)) }
+                IconButton(onClick = { scope.launch { scaffoldState.bottomSheetState.expand() } }) {
+                    Icon(Icons.Default.PhotoLibrary, "Gallery", tint = Color.White, modifier = Modifier.size(28.dp))
+                }
 
                 Box(modifier = Modifier
                     .size(80.dp)
@@ -374,11 +400,11 @@ fun GallerySheetContent(
                 .drawWithContent {
                     // try-catch garante que não há crash no 1º frame antes de o Compose calcular os tamanhos
                     val offset = try { scaffoldState.bottomSheetState.requireOffset() } catch (e: Exception) { 0f }
-                    
+
                     // Fórmula mágica: AlturaTotal - DeslocamentoGaveta - AlturaDoBotão
                     // Isto ancora a linha de corte exatamente no ecrã do telemóvel, imune à altura da gaveta!
                     val clipTop = size.height - offset - clipBottomOffset.toPx()
-                    
+
                     clipRect(bottom = clipTop) {
                         this@drawWithContent.drawContent()
                     }

@@ -1,5 +1,6 @@
 package com.example.treino.data.remote.repository
 
+import UpdateSetHistoryRequest
 import com.example.treino.data.remote.CreateExercicioRequest
 import com.example.treino.data.remote.CreatePastaRequest
 import com.example.treino.data.remote.CreateSessaoRequest
@@ -46,6 +47,7 @@ class TreinoRemoteRepository @Inject constructor(
     suspend fun getSetsByExercicio(idExercicio: Int) = api.getSetsByExercicio(idExercicio)
     suspend fun createSet(request: CreateSetRequest) = api.createSet(request)
     suspend fun updateSet(id: Int, request: CreateSetRequest) = api.updateSet(id, request)
+    suspend fun updateSetHistory(id: Int, peso: Double, reps: Int) = api.updateSetHistory(id, UpdateSetHistoryRequest(peso, reps))
     suspend fun deleteSet(id: Int) = api.deleteSet(id)
 
     // --- ExerciseDB ---
@@ -61,4 +63,6 @@ class TreinoRemoteRepository @Inject constructor(
     ) = api.searchExercises(name, bodyParts, equipments, targetMuscles, exerciseType, limit, after, before)
 
     suspend fun getExerciseDetails(id: String) = api.getExerciseDetails(id)
+
+    suspend fun getPublicWorkouts(frequency: Int?, experience: Int?) = api.getPublicWorkouts(frequency, experience)
 }

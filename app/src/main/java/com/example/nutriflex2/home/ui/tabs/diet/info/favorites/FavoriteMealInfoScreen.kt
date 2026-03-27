@@ -98,7 +98,7 @@ fun FavoriteMealInfoScreen(
     onBack: () -> Unit,
     onLogMeal: () -> Unit,
     onEditClick: (String) -> Unit,
-    onIngredientClick: (String) -> Unit,
+    onIngredientClick: (String, String?, String?) -> Unit, // Alterado: (foodId, servingDesc, portion)
     viewModel: FavoriteMealInfoViewModel = hiltViewModel()
 ) {
     val uiState by viewModel.uiState.collectAsState()
@@ -235,7 +235,9 @@ fun FavoriteMealInfoScreen(
                         val ingredientsList = uiState.ingredients.map { ing ->
                             ExpandableItemData(
                                 text = "${ing.quantidadePorcoes} x ${ing.tipoPorcao} de ${ing.nomeAlimento ?: "Ingredient"}",
-                                clickId = ing.alimentoApiId
+                                clickId = ing.alimentoApiId,
+                                servingDesc = ing.tipoPorcao,
+                                portion = ing.quantidadePorcoes.toString()
                             )
                         }
                         ExpandableSection(
@@ -269,7 +271,9 @@ fun FavoriteMealInfoScreen(
 
 data class ExpandableItemData(
     val text: String,
-    val clickId: String? = null
+    val clickId: String? = null,
+    val servingDesc: String? = null,
+    val portion: String? = null
 )
 
 @Composable
@@ -277,7 +281,7 @@ private fun ExpandableSection(
     title: String,
     items: List<ExpandableItemData>,
     isNumbered: Boolean = false,
-    onItemClick: ((String) -> Unit)? = null
+    onItemClick: ((String, String?, String?) -> Unit)? = null
 ) {
     var expanded by remember { mutableStateOf(false) }
 
@@ -334,7 +338,7 @@ private fun ExpandableSection(
                             modifier = Modifier
                                 .fillMaxWidth()
                                 .then(
-                                    if (isClickable) Modifier.clickable { onItemClick!!(item.clickId!!) }
+                                    if (isClickable) Modifier.clickable { onItemClick!!(item.clickId!!, item.servingDesc, item.portion) }
                                     else Modifier
                                 )
                                 .padding(vertical = if (isClickable) 4.dp else 0.dp)

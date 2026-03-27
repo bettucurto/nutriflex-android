@@ -1,7 +1,14 @@
 package com.example.treino.data.remote
 
+import UpdateSetHistoryRequest
 import com.google.gson.annotations.SerializedName
-import retrofit2.http.*
+import retrofit2.http.Body
+import retrofit2.http.DELETE
+import retrofit2.http.GET
+import retrofit2.http.POST
+import retrofit2.http.PUT
+import retrofit2.http.Path
+import retrofit2.http.Query
 
 // --- PASTAS ---
 data class PastaDto(
@@ -11,7 +18,9 @@ data class PastaDto(
     val idUser: Int,
     val visibilidade: String, // 'publica' ou 'privada'
     @SerializedName("is_deletable")
-    val isDeletable: Int = 1
+    val isDeletable: Int = 1,
+    val frequency: Int? = null,
+    val experience: Int? = null
 )
 
 data class CreatePastaRequest(
@@ -36,6 +45,8 @@ data class SessionWithDetailsDto(
     val nome: String,
     @SerializedName("id_pasta")
     val idPasta: Int,
+    @SerializedName("id_Proxim_sessao")
+    val idProximaSessao: Int = 0,
     val exercicios: List<ExerciseWithSetsDto> = emptyList()
 )
 
@@ -122,9 +133,9 @@ data class ExercicioSetDto(
     @SerializedName("repeticoes_max")
     val repeticoesMax: Int,
     @SerializedName("peso_ultima_vez")
-    val pesoUltimaVez: Double,
+    val pesoUltimaVez: Double? = 0.0,
     @SerializedName("repeticoes_ultima_vez")
-    val repeticoesUltimaVez: Int,
+    val repeticoesUltimaVez: Int? = 0,
     val ordem: Int,
     @SerializedName("id_exercicio")
     val idExercicio: Int
@@ -273,6 +284,9 @@ interface TreinoApiService {
     @PUT("treinos/set/{id}")
     suspend fun updateSet(@Path("id") id: Int, @Body body: CreateSetRequest): SimpleMessageResponse       
 
+    @PUT("treinos/set/history/{id}")
+    suspend fun updateSetHistory(@Path("id") id: Int, @Body body: UpdateSetHistoryRequest): SimpleMessageResponse
+
     @DELETE("treinos/set/{id}")
     suspend fun deleteSet(@Path("id") id: Int): SimpleMessageResponse
 
@@ -291,4 +305,10 @@ interface TreinoApiService {
 
     @GET("treinos/exercise/{id}")
     suspend fun getExerciseDetails(@Path("id") id: String): ExerciseDbDetailsResponse
+
+    @GET("treinos/public-workouts")
+    suspend fun getPublicWorkouts(
+        @Query("frequency") frequency: Int? = null,
+        @Query("experience") experience: Int? = null
+    ): List<PastaDto>
 }

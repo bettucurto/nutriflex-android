@@ -23,5 +23,6 @@ data class UserLocal(
     val dailyCarbsGrams: Int,
     val dailyProteinGrams: Int,
     val dailyFatGrams: Int,
-    val activityLevel: Int
+    val activityLevel: Int,
+    val nextWorkoutId: Int? = null
 )

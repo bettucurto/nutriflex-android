@@ -152,19 +152,42 @@ class EditSessionViewModel @Inject constructor(
         }
     }
 
-    fun updateSetValues(exerciseIndex: Int, setIndex: Int, weight: Double? = null, repsMin: Int? = null, repsMax: Int? = null) {
+    fun updateSetWeight(exerciseIndex: Int, setIndex: Int, weight: Double?) {
         _uiState.update { state ->
             val currentExercises = state.exercises.toMutableList()
             if (exerciseIndex !in currentExercises.indices) return@update state
             val currentExercise = currentExercises[exerciseIndex]
             val currentSets = currentExercise.sets.toMutableList()
             if (setIndex in currentSets.indices) {
-                val set = currentSets[setIndex]
-                currentSets[setIndex] = set.copy(
-                    weightKg = weight ?: set.weightKg,
-                    repsMin = repsMin ?: set.repsMin,
-                    repsMax = repsMax ?: set.repsMax
-                )
+                currentSets[setIndex] = currentSets[setIndex].copy(weightKg = weight ?: 0.0)
+                currentExercises[exerciseIndex] = currentExercise.copy(sets = currentSets)
+                state.copy(exercises = currentExercises)
+            } else state
+        }
+    }
+
+    fun updateSetRepsMin(exerciseIndex: Int, setIndex: Int, reps: Int?) {
+        _uiState.update { state ->
+            val currentExercises = state.exercises.toMutableList()
+            if (exerciseIndex !in currentExercises.indices) return@update state
+            val currentExercise = currentExercises[exerciseIndex]
+            val currentSets = currentExercise.sets.toMutableList()
+            if (setIndex in currentSets.indices) {
+                currentSets[setIndex] = currentSets[setIndex].copy(repsMin = reps ?: 0)
+                currentExercises[exerciseIndex] = currentExercise.copy(sets = currentSets)
+                state.copy(exercises = currentExercises)
+            } else state
+        }
+    }
+
+    fun updateSetRepsMax(exerciseIndex: Int, setIndex: Int, reps: Int?) {
+        _uiState.update { state ->
+            val currentExercises = state.exercises.toMutableList()
+            if (exerciseIndex !in currentExercises.indices) return@update state
+            val currentExercise = currentExercises[exerciseIndex]
+            val currentSets = currentExercise.sets.toMutableList()
+            if (setIndex in currentSets.indices) {
+                currentSets[setIndex] = currentSets[setIndex].copy(repsMax = reps ?: 0)
                 currentExercises[exerciseIndex] = currentExercise.copy(sets = currentSets)
                 state.copy(exercises = currentExercises)
             } else state

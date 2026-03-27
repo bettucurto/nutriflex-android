@@ -56,13 +56,22 @@ class MealInfoViewModel @Inject constructor(
     init {
         val foodId = checkNotNull(savedStateHandle["foodId"]) as String
         mealId = savedStateHandle["mealId"] as? Int
+        
+        val initialServingId = savedStateHandle.get<String>("servingId")
+        val initialPortion = savedStateHandle.get<String>("portion")?.toDoubleOrNull()
+        val initialServingDesc = savedStateHandle.get<String>("servingDesc")
 
         viewModelScope.launch {
-            loadFoodDetails(foodId)
+            loadFoodDetails(foodId, initialServingId, initialPortion, initialServingDesc)
         }
     }
 
-    private suspend fun loadFoodDetails(foodId: String) {
+    private suspend fun loadFoodDetails(
+        foodId: String,
+        initialServingId: String? = null,
+        initialPortion: Double? = null,
+        initialServingDesc: String? = null
+    ) {
         _uiState.value = _uiState.value.copy(isLoading = true)
         try {
             val details = repository.getFoodDetails(foodId)
@@ -91,18 +100,36 @@ class MealInfoViewModel @Inject constructor(
                 } else serving
             }
 
-            val firstServingIndex = adjustedServings.indexOfFirst { it.description == "Grams" }.let {
-                if (it == -1) 0 else it
+            // Lógica de seleção inicial
+            var selectedIndex = -1
+
+            // 1. Tentar por ID
+            if (initialServingId != null) {
+                selectedIndex = adjustedServings.indexOfFirst { it.id == initialServingId }
             }
-            val initialPortion =
-                if (adjustedServings.getOrNull(firstServingIndex)?.description == "Grams") 100.0 else 1.0
+
+            // 2. Tentar por Descrição (se ID falhou ou não foi providenciado)
+            if (selectedIndex == -1 && initialServingDesc != null) {
+                selectedIndex = adjustedServings.indexOfFirst { 
+                    it.description.equals(initialServingDesc, ignoreCase = true) 
+                }
+            }
+
+            // 3. Fallback para "Grams" ou o primeiro
+            if (selectedIndex == -1) {
+                selectedIndex = adjustedServings.indexOfFirst { it.description == "Grams" }
+                if (selectedIndex == -1) selectedIndex = 0
+            }
+
+            // Lógica de quantidade inicial
+            val portion = initialPortion ?: if (adjustedServings.getOrNull(selectedIndex)?.description == "Grams") 100.0 else 1.0
 
             _uiState.value = MealInfoUiState(
                 isLoading = false,
                 food = details,
                 servings = adjustedServings,
-                selectedServingIndex = firstServingIndex,
-                portionCount = initialPortion
+                selectedServingIndex = selectedIndex,
+                portionCount = portion
             ).recalculate()
 
         } catch (e: Exception) {

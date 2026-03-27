@@ -170,9 +170,10 @@ class DietaRemoteRepository @Inject constructor(
     suspend fun getReceitaById(id: String): FatSecretRecipeDetailsDto =
         api.getReceitaById(id).receita
 
-    suspend fun recognizeMeal(image: java.io.File): okhttp3.ResponseBody {
+    suspend fun recognizeFoodFromImage(image: java.io.File): FoodRecognitionResponse {
         val requestFile = okhttp3.RequestBody.create("image/*".toMediaTypeOrNull(), image)
-        val body = okhttp3.MultipartBody.Part.createFormData("image", image.name, requestFile)
-        return api.recognizeMeal(body)
+        // CRÍTICO: O servidor espera o campo "imagem"
+        val body = okhttp3.MultipartBody.Part.createFormData("imagem", image.name, requestFile)
+        return api.recognizeFoodFromImage(body)
     }
 }

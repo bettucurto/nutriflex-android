@@ -21,6 +21,8 @@ interface TreinoRepository {
 
     // --- Sessoes ---
     fun observeSessoes(idPasta: Int): Flow<List<Sessao>>
+    fun observeAllSessoesByUser(userId: Int): Flow<List<Sessao>>
+    fun observeNextSessaoWithExercises(userId: Int, nextWorkoutId: Int?): Flow<Pair<Sessao, List<Exercicio>>?>
     suspend fun refreshSessoes(idPasta: Int)
     suspend fun createSessao(request: CreateSessaoRequest): Int
     suspend fun getSessaoWithDetails(id: Int): SessionWithDetailsDto
@@ -55,4 +57,6 @@ interface TreinoRepository {
         before: String? = null
     ): ExerciseDbSearchResponse
     suspend fun getExerciseDetails(id: String): com.example.treino.data.remote.ExerciseDbDetailsResponse
+
+    suspend fun getPublicWorkouts(frequency: Int?, experience: Int?): List<Pasta>
 }

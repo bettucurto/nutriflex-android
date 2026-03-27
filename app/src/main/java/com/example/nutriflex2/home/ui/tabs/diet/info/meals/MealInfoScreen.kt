@@ -14,6 +14,7 @@ import androidx.compose.foundation.layout.ExperimentalLayoutApi
 import androidx.compose.foundation.layout.FlowRow
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.aspectRatio
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
@@ -58,7 +59,6 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.geometry.Offset
-import androidx.compose.ui.geometry.Size
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.SolidColor
@@ -652,13 +652,17 @@ private fun NutritionCircle(uiState: MealInfoUiState) {
         Spacer(Modifier.width(16.dp))
 
         Box(
-            modifier = Modifier.size(150.dp).weight(0.45f),
+            modifier = Modifier.weight(0.45f),
             contentAlignment = Alignment.Center,
         ) {
-            Canvas(modifier = Modifier.fillMaxSize(0.95f)) {
+            // MUDANÇA AQUI: fillMaxWidth + aspectRatio
+            Canvas(
+                modifier = Modifier
+                    .fillMaxWidth(0.95f) // Ocupa 95% do Box
+                    .aspectRatio(1f) // Força a ser um Quadrado Perfeito
+                    .padding(6.dp) // Respiro para a espessura da linha não cortar
+            ) {
                 val strokeWidth = 12.dp.toPx()
-                val diameter = size.minDimension
-                val arcSize = Size(diameter, diameter)
                 var startAngle = -90f
 
                 fun sweep(pct: Int) = 360f * (pct / 100f)

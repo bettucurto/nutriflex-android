@@ -18,6 +18,8 @@ class TreinoLocalRepository @Inject constructor(
 
     // --- Sessoes ---
     fun observeSessoes(idPasta: Int) = dao.observeSessoes(idPasta)
+    fun observeAllSessoesByUser(userId: Int) = dao.observeAllSessoesByUser(userId)
+    fun observeNextSessaoWithExercises(userId: Int, nextWorkoutId: Int?) = dao.observeNextSessaoWithExercises(userId, nextWorkoutId)
     suspend fun saveSessoes(sessoes: List<SessaoEntity>) = dao.insertSessoes(sessoes)
     suspend fun deleteSessoesByPasta(idPasta: Int) = dao.deleteSessoesByPasta(idPasta)
     suspend fun deleteSessaoById(id: Int) = dao.deleteSessaoById(id)

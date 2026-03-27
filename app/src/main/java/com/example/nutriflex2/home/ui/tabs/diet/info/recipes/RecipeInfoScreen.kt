@@ -94,7 +94,7 @@ fun RecipeInfoScreen(
     recipeId: String,
     onBack: () -> Unit,
     onAddToMeal: () -> Unit,
-    onIngredientClick: (String) -> Unit, // <- ADICIONADO AQUI
+    onIngredientClick: (String, String?, String?) -> Unit, // Alterado: (foodId, servingId, portion)
     viewModel: RecipeInfoViewModel = hiltViewModel()
 ) {
     val uiState by viewModel.uiState.collectAsState()
@@ -247,7 +247,12 @@ fun RecipeInfoScreen(
                         val ingredientsList = recipe.ingredients.map {
                             // No FatSecret, um foodId de "0" significa que é um ingrediente que não tem página detalhada
                             val fId = if (it.foodId == "0" || it.foodId.isBlank()) null else it.foodId
-                            ExpandableItemData(text = it.ingredientDescription, clickId = fId)
+                            ExpandableItemData(
+                                text = it.ingredientDescription, 
+                                clickId = fId,
+                                servingId = it.servingId,
+                                portion = it.numberOfUnits
+                            )
                         }
                         ExpandableSection(
                             title = "Ingredients",
@@ -298,7 +303,9 @@ fun RecipeInfoScreen(
 // Nova classe para guardar a informação da lista
 data class ExpandableItemData(
     val text: String,
-    val clickId: String? = null // Se for null, não é clicável
+    val clickId: String? = null, // Se for null, não é clicável
+    val servingId: String? = null,
+    val portion: String? = null
 )
 
 // Secção Expansível Atualizada
@@ -307,7 +314,7 @@ private fun ExpandableSection(
     title: String,
     items: List<ExpandableItemData>,
     isNumbered: Boolean = false,
-    onItemClick: ((String) -> Unit)? = null
+    onItemClick: ((String, String?, String?) -> Unit)? = null
 ) {
     var expanded by remember { mutableStateOf(false) }
 
@@ -365,7 +372,7 @@ private fun ExpandableSection(
                                 .fillMaxWidth()
                                 // Torna a linha clicável se tiver um ID válido
                                 .then(
-                                    if (isClickable) Modifier.clickable { onItemClick!!(item.clickId!!) }
+                                    if (isClickable) Modifier.clickable { onItemClick!!(item.clickId!!, item.servingId, item.portion) }
                                     else Modifier
                                 )
                                 .padding(vertical = if (isClickable) 4.dp else 0.dp) // Dá um bocadinho mais de espaço para ser mais fácil de clicar com o dedo

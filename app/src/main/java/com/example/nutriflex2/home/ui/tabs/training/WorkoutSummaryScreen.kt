@@ -119,7 +119,11 @@ fun WorkoutSummaryScreen(
                     contentColor = MaterialTheme.colorScheme.onPrimary
                 )
             ) {
-                Text("Back to Training", fontWeight = FontWeight.Bold, fontSize = 18.sp)
+                Text(
+                    text = "Back to Training",
+                    fontWeight = FontWeight.Bold,
+                    fontSize = 18.sp
+                )
             }
         }
 

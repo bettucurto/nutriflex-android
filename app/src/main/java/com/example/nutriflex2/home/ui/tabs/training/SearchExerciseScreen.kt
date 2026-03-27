@@ -4,18 +4,7 @@ import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
-import androidx.compose.foundation.layout.Arrangement
-import androidx.compose.foundation.layout.Box
-import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.PaddingValues
-import androidx.compose.foundation.layout.Row
-import androidx.compose.foundation.layout.Spacer
-import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.height
-import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.size
-import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.lazy.items
@@ -27,22 +16,8 @@ import androidx.compose.material.icons.filled.AdsClick
 import androidx.compose.material.icons.filled.ArrowBack
 import androidx.compose.material.icons.filled.Check
 import androidx.compose.material.icons.filled.Search
-import androidx.compose.material3.CircularProgressIndicator
-import androidx.compose.material3.ExperimentalMaterial3Api
-import androidx.compose.material3.FilterChip
-import androidx.compose.material3.FilterChipDefaults
-import androidx.compose.material3.Icon
-import androidx.compose.material3.IconButton
-import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.OutlinedTextField
-import androidx.compose.material3.OutlinedTextFieldDefaults
-import androidx.compose.material3.Scaffold
-import androidx.compose.material3.Surface
-import androidx.compose.material3.Text
-import androidx.compose.material3.TopAppBar
-import androidx.compose.runtime.Composable
-import androidx.compose.runtime.collectAsState
-import androidx.compose.runtime.getValue
+import androidx.compose.material3.*
+import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -62,12 +37,15 @@ import coil.compose.AsyncImage
 import coil.request.ImageRequest
 import com.example.nutriflex2.R
 import com.example.treino.data.remote.ExerciseDbSummaryDto
+import com.example.treino.domain.models.Exercicio
 import components.LeftTitleText
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun SearchExerciseScreen(
     navController: NavController,
+    exIndex: Int = -1,
+    isReplacement: Boolean = false,
     viewModel: SearchExerciseViewModel = hiltViewModel()
 ) {
     val state by viewModel.uiState.collectAsState()
@@ -217,16 +195,35 @@ fun SearchExerciseScreen(
                                 exercise = exercise,
                                 onExerciseClick = { id ->
                                     if (id.isNotBlank()) {
-                                        navController.navigate("exercise_info/$id?isAddingMode=true")
+                                        navController.navigate("exercise_info/$id?isAddingMode=false&isReplacement=$isReplacement&exIndex=$exIndex")
                                     }
                                 },
                                 onAddClick = {
                                     if (exercise.id.isNotBlank()) {
-                                        navController.previousBackStackEntry?.savedStateHandle?.set(
-                                            "selected_exercise_data", 
-                                            "${exercise.id}|${exercise.name}|${exercise.bodyParts?.firstOrNull() ?: ""}|${exercise.imageUrl ?: exercise.gifUrl}"
-                                        )
-                                        navController.popBackStack()
+                                        if (isReplacement && exIndex != -1) {
+                                            // Converte DTO para Modelo de Domínio (Exercicio)
+                                            // Nota: Aqui assumes-se que existe um mapper ou lógica para converter ExerciseDbSummaryDto -> Exercicio
+                                            // Como alternativa, cria-se o objeto Exercicio manualmente para o retorno.
+                                            val replacedEx = Exercicio(
+                                                id = 0,
+                                                exercicioApiId = exercise.id,
+                                                nome = exercise.name,
+                                                notas = "",
+                                                idSessao = 0,
+                                                ordem = 0,
+                                                imagem = exercise.imageUrl ?: exercise.gifUrl,
+                                                bodypart = exercise.bodyParts?.firstOrNull()
+                                            )
+                                            navController.previousBackStackEntry?.savedStateHandle?.set("replaced_exercise", replacedEx)
+                                            navController.previousBackStackEntry?.savedStateHandle?.set("replace_index", exIndex)
+                                            navController.popBackStack()
+                                        } else {
+                                            navController.previousBackStackEntry?.savedStateHandle?.set(
+                                                "selected_exercise_data", 
+                                                "${exercise.id}|${exercise.name}|${exercise.bodyParts?.firstOrNull() ?: ""}|${exercise.imageUrl ?: exercise.gifUrl}"
+                                            )
+                                            navController.popBackStack()
+                                        }
                                     }
                                 }
                             )
@@ -257,7 +254,6 @@ private fun EmptySearchContent(searchQuery: String) {
         horizontalAlignment = Alignment.CenterHorizontally,
         verticalArrangement = Arrangement.Center
     ) {
-        // Ícone com Brilho Verde
         Box(
             modifier = Modifier
                 .size(160.dp)
@@ -333,7 +329,6 @@ fun ExerciseListItem(
                 .fillMaxWidth(),
             verticalAlignment = Alignment.CenterVertically
         ) {
-            // Lado Esquerdo (Imagem Circular)
             AsyncImage(
                 model = ImageRequest.Builder(context)
                     .data(exercise.imageUrl ?: exercise.gifUrl)
@@ -350,7 +345,6 @@ fun ExerciseListItem(
                 error = painterResource(R.drawable.nutrilogo)
             )
 
-            // Centro (Textos e Metadados)
             Column(
                 modifier = Modifier
                     .weight(1f)
@@ -366,7 +360,6 @@ fun ExerciseListItem(
                 
                 Spacer(modifier = Modifier.height(6.dp))
 
-                // Chip de Equipamento (Azul)
                 val equipment = exercise.equipments?.firstOrNull() ?: exercise.equipment ?: ""
                 if (equipment.isNotEmpty()) {
                     Surface(
@@ -385,7 +378,6 @@ fun ExerciseListItem(
 
                 Spacer(modifier = Modifier.height(6.dp))
 
-                // Músculos Alvo e Ícone de Foco
                 Row(verticalAlignment = Alignment.CenterVertically) {
                     Icon(
                         imageVector = Icons.Default.AdsClick,
@@ -418,20 +410,19 @@ fun ExerciseListItem(
                 }
             }
 
-            // Lado Direito (Ação)
             Surface(
                 modifier = Modifier
                     .size(40.dp)
                     .clip(RoundedCornerShape(12.dp))
                     .clickable { onAddClick() },
                 shape = RoundedCornerShape(12.dp),
-                color = Color(0xFFE8F5E9) // Verde muito claro
+                color = Color(0xFFE8F5E9)
             ) {
                 Box(contentAlignment = Alignment.Center) {
                     Icon(
                         imageVector = Icons.Default.Add,
                         contentDescription = "Add",
-                        tint = Color(0xFF4CAF50), // Verde NutriFlex
+                        tint = Color(0xFF4CAF50),
                         modifier = Modifier.size(24.dp)
                     )
                 }

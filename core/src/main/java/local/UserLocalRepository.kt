@@ -16,6 +16,10 @@ class UserLocalRepository @Inject constructor(
     private val weightHistoryDao: WeightHistoryDao,
 ) {
 
+    suspend fun updateNextWorkoutId(userId: Int, nextWorkoutId: Int) {
+        userLocalDao.updateNextWorkoutId(userId, nextWorkoutId)
+    }
+
     suspend fun saveUserLocal(
         userId: Int,
         token: String,

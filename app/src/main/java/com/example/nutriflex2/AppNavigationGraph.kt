@@ -34,9 +34,11 @@ import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.navigation
 import androidx.navigation.navArgument
-import com.example.nutriflex2.home.account.AccountScreen
+import com.example.nutriflex2.home.about.AboutUsScreen
+import com.example.nutriflex2.home.settings.SettingsScreen
 import com.example.nutriflex2.home.ui.HomeScreen
 import com.example.nutriflex2.home.ui.SyncViewModel
+import com.example.nutriflex2.home.ui.tabs.diet.ScanConfirmScreen
 import com.example.nutriflex2.home.ui.tabs.diet.ScanMealScreen
 import com.example.nutriflex2.home.ui.tabs.diet.favorites.FavoriteMealEditorScreen
 import com.example.nutriflex2.home.ui.tabs.diet.favorites.FavoriteMealEditorViewModel
@@ -50,6 +52,7 @@ import com.example.nutriflex2.home.ui.tabs.training.CreateSessionScreen
 import com.example.nutriflex2.home.ui.tabs.training.EditSessionScreen
 import com.example.nutriflex2.home.ui.tabs.training.ExerciseInfoScreen
 import com.example.nutriflex2.home.ui.tabs.training.SearchExerciseScreen
+import com.example.nutriflex2.home.ui.tabs.training.SearchWorkoutScreen
 import com.example.nutriflex2.home.ui.tabs.training.WorkoutSummary
 import com.example.nutriflex2.home.ui.tabs.training.WorkoutSummaryScreen
 import kotlinx.coroutines.delay
@@ -117,7 +120,8 @@ fun AppNavGraph(
                 onNavigateToTraining = { navController.navigate("training_flow") },
                 onNavigateToSearchMeals = { navController.navigate("searchMealsScreen") },
                 onNavigateToSearchRecipes = { navController.navigate("searchRecipeScreen") },
-                onNavigateToAccount = { navController.navigate("accountScreen") }
+                onNavigateToAccount = { navController.navigate("accountScreen") },
+                onNavigateToAbout = { navController.navigate("aboutScreen") }
             )
         }
 
@@ -140,41 +144,89 @@ fun AppNavGraph(
                 )
             }
 
-            composable("search_exercise") {
-                SearchExerciseScreen(navController = navController)
+            composable(
+                route = "search_exercise/{exIndex}?isReplacement={isReplacement}",
+                arguments = listOf(
+                    navArgument("exIndex") { type = NavType.IntType; defaultValue = -1 },
+                    navArgument("isReplacement") { type = NavType.BoolType; defaultValue = false }
+                )
+            ) { backStackEntry ->
+                val exIndex = backStackEntry.arguments?.getInt("exIndex") ?: -1
+                val isReplacement = backStackEntry.arguments?.getBoolean("isReplacement") ?: false
+                SearchExerciseScreen(navController = navController, exIndex = exIndex, isReplacement = isReplacement)
             }
 
             composable(
-                route = "exercise_info/{exerciseId}?isAddingMode={isAddingMode}",
+                route = "exercise_info/{exerciseId}?isAddingMode={isAddingMode}&isReplacement={isReplacement}&exIndex={exIndex}",
                 arguments = listOf(
                     navArgument("exerciseId") { type = NavType.StringType },
                     navArgument("isAddingMode") { 
                         type = NavType.BoolType
                         defaultValue = false
+                    },
+                    navArgument("isReplacement") {
+                        type = NavType.BoolType
+                        defaultValue = false
+                    },
+                    navArgument("exIndex") {
+                        type = NavType.IntType
+                        defaultValue = -1
                     }
                 )
             ) { backStackEntry ->
                 val isAddingMode = backStackEntry.arguments?.getBoolean("isAddingMode") ?: false
+                val isReplacement = backStackEntry.arguments?.getBoolean("isReplacement") ?: false
+                val exIndex = backStackEntry.arguments?.getInt("exIndex") ?: -1
+
                 ExerciseInfoScreen(
                     onBack = { navController.popBackStack() },
-                    isAddingMode = isAddingMode,
+                    isAddingMode = isAddingMode || isReplacement,
+                    isReplacement = isReplacement,
+                    exIndex = exIndex,
                     navController = navController,
                     onAddExercise = { data ->
-                        val routes = listOf("create_session/{folderId}", "edit_session/{sessionId}")
-                        var foundEntry: NavBackStackEntry? = null
-                        for (route in routes) {
-                            try {
-                                foundEntry = navController.getBackStackEntry(route)
-                                break
-                            } catch (e: Exception) { }
-                        }
-
-                        if (foundEntry != null) {
-                            foundEntry.savedStateHandle.set("selected_exercise_data", data)
-                            navController.popBackStack(foundEntry.destination.id, inclusive = false)
+                        if (isReplacement && exIndex != -1) {
+                            val parts = data.split("|")
+                            if (parts.size >= 4) {
+                                val replacedEx = com.example.treino.domain.models.Exercicio(
+                                    id = 0,
+                                    exercicioApiId = parts[0],
+                                    nome = parts[1],
+                                    notas = "",
+                                    idSessao = 0,
+                                    ordem = 0,
+                                    imagem = parts[3],
+                                    bodypart = parts[2]
+                                )
+                                // Tenta encontrar a entrada do ActiveWorkout para colocar o resultado
+                                try {
+                                    val activeWorkoutEntry = navController.getBackStackEntry("active_workout/{sessionId}")
+                                    activeWorkoutEntry.savedStateHandle.set("replaced_exercise", replacedEx)
+                                    activeWorkoutEntry.savedStateHandle.set("replace_index", exIndex)
+                                    navController.popBackStack("active_workout/{sessionId}", inclusive = false)
+                                } catch (e: Exception) {
+                                    navController.previousBackStackEntry?.savedStateHandle?.set("replaced_exercise", replacedEx)
+                                    navController.previousBackStackEntry?.savedStateHandle?.set("replace_index", exIndex)
+                                    navController.popBackStack()
+                                }
+                            }
                         } else {
-                            navController.previousBackStackEntry?.savedStateHandle?.set("selected_exercise_data", data)
-                            navController.popBackStack()
+                            val routes = listOf("create_session/{folderId}", "edit_session/{sessionId}")
+                            var foundEntry: NavBackStackEntry? = null
+                            for (route in routes) {
+                                try {
+                                    foundEntry = navController.getBackStackEntry(route)
+                                    break
+                                } catch (e: Exception) { }
+                            }
+
+                            if (foundEntry != null) {
+                                foundEntry.savedStateHandle.set("selected_exercise_data", data)
+                                navController.popBackStack(foundEntry.destination.id, inclusive = false)
+                            } else {
+                                navController.previousBackStackEntry?.savedStateHandle?.set("selected_exercise_data", data)
+                                navController.popBackStack()
+                            }
                         }
                     }
                 )
@@ -197,12 +249,11 @@ fun AppNavGraph(
                 ActiveWorkoutScreen(
                     onBack = { navController.popBackStack() },
                     onFinish = { summary ->
-                        // Pass summary as json or via savedStateHandle. For simplicity, we can use a shared state or just serialize.
-                        // But since it's a small object, let's navigate to summary.
                         navController.navigate("workout_summary/${summary.duration}/${summary.totalVolume}/${summary.completedSets}") {
                             popUpTo("trainingTab") { inclusive = false }
                         }
-                    }
+                    },
+                    navController = navController
                 )
             }
 
@@ -222,6 +273,10 @@ fun AppNavGraph(
                     summary = WorkoutSummary(duration, volume, sets),
                     navController = navController
                 )
+            }
+            
+            composable("workout_browser") {
+                SearchWorkoutScreen(navController = navController)
             }
         }
 
@@ -253,8 +308,25 @@ fun AppNavGraph(
 
         // --- Detalhes do Alimento (Modo: Log Diário) ---
         composable(
-            route = "foodDetail/{foodId}",
-            arguments = listOf(navArgument("foodId") { type = NavType.StringType })
+            route = "foodDetail/{foodId}?servingId={servingId}&portion={portion}&servingDesc={servingDesc}",
+            arguments = listOf(
+                navArgument("foodId") { type = NavType.StringType },
+                navArgument("servingId") { 
+                    type = NavType.StringType
+                    nullable = true
+                    defaultValue = null
+                },
+                navArgument("portion") { 
+                    type = NavType.StringType
+                    nullable = true
+                    defaultValue = null
+                },
+                navArgument("servingDesc") { 
+                    type = NavType.StringType
+                    nullable = true
+                    defaultValue = null
+                }
+            )
         ) { backStackEntry ->
             val foodId = backStackEntry.arguments?.getString("foodId") ?: ""
 
@@ -290,8 +362,8 @@ fun AppNavGraph(
                         }
                     }
                 },
-                onIngredientClick = { foodId ->
-                    navController.navigate("foodDetail/$foodId")
+                onIngredientClick = { foodId, servingId, portion ->
+                    navController.navigate("foodDetail/$foodId?servingId=$servingId&portion=$portion")
                 }
             )
         }
@@ -313,8 +385,8 @@ fun AppNavGraph(
                 onEditClick = { id ->
                     navController.navigate("favoriteMealEditor?mealId=$id")
                 },
-                onIngredientClick = { foodId ->
-                    navController.navigate("foodDetail/$foodId")
+                onIngredientClick = { foodId, servingDesc, portion ->
+                    navController.navigate("foodDetail/$foodId?servingDesc=$servingDesc&portion=$portion")
                 }
             )
         }
@@ -368,8 +440,25 @@ fun AppNavGraph(
             }
 
             composable(
-                route = "meal_creation_detail/{foodId}",
-                arguments = listOf(navArgument("foodId") { type = NavType.StringType })
+                route = "meal_creation_detail/{foodId}?servingId={servingId}&portion={portion}&servingDesc={servingDesc}",
+                arguments = listOf(
+                    navArgument("foodId") { type = NavType.StringType },
+                    navArgument("servingId") { 
+                        type = NavType.StringType
+                        nullable = true
+                        defaultValue = null
+                    },
+                    navArgument("portion") { 
+                        type = NavType.StringType
+                        nullable = true
+                        defaultValue = null
+                    },
+                    navArgument("servingDesc") { 
+                        type = NavType.StringType
+                        nullable = true
+                        defaultValue = null
+                    }
+                )
             ) { backStackEntry ->
                 val foodId = backStackEntry.arguments?.getString("foodId") ?: ""
                 val parentEntry = remember(backStackEntry) {
@@ -395,7 +484,7 @@ fun AppNavGraph(
 
 
         composable("accountScreen") {
-            AccountScreen(
+            SettingsScreen(
                 onBack = { navController.navigate("homeScreen")},
                 onLogout = {
                     navController.navigate("welcomeScreen") {
@@ -405,9 +494,74 @@ fun AppNavGraph(
             )
         }
 
+        composable("aboutScreen"){
+            AboutUsScreen(navController)
+        }
+
         composable("scan_meal") {
             ScanMealScreen(
+                navController = navController,
                 onNavigateBack = { navController.popBackStack() }
+            )
+        }
+
+        composable(
+            route = "scanConfirm?imageUri={imageUri}",
+            arguments = listOf(
+                navArgument("imageUri") { 
+                    type = NavType.StringType
+                    nullable = true
+                    defaultValue = null
+                }
+            )
+        ) { backStackEntry ->
+            val ingredients = navController.previousBackStackEntry
+                ?.savedStateHandle
+                ?.get<List<com.example.dieta.domain.FoodRecognitionUseCase.ProcessedIngredient>>("detected_ingredients") 
+                ?: emptyList()
+
+            ScanConfirmScreen(
+                initialIngredients = ingredients,
+                onBack = { navController.popBackStack() },
+                onAddMore = { navController.navigate("scan_confirm_search") },
+                onCompleted = {
+                    navController.navigate("homeScreen") {
+                        popUpTo("homeScreen") { inclusive = true }
+                    }
+                },
+                navController = navController
+            )
+        }
+
+        composable("scan_confirm_search") {
+            SearchMealsScreen(
+                navController = navController,
+                onBack = { navController.popBackStack() },
+                onOpenPhoto = { },
+                onOpenCreateMeal = { },
+                onFoodClick = { foodId ->
+                    navController.navigate("scan_confirm_detail/$foodId")
+                }
+            )
+        }
+
+        composable(
+            route = "scan_confirm_detail/{foodId}",
+            arguments = listOf(navArgument("foodId") { type = NavType.StringType })
+        ) { backStackEntry ->
+            val foodId = backStackEntry.arguments?.getString("foodId") ?: ""
+            MealInfoScreen(
+                foodId = foodId,
+                onBack = { navController.popBackStack() },
+                onReturnIngredient = { food, serving, qty ->
+                    val selection = com.example.dieta.domain.FatSecretIngredientSelection(food, serving, qty)
+                    // Procuramos scanConfirm na pilha (pode ter argumentos, por isso usamos contains)
+                    val targetEntry = navController.currentBackStack.value.lastOrNull { it.destination.route?.contains("scanConfirm") == true }
+                    targetEntry?.savedStateHandle?.set("added_food_selection", selection)
+                },
+                onAddToMealCompleted = {
+                    navController.popBackStack("scanConfirm", inclusive = false)
+                }
             )
         }
 
@@ -415,7 +569,7 @@ fun AppNavGraph(
             startDestination = "registrationScreen1",
             route = "registrationFlow"
         ) {
-// ...
+
             composable("registrationScreen1") { backStackEntry ->
                 val parentEntry = remember(backStackEntry) {
                     navController.getBackStackEntry("registrationFlow")
@@ -553,4 +707,5 @@ fun SplashScreen(navController: NavController, viewModel: SplashViewModel = hilt
             modifier = Modifier.scale(scale.value)
         )
     }
-}
+    }
+

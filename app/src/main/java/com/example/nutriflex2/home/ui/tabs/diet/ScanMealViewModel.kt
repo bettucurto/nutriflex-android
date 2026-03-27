@@ -10,6 +10,7 @@ import android.util.Log
 import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.viewModelScope
 import com.example.dieta.domain.DietaRepository
+import com.example.dieta.domain.FoodRecognitionUseCase
 import dagger.hilt.android.lifecycle.HiltViewModel
 import dagger.hilt.android.qualifiers.ApplicationContext
 import kotlinx.coroutines.Dispatchers
@@ -26,7 +27,8 @@ import javax.inject.Inject
 @HiltViewModel
 class ScanMealViewModel @Inject constructor(
     application: Application,
-    private val dietaRepository: DietaRepository
+    private val dietaRepository: DietaRepository,
+    private val foodRecognitionUseCase: FoodRecognitionUseCase
 ) : AndroidViewModel(application) {
 
     private val _uiState = MutableStateFlow(ScanMealUiState())
@@ -119,14 +121,14 @@ class ScanMealViewModel @Inject constructor(
             try {
                 val file = uriToFile(uri, context)
                 if (file != null) {
-                    val resultJson = dietaRepository.recognizeMeal(file)
-                    Log.d("ScanMealViewModel", "API Response: $resultJson")
+                    // Chamar Use Case que faz API + CSV + Log.d
+                    val ingredients = foodRecognitionUseCase.recognizeAndProcess(file)
                     
-                    if (resultJson != null) {
-                         _uiState.update { it.copy(isLoading = false, successMessage = "Comida Detetada com Sucesso!") }
-                    } else {
-                         _uiState.update { it.copy(isLoading = false, error = "Falha na deteção.") }
-                    }
+                    _uiState.update { it.copy(
+                        isLoading = false, 
+                        successMessage = "Comida Detetada!",
+                        detectedIngredients = ingredients
+                    ) }
                 } else {
                     _uiState.update { it.copy(isLoading = false, error = "Erro ao processar imagem.") }
                 }
@@ -135,6 +137,10 @@ class ScanMealViewModel @Inject constructor(
                 _uiState.update { it.copy(isLoading = false, error = e.message) }
             }
         }
+    }
+    
+    fun clearDetectedIngredients() {
+        _uiState.update { it.copy(detectedIngredients = null) }
     }
     
     fun clearMessages() {

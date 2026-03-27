@@ -16,6 +16,9 @@ import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.collect
 import kotlinx.coroutines.flow.firstOrNull
+import kotlinx.coroutines.flow.flatMapLatest
+import kotlinx.coroutines.flow.flowOf
+import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.onEach
 import kotlinx.coroutines.flow.receiveAsFlow
 import kotlinx.coroutines.launch
@@ -39,7 +42,6 @@ data class HomeUiState(
 
     val nextWorkoutId: Int? = null,
     val nextWorkoutName: String = "",
-    val nextWorkoutExercises: Int = 0,
     val currentWeight: Float = 75f,
     val goalWeight: Float = 70f,
     val bmi: Float = 0f,
@@ -162,28 +164,16 @@ class HomeViewModel @Inject constructor(
 
     private fun loadNextWorkout() {
         viewModelScope.launch {
-            val user = userLocalRepository.getUserLocal().firstOrNull() ?: return@launch
-            
-            treinoRepository.observePastas(user.userId).collect { pastas ->
-                val allSessions = mutableListOf<Sessao>()
-                for (pasta in pastas) {
-                    val sessions = treinoRepository.observeSessoes(pasta.id).firstOrNull() ?: emptyList()
-                    allSessions.addAll(sessions)
+            userLocalRepository.getUserLocal().flatMapLatest { user ->
+                if (user == null) flowOf(null)
+                else {
+                    treinoRepository.observeNextSessaoWithExercises(user.userId, user.nextWorkoutId)
                 }
-
-                if (allSessions.isEmpty()) {
-                    _uiState.value = _uiState.value.copy(nextWorkoutId = null)
-                } else {
-                    val nextWorkout = allSessions.first()
-                    // Usamos collect de forma pontual ou transformamos em flow se quisermos reatividade total
-                    treinoRepository.observeExercicios(nextWorkout.id).collect { exercises ->
-                        _uiState.value = _uiState.value.copy(
-                            nextWorkoutId = nextWorkout.id,
-                            nextWorkoutName = nextWorkout.nome,
-                            nextWorkoutExercises = exercises.size
-                        )
-                    }
-                }
+            }.collect { data ->
+                _uiState.value = _uiState.value.copy(
+                    nextWorkoutId = data?.first?.id,
+                    nextWorkoutName = data?.first?.nome ?: ""
+                )
             }
         }
     }

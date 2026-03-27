@@ -4,9 +4,11 @@ import androidx.room.Dao
 import androidx.room.Insert
 import androidx.room.OnConflictStrategy
 import androidx.room.Query
+import androidx.room.Transaction
 import com.example.treino.data.local.tables.ExercicioEntity
 import com.example.treino.data.local.tables.PastaEntity
 import com.example.treino.data.local.tables.SessaoEntity
+import com.example.treino.data.local.tables.SessaoWithExercises
 import com.example.treino.data.local.tables.SetEntity
 import kotlinx.coroutines.flow.Flow
 
@@ -30,8 +32,21 @@ interface TreinoDao {
     @Query("SELECT * FROM sessoes WHERE idPasta = :idPasta")
     fun observeSessoes(idPasta: Int): Flow<List<SessaoEntity>>
 
+    @Transaction
+    @Query("""
+        SELECT * FROM sessoes 
+        WHERE (:nextWorkoutId IS NOT NULL AND id = :nextWorkoutId)
+        OR (:nextWorkoutId IS NULL AND idPasta IN (SELECT id FROM pastas_treinos WHERE idUser = :userId OR visibilidade = 'publica'))
+        ORDER BY (id = :nextWorkoutId) DESC, id ASC 
+        LIMIT 1
+    """)
+    fun observeNextSessaoWithExercises(userId: Int, nextWorkoutId: Int?): Flow<SessaoWithExercises?>
+
     @Insert(onConflict = OnConflictStrategy.REPLACE)
     suspend fun insertSessoes(sessoes: List<SessaoEntity>)
+
+    @Query("SELECT * FROM sessoes WHERE idPasta IN (SELECT id FROM pastas_treinos WHERE idUser = :userId OR visibilidade = 'publica')")
+    fun observeAllSessoesByUser(userId: Int): Flow<List<SessaoEntity>>
 
     @Query("DELETE FROM sessoes WHERE idPasta = :idPasta")
     suspend fun deleteSessoesByPasta(idPasta: Int)

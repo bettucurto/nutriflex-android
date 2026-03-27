@@ -70,6 +70,7 @@ dependencies {
     implementation(project(":treino"))
     implementation(libs.androidx.compose.ui.ui)
     implementation(libs.androidx.foundation.layout)
+    implementation(libs.androidx.compose.ui.text)
 
     val room_version = "2.8.4"
     implementation("androidx.room:room-runtime:$room_version")

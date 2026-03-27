@@ -16,6 +16,9 @@ interface UserLocalDao {
     @Insert(onConflict = OnConflictStrategy.REPLACE)
     suspend fun upsert(user: UserLocal)
 
+    @Query("UPDATE user_local SET nextWorkoutId = :nextWorkoutId WHERE userId = :userId")
+    suspend fun updateNextWorkoutId(userId: Int, nextWorkoutId: Int)
+
     @Query("UPDATE user_local SET eatenCaloriesToday = eatenCaloriesToday + :calories, lastCaloriesResetDate = :date")
     suspend fun addCaloriesEaten(calories: Int, date: String)
 
