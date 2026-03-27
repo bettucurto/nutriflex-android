@@ -17,6 +17,7 @@ import androidx.compose.animation.slideOutVertically
 import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.combinedClickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -345,15 +346,24 @@ fun ActiveWorkoutSetTable(
 ) {
     val headerColor = MaterialTheme.colorScheme.primary
     Column(modifier = Modifier.fillMaxWidth().padding(horizontal = 16.dp)) {
+        // MUDANÇA: Pesos perfeitamente ajustados. Soma = 1.0f (0.12 + 0.32 + 0.20 + 0.20 + 0.16)
         Row(modifier = Modifier.fillMaxWidth().padding(vertical = 8.dp)) {
             Text("SET", modifier = Modifier.weight(0.12f), textAlign = TextAlign.Center, fontSize = 10.sp, fontWeight = FontWeight.Bold, color = headerColor)
-            Text("LAST", modifier = Modifier.weight(0.3f), textAlign = TextAlign.Center, fontSize = 10.sp, fontWeight = FontWeight.Bold, color = headerColor)
-            Text("KG", modifier = Modifier.weight(0.22f), textAlign = TextAlign.Center, fontSize = 10.sp, fontWeight = FontWeight.Bold, color = headerColor)
-            Text("REPS", modifier = Modifier.weight(0.22f), textAlign = TextAlign.Center, fontSize = 10.sp, fontWeight = FontWeight.Bold, color = headerColor)
-            Box(modifier = Modifier.weight(0.12f))
+            Text("LAST", modifier = Modifier.weight(0.32f), textAlign = TextAlign.Center, fontSize = 10.sp, fontWeight = FontWeight.Bold, color = headerColor)
+            Text("KG", modifier = Modifier.weight(0.20f), textAlign = TextAlign.Center, fontSize = 10.sp, fontWeight = FontWeight.Bold, color = headerColor)
+            Text("REPS", modifier = Modifier.weight(0.20f), textAlign = TextAlign.Center, fontSize = 10.sp, fontWeight = FontWeight.Bold, color = headerColor)
+            Box(modifier = Modifier.weight(0.16f))
         }
         sets.forEachIndexed { index, set ->
-            ActiveWorkoutSetRow(index, set, sets, { onToggleCheck(index) }, { w, r -> onUpdateSet(index, w, r) }, { onOpenSetTypeMenu(index) }, { onRemoveSet(index) })
+            ActiveWorkoutSetRow(
+                index = index,
+                set = set,
+                allSets = sets,
+                onToggleCheck = { onToggleCheck(index) },
+                onUpdateSet = { w, r -> onUpdateSet(index, w, r) },
+                onOpenSetTypeMenu = { onOpenSetTypeMenu(index) },
+                onRemoveSet = { onRemoveSet(index) }
+            )
         }
     }
 }
@@ -372,69 +382,98 @@ fun ActiveWorkoutSetRow(
     val isChecked = set.isChecked
     val primaryColor = MaterialTheme.colorScheme.primary
 
-    Row(
-        modifier = Modifier.fillMaxWidth().padding(vertical = 4.dp),
-        verticalAlignment = Alignment.CenterVertically
-    ) {
-        Box(modifier = Modifier.weight(0.12f).size(36.dp).clip(CircleShape).clickable(enabled = !isChecked) { onOpenSetTypeMenu() }, contentAlignment = Alignment.Center) {
-            val (text, color) = when (set.tipoSet) {
-                "WARMUP" -> "W" to Color(0xFFFFB300)
-                else -> {
-                    val num = allSets.take(index + 1).count { it.tipoSet == "REGULAR" || it.tipoSet.isEmpty() }
-                    num.toString() to if (isChecked) primaryColor else MaterialTheme.colorScheme.secondary
+    // MUDANÇA: Estado para controlar a visibilidade do menu de apagar o set
+    var showDeleteMenu by remember { mutableStateOf(false) }
+
+    Box(modifier = Modifier.fillMaxWidth()) {
+        Row(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(vertical = 4.dp)
+                // MUDANÇA: Toque longo na linha inteira abre o menu de opções
+                .combinedClickable(
+                    onClick = { /* Deixamos vazio para não interferir com o foco nos TextFields */ },
+                    onLongClick = { showDeleteMenu = true }
+                ),
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+
+            // 1. COLUNA DO SET (0.12f)
+            Box(modifier = Modifier.weight(0.12f).size(36.dp).clip(CircleShape).clickable(enabled = !isChecked) { onOpenSetTypeMenu() }, contentAlignment = Alignment.Center) {
+                val (text, color) = when (set.tipoSet) {
+                    "WARMUP" -> "W" to Color(0xFFFFB300)
+                    else -> {
+                        val num = allSets.take(index + 1).count { it.tipoSet == "REGULAR" || it.tipoSet.isEmpty() }
+                        num.toString() to if (isChecked) primaryColor else MaterialTheme.colorScheme.secondary
+                    }
+                }
+                Text(text, fontWeight = FontWeight.ExtraBold, color = color, fontSize = 15.sp)
+            }
+
+            // 2. COLUNA DO LAST (0.32f)
+            Text(if (set.pesoUltimaVez > 0) "${set.repeticoesUltimaVez} x ${set.pesoUltimaVez}kg" else "-", modifier = Modifier.weight(0.32f), textAlign = TextAlign.Center, fontSize = 12.sp, color = MaterialTheme.colorScheme.onSurfaceVariant)
+
+            // 3. COLUNA DO KG (0.20f)
+            ActiveSetInputField(
+                value = if (set.peso == 0.0) "" else set.peso.toString(),
+                placeholder = "kg",
+                onValueChange = { onUpdateSet(it.toDoubleOrNull(), null) },
+                modifier = Modifier.weight(0.20f),
+                enabled = !isChecked
+            )
+
+            // 4. COLUNA DE REPS (0.20f)
+            ActiveSetInputField(
+                value = if (set.repeticoesMin == 0 && set.repeticoesMax == 0) "" else if (set.repeticoesMin == set.repeticoesMax) "${set.repeticoesMin}" else "${set.repeticoesMin}-${set.repeticoesMax}",
+                placeholder = "${set.repeticoesMin}-${set.repeticoesMax}",
+                onValueChange = { onUpdateSet(null, it.toIntOrNull()) },
+                modifier = Modifier.weight(0.20f),
+                enabled = !isChecked
+            )
+
+            // 5. COLUNA DO CHECKMARK (0.16f)
+            Box(modifier = Modifier.weight(0.16f).padding(start = 2.dp, end = 4.dp), contentAlignment = Alignment.Center) {
+                Box(
+                    modifier = Modifier
+                        .size(28.dp)
+                        .clip(RoundedCornerShape(6.dp))
+                        .background(if (isChecked) primaryColor else MaterialTheme.colorScheme.surfaceVariant)
+                        .clickable {
+                            if (!isChecked) {
+                                val weightToUse = if (set.peso == 0.0) {
+                                    if (set.pesoUltimaVez > 0) set.pesoUltimaVez else 0.0
+                                } else set.peso
+
+                                val repsToUse = if (set.repeticoesMin == 0) {
+                                    if (set.repeticoesUltimaVez > 0) set.repeticoesUltimaVez else set.repeticoesMin
+                                } else set.repeticoesMin
+
+                                if (set.peso == 0.0 || set.repeticoesMin == 0) {
+                                    onUpdateSet(weightToUse, repsToUse)
+                                }
+                            }
+                            onToggleCheck()
+                        },
+                    contentAlignment = Alignment.Center
+                ) {
+                    Icon(Icons.Default.Check, null, tint = if (isChecked) Color.White else Color.Transparent, modifier = Modifier.size(16.dp))
                 }
             }
-            Text(text, fontWeight = FontWeight.ExtraBold, color = color, fontSize = 15.sp)
         }
-        Text(if (set.pesoUltimaVez > 0) "${set.repeticoesUltimaVez} x ${set.pesoUltimaVez}kg" else "-", modifier = Modifier.weight(0.3f), textAlign = TextAlign.Center, fontSize = 12.sp, color = MaterialTheme.colorScheme.onSurfaceVariant)
 
-        ActiveSetInputField(
-            value = if (set.peso == 0.0) "" else set.peso.toString(),
-            placeholder = "kg",
-            onValueChange = { onUpdateSet(it.toDoubleOrNull(), null) },
-            modifier = Modifier.weight(0.22f),
-            enabled = !isChecked
-        )
-
-        ActiveSetInputField(
-            value = if (set.repeticoesMin == 0 && set.repeticoesMax == 0) "" else if (set.repeticoesMin == set.repeticoesMax) "${set.repeticoesMin}" else "${set.repeticoesMin}-${set.repeticoesMax}",
-            placeholder = "${set.repeticoesMin}-${set.repeticoesMax}",
-            onValueChange = { onUpdateSet(null, it.toIntOrNull()) },
-            modifier = Modifier.weight(0.22f),
-            enabled = !isChecked
-        )
-
-        // AQUI ESTÁ A MUDANÇA: Substituímos o IconButton por um Box normal
-        // Aumentámos o weight para 0.12f (igual ao cabeçalho) e demos padding à esquerda (start)
-        Box(modifier = Modifier.weight(0.16f).padding(start = 8.dp, end = 4.dp), contentAlignment = Alignment.Center) {
-            Box(
-                modifier = Modifier
-                    .size(28.dp) // Um tamanho simpático e perfeitamente quadrado
-                    .clip(RoundedCornerShape(6.dp))
-                    .background(if (isChecked) primaryColor else MaterialTheme.colorScheme.surfaceVariant)
-                    .clickable {
-                        if (!isChecked) {
-                            // Se peso está vazio, usa o peso da última vez ou 0
-                            val weightToUse = if (set.peso == 0.0) {
-                                if (set.pesoUltimaVez > 0) set.pesoUltimaVez else 0.0
-                            } else set.peso
-
-                            // Se reps estão vazias, usa as reps da última vez ou repsMin (ou max)
-                            val repsToUse = if (set.repeticoesMin == 0) {
-                                if (set.repeticoesUltimaVez > 0) set.repeticoesUltimaVez else set.repeticoesMin
-                            } else set.repeticoesMin
-
-                            // Atualiza os valores antes de fazer o toggle check
-                            if (set.peso == 0.0 || set.repeticoesMin == 0) {
-                                onUpdateSet(weightToUse, repsToUse)
-                            }
-                        }
-                        onToggleCheck()
-                    },
-                contentAlignment = Alignment.Center
-            ) {
-                Icon(Icons.Default.Check, null, tint = if (isChecked) Color.White else Color.Transparent, modifier = Modifier.size(16.dp))
-            }
+        // MUDANÇA: O Tooltip / Menu que aparece quando se faz o "Long Press"
+        DropdownMenu(
+            expanded = showDeleteMenu,
+            onDismissRequest = { showDeleteMenu = false }
+        ) {
+            DropdownMenuItem(
+                text = { Text("Delete Set", color = MaterialTheme.colorScheme.error) },
+                onClick = {
+                    showDeleteMenu = false
+                    onRemoveSet() // Dispara a função de apagar que estava adormecida
+                },
+                leadingIcon = { Icon(Icons.Default.Delete, contentDescription = "Delete", tint = MaterialTheme.colorScheme.error) }
+            )
         }
     }
 }

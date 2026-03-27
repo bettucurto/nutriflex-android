@@ -119,7 +119,7 @@ fun SearchWorkoutScreen(
                         FilterChip(
                             selected = isSelected,
                             onClick = { viewModel.onFrequencyFilterSelected(freq) },
-                            label = { Text("$freq Days") },
+                            label = { Text("$freq ${if (freq == 1) "Day" else "Days"}") },
                             colors = FilterChipDefaults.filterChipColors(
                                 selectedContainerColor = colorScheme.primary,
                                 selectedLabelColor = colorScheme.onPrimary,
