@@ -95,7 +95,7 @@ fun AboutUsScreen(
             Spacer(modifier = Modifier.weight(1f))
 
             Text(
-                text = "Version 1.0.2", // Placeholder for version information.
+                text = "Version 1.0.3", // Placeholder for version information.
                 style = MaterialTheme.typography.bodySmall,
                 color = MaterialTheme.colorScheme.onSurfaceVariant
             )

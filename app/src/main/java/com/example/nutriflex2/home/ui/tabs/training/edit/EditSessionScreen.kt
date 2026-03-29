@@ -143,7 +143,7 @@ fun EditSessionScreen(
                             exercises = state.exercises,
                             selectedIndex = state.selectedExerciseIndex,
                             onSelect = viewModel::onSelectExercise,
-                            onAddNew = { navController?.navigate("search_exercise") }
+                            onAddNew = { navController?.navigate("search_exercise/-1?isReplacement=false") }
                         )
                     }
                 }
